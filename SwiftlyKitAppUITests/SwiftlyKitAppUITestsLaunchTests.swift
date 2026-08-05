@@ -1,10 +1,3 @@
-//
-//  SwiftlyKitAppUITestsLaunchTests.swift
-//  SwiftlyKitAppUITests
-//
-//  Created by Berken Sayilir on 05.08.2026.
-//
-
 import XCTest
 
 final class SwiftlyKitAppUITestsLaunchTests: XCTestCase {

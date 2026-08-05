@@ -1,10 +1,3 @@
-//
-//  SwiftlyKitAppTests.swift
-//  SwiftlyKitAppTests
-//
-//  Created by Berken Sayilir on 05.08.2026.
-//
-
 import Testing
 @testable import SwiftlyKitApp
 

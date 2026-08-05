@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		9AF2C42D3023AC61006032CB /* SwiftlyKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9AF2C42C3023AC61006032CB /* SwiftlyKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		9AA109313023AA58000DCC05 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9AF2C42D3023AC61006032CB /* SwiftlyKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = SwiftlyKitApp;
 			packageProductDependencies = (
+				9AF2C42C3023AC61006032CB /* SwiftlyKit */,
 			);
 			productName = SwiftlyKitApp;
 			productReference = 9AA109233023AA57000DCC05 /* SwiftlyKitApp.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = 9AA1091A3023AA57000DCC05;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9AF2C42B3023AC61006032CB /* XCLocalSwiftPackageReference "../SwiftlyKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9AA109243023AA57000DCC05 /* Products */;
 			projectDirPath = "";
@@ -563,6 +572,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		9AF2C42B3023AC61006032CB /* XCLocalSwiftPackageReference "../SwiftlyKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../SwiftlyKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9AF2C42C3023AC61006032CB /* SwiftlyKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftlyKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9AA1091B3023AA57000DCC05 /* Project object */;
 }
