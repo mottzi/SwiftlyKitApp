@@ -1,15 +1,17 @@
 import SwiftUI
+import SwiftlyKit
 
 struct ContentView: View {
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        VStack(alignment: .leading, spacing: 16) {
+            Text("SwiftlyKit")
+                .font(.title.bold())
+                .accessibilityIdentifier("appTitle")
+            
         }
-        .padding()
     }
+
 }
 
 #Preview {
