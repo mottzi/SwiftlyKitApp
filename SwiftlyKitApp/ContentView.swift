@@ -3,17 +3,21 @@ import SwiftlyKit
 
 struct ContentView: View {
 
-    @State private var isPackageSelected = false
+    @State private var packageURL: URL?
+
+    private var isPackageSelected: Bool {
+        packageURL != nil
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            PackageSelector()
-            
+            ProjectCard(packageURL: $packageURL)
+
             RoundedRectangle(cornerRadius: 12)
                 .foregroundStyle(.secondary)
-                .frame(maxHeight: .infinity)
         }
         .padding()
+        .animation(.appSpring(response: 0.45, dampingFraction: 0.75), value: isPackageSelected)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
