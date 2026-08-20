@@ -1,21 +1,16 @@
-import SwiftlyKit
+import SwiftUI
 
-// MARK: - Display Name Extensions (used by ProjectCard)
+struct PackageView: View {
 
-public extension LinuxArchitecture {
-    var displayName: String {
-        switch self {
-        case .x86_64: "x86_64 Linux"
-        case .arm64: "ARM64 Linux"
-        }
+    var body: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(.blue)
     }
+
 }
 
-public extension BuildConfiguration {
-    var displayName: String {
-        switch self {
-        case .release: "Release"
-        case .debug: "Debug"
-        }
-    }
+#Preview {
+    PackageView()
+        .padding()
+        .frame(width: 500, height: 300)
 }

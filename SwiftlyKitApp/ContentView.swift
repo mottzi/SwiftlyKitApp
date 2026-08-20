@@ -3,30 +3,56 @@ import SwiftlyKit
 
 struct ContentView: View {
 
-    @State private var packageURL: URL?
-
-    private var isPackageSelected: Bool {
-        packageURL != nil
-    }
+    @Environment(AppState.self) private var appState
 
     var body: some View {
+        @Bindable var appState = appState
+
         VStack(alignment: .leading, spacing: 16) {
-            ProjectCard(packageURL: $packageURL)
+            ScrollView(.horizontal) {
+                HStack(spacing: 16) {
+                    PackageSelector()
+                        .containerRelativeFrame(.horizontal)
+                        .id(PackagePage.selector)
+                    PackageView()
+                        .containerRelativeFrame(.horizontal)
+                        .id(PackagePage.project)
+                }
+                .scrollTargetLayout()
+            }
+            .scrollPosition(id: $appState.packagePage)
+            .scrollTargetBehavior(.viewAligned)
+            .scrollDisabled(true)
+            .scrollIndicators(.hidden)
+            .safeAreaPadding(.horizontal)
+            .frame(maxHeight: .infinity)
 
             RoundedRectangle(cornerRadius: 12)
                 .foregroundStyle(.secondary)
+                .padding(.horizontal)
         }
-        .padding()
-        .animation(.appSpring(response: 0.45, dampingFraction: 0.75), value: isPackageSelected)
+        .padding(.vertical)
         .toolbar {
+            if appState.isPackageSelected {
+                ToolbarItem {
+                    Button {
+                        withAnimation {
+                            appState.clearPackage()
+                        }
+                    } label: {
+                        Label("Clear Package", systemImage: "trash.fill")
+                    }
+                }
+            }
+            
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     // action
                 } label: {
                     Label("Run", systemImage: "play.fill")
                 }
-                .tint(isPackageSelected ? .blue : nil)
-                .disabled(!isPackageSelected)
+                .tint(appState.isPackageSelected ? .blue : nil)
+                .disabled(!appState.isPackageSelected)
             }
         }
     }
@@ -35,5 +61,7 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environment(AppState())
         .frame(width: 500, height: 300)
 }
+
