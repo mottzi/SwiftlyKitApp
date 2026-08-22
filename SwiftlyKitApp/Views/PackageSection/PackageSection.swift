@@ -5,29 +5,28 @@ struct PackageSection: View {
     @Environment(AppState.self) private var appState
 
     var body: some View {
-        @Bindable var appState = appState
-
-        ScrollView(.horizontal) {
-            HStack(spacing: 16) {
-                PackagePicker()
-                    .containerRelativeFrame(.horizontal)
-                    .frame(maxHeight: .infinity)
-                    .id(PackagePage.selector)
-                
-                PackageBuildDetails()
-                    .containerRelativeFrame(.horizontal)
-                    .frame(maxHeight: .infinity)
-                    .id(PackagePage.project)
-            }
+        PackageBuildDetails()
             .fixedSize(horizontal: false, vertical: true)
-            .scrollTargetLayout()
-        }
-        .scrollPosition(id: $appState.packagePage)
-        .scrollTargetBehavior(.viewAligned)
-        .scrollDisabled(true)
-        .scrollClipDisabled(true)
-        .scrollIndicators(.hidden)
-        .safeAreaPadding(.horizontal)
+            .hidden()
+            .frame(maxWidth: .infinity)
+            .overlay {
+                ZStack {
+                    if appState.isPackageSelected {
+                        PackageBuildDetails()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.horizontal)
+                            .geometryGroup()
+                            .transition(.move(edge: .trailing))
+                    } else {
+                        PackagePicker()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.horizontal)
+                            .geometryGroup()
+                            .transition(.move(edge: .leading))
+                    }
+                }
+                .clipped()
+            }
     }
 }
 

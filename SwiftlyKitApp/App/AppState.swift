@@ -42,15 +42,6 @@ extension AppState {
         return path
     }
 
-    var packagePage: PackagePage? {
-        get { isPackageSelected ? .project : .selector }
-        set {
-            if newValue == .selector {
-                clearPackage()
-            }
-        }
-    }
-
     func selectPackage(at url: URL) {
         if url.lastPathComponent == "Package.swift" {
             packageURL = url.deletingLastPathComponent()
@@ -64,11 +55,6 @@ extension AppState {
         packageURL = nil
     }
     
-}
-
-enum PackagePage: Hashable {
-    case selector
-    case project
 }
 
 enum LinuxTarget: String, CaseIterable, Identifiable {
