@@ -5,28 +5,18 @@ struct PackageSection: View {
     @Environment(AppState.self) private var appState
 
     var body: some View {
-        PackageBuildDetails()
-            .fixedSize(horizontal: false, vertical: true)
-            .hidden()
-            .frame(maxWidth: .infinity)
-            .overlay {
-                ZStack {
-                    if appState.isPackageSelected {
-                        PackageBuildDetails()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .padding(.horizontal)
-                            .geometryGroup()
-                            .transition(.move(edge: .trailing))
-                    } else {
-                        PackagePicker()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .padding(.horizontal)
-                            .geometryGroup()
-                            .transition(.move(edge: .leading))
-                    }
-                }
-                .clipped()
-            }
+        PagingHStack(selection: appState.packagePage) {
+            PackagePicker()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .geometryGroup()
+
+            PackageBuildDetails()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .geometryGroup()
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.horizontal)
+        .clipped()
     }
 }
 

@@ -24,6 +24,10 @@ extension AppState {
         packageURL != nil
     }
 
+    var packagePage: PackagePage {
+        isPackageSelected ? .details : .picker
+    }
+
     var packageName: String {
         packageURL?.lastPathComponent ?? "Package"
     }
@@ -55,6 +59,11 @@ extension AppState {
         packageURL = nil
     }
     
+}
+
+enum PackagePage: Int {
+    case picker
+    case details
 }
 
 enum LinuxTarget: String, CaseIterable, Identifiable {
