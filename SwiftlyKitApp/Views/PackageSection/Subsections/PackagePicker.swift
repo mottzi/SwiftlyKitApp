@@ -83,7 +83,7 @@ private extension PackagePicker {
                 .environment(\.isHovering, isHover)
                 .environment(\.isPressed, isPressed)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(.interaction, RoundedRectangle(cornerRadius: 12))
+                .contentShape(.interaction, .rect(cornerRadius: 12))
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.orange.opacity(backgroundOpacity))

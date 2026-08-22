@@ -146,7 +146,7 @@ struct PackageMenu: View {
                 .font(.body.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .frame(width: 28, height: 28)
-                .contentShape(Rectangle())
+                .contentShape(.rect)
         }
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)

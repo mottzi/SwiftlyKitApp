@@ -24,7 +24,7 @@ struct PackageSection: View {
         }
         .scrollPosition(id: $appState.packagePage)
         .scrollTargetBehavior(.viewAligned)
-//        .scrollDisabled(true)
+        .scrollDisabled(true)
         .scrollClipDisabled(true)
         .scrollIndicators(.hidden)
         .safeAreaPadding(.horizontal)
