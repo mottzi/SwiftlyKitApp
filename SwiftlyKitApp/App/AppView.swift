@@ -21,10 +21,3 @@ struct AppView: View {
         .environment(AppState())
         .frame(width: 500, height: 300)
 }
-
-extension View {
-    
-    func debug(_ color: Color = .orange, _ width: CGFloat = 1) -> some View {
-        self.border(color, width: width)
-    }
-}

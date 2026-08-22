@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftlyKit
 
-struct PackageDetails: View {
+struct PackageBuildDetails: View {
 
     @Environment(AppState.self) private var appState
 
@@ -9,69 +9,18 @@ struct PackageDetails: View {
         @Bindable var appState = appState
 
         VStack(alignment: .leading, spacing: 14) {
-            header
-
-            Divider().opacity(0.55)
-
+            Header()
+            Divider()
+                .opacity(0.55)
             ConfigurationSection()
         }
         .padding(16)
-//        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxHeight: .infinity, alignment: .top)
         .background {
             RoundedRectangle(cornerRadius: 12)
                 .fill(.quaternary.opacity(0.38))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
-                }
+                .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
-    // MARK: - Header
-
-    private var header: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Image(systemName: "swift")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 26, height: 26)
-                .foregroundStyle(.orange)
-                .symbolRenderingMode(.monochrome)
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(appState.packageName)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color.primary)
-                    .lineLimit(1)
-
-                pathLabel
-            }
-
-            Spacer(minLength: 8)
-
-            PackageMenu()
-        }
-    }
-
-    private var pathLabel: some View {
-        Text(appState.displayPath)
-            .font(.system(size: 11))
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .truncationMode(.middle)
-            .help(appState.displayPath)
-            .contextMenu {
-                if let url = appState.packageURL {
-                    Button("Open in Finder") {
-                        NSWorkspace.shared.open(url)
-                    }
-                    Button("Copy Path") {
-                        copyPath(url)
-                    }
-                }
-            }
     }
 
     // MARK: - Configuration
@@ -162,7 +111,7 @@ struct PackageDetails: View {
 
 // MARK: - Menu
 
-private struct PackageMenu: View {
+struct PackageMenu: View {
 
     @Environment(AppState.self) private var appState
 
@@ -204,12 +153,6 @@ private struct PackageMenu: View {
         .help("Package actions")
         .accessibilityLabel("Package actions")
     }
-}
-
-private func copyPath(_ url: URL) {
-    let pasteboard = NSPasteboard.general
-    pasteboard.clearContents()
-    pasteboard.setString(url.path(percentEncoded: false), forType: .string)
 }
 
 #Preview {

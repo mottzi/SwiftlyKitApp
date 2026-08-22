@@ -82,6 +82,8 @@ private extension PackagePicker {
             return configuration.label
                 .environment(\.isHovering, isHover)
                 .environment(\.isPressed, isPressed)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(.interaction, RoundedRectangle(cornerRadius: 12))
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.orange.opacity(backgroundOpacity))
@@ -110,19 +112,21 @@ private extension PackagePicker {
         }
 
         var body: some View {
-            
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(
-                    strokeColor,
-                    style: StrokeStyle(
-                        lineWidth: lineWidth,
-                        dash: isDropTargeted ? [10, 6] : [8, 6],
-                        dashPhase: isDropTargeted ? -12 : (isHovering ? (isPressed ? -12 : -6) : 0)
-                    )
-                )
-                .opacity(appState.isPackageSelected ? 0 : 1)
-                .overlay { DropzoneContent() }
-                .contentShape(RoundedRectangle(cornerRadius: 12))
+            DropzoneContent()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(.interaction, RoundedRectangle(cornerRadius: 12))
+                .background {
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(
+                            strokeColor,
+                            style: StrokeStyle(
+                                lineWidth: lineWidth,
+                                dash: isDropTargeted ? [10, 6] : [8, 6],
+                                dashPhase: isDropTargeted ? -12 : (isHovering ? (isPressed ? -12 : -6) : 0)
+                            )
+                        )
+                        .opacity(appState.isPackageSelected ? 0 : 1)
+                }
                 .animation(.default, value: isDropTargeted)
                 .animation(.default, value: isHovering)
                 .animation(.default, value: isPressed)

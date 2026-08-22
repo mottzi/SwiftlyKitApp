@@ -11,16 +11,20 @@ struct PackageSection: View {
             HStack(spacing: 16) {
                 PackagePicker()
                     .containerRelativeFrame(.horizontal)
+                    .frame(maxHeight: .infinity)
                     .id(PackagePage.selector)
-                PackageDetails()
+                
+                PackageBuildDetails()
                     .containerRelativeFrame(.horizontal)
+                    .frame(maxHeight: .infinity)
                     .id(PackagePage.project)
             }
+            .fixedSize(horizontal: false, vertical: true)
             .scrollTargetLayout()
         }
         .scrollPosition(id: $appState.packagePage)
         .scrollTargetBehavior(.viewAligned)
-        .scrollDisabled(true)
+//        .scrollDisabled(true)
         .scrollClipDisabled(true)
         .scrollIndicators(.hidden)
         .safeAreaPadding(.horizontal)
