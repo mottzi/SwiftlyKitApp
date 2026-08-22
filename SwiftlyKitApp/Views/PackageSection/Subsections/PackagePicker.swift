@@ -1,17 +1,18 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct PackageSelector: View {
+struct PackagePicker: View {
 
     @Environment(AppState.self) private var appState
 
-    @State private var isFileImporterPresented = false
     @State private var isDropTargeted = false
 
     var body: some View {
+        @Bindable var appState = appState
+
         Button {
             if !appState.isPackageSelected {
-                isFileImporterPresented = true
+                appState.isFileImporterPresented = true
             }
         } label: {
             Container()
@@ -19,7 +20,7 @@ struct PackageSelector: View {
         .buttonStyle(SelectorButtonStyle())
         .environment(\.isDropTargeted, isDropTargeted)
         .fileImporter(
-            isPresented: $isFileImporterPresented,
+            isPresented: $appState.isFileImporterPresented,
             allowedContentTypes: [.folder]
         ) { result in
             if case .success(let url) = result {
@@ -51,7 +52,7 @@ struct PackageSelector: View {
 
 // MARK: - Subviews
 
-private extension PackageSelector {
+private extension PackagePicker {
 
     struct SelectorButtonStyle: ButtonStyle {
         @Environment(AppState.self) private var appState
@@ -74,8 +75,6 @@ private extension PackageSelector {
 
             let containerScale = if isPressed {
                 0.98
-            } else if isDropTargeted {
-                1.02
             } else {
                 1.0
             }
@@ -122,28 +121,12 @@ private extension PackageSelector {
                     )
                 )
                 .opacity(appState.isPackageSelected ? 0 : 1)
-                .overlay { Content() }
+                .overlay { DropzoneContent() }
                 .contentShape(RoundedRectangle(cornerRadius: 12))
                 .animation(.default, value: isDropTargeted)
                 .animation(.default, value: isHovering)
                 .animation(.default, value: isPressed)
                 .animation(.default, value: appState.isPackageSelected)
-        }
-    }
-
-    struct Content: View {
-        @Environment(AppState.self) private var appState
-
-        var body: some View {
-            ZStack {
-                if appState.isPackageSelected {
-                    SelectedPackageScaffold()
-                        .transition(.opacity)
-                } else {
-                    DropzoneContent()
-                        .transition(.opacity)
-                }
-            }
         }
     }
 
@@ -153,9 +136,6 @@ private extension PackageSelector {
                 Icon()
                 Label()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(.rect)
-            .padding(12)
         }
     }
 
@@ -244,7 +224,7 @@ extension EnvironmentValues {
 }
 
 #Preview {
-    ContentView()
+    AppView()
         .environment(AppState())
         .frame(width: 500, height: 300)
 }

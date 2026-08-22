@@ -1,16 +1,14 @@
 import SwiftUI
 
-@main
-struct SwiftlyKitApp: App {
+@main struct SwiftlyKitApp: App {
 
     @State private var appState = AppState()
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppView()
                 .environment(appState)
         }
         .defaultSize(width: 700, height: 500)
     }
-    
 }
