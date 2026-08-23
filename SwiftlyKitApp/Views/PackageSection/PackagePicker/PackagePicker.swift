@@ -36,17 +36,10 @@ struct PackagePicker: View {
             )
         )
         .onHover { isHovering = $0 }
-        .fileImporter(
-            isPresented: $appState.isFileImporterPresented,
-            allowedContentTypes: [.folder]
-        ) { result in
-            if case .success(let url) = result {
-                Task { @MainActor in
-                    await Task.yield()
-                    withAnimation {
-                        appState.selectPackage(at: url)
-                    }
-                }
+        .onDropSessionUpdated { session in
+            isDropTargeted = switch session.phase {
+                case .entering, .active: true
+                default: false
             }
         }
         .dropDestination(for: URL.self) { items, session in
@@ -55,10 +48,17 @@ struct PackagePicker: View {
                 appState.selectPackage(at: url)
             }
         }
-        .onDropSessionUpdated { session in
-            isDropTargeted = switch session.phase {
-                case .entering, .active: true
-                default: false
+        .fileImporter(
+            isPresented: $appState.isFileImporterPresented,
+            allowedContentTypes: [.folder]
+        ) { result in
+            if case .success(let url) = result {
+                Task {
+                    await Task.yield()
+                    withAnimation {
+                        appState.selectPackage(at: url)
+                    }
+                }
             }
         }
     }
