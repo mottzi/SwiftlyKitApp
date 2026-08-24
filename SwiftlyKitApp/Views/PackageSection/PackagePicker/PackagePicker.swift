@@ -8,11 +8,11 @@ struct PackagePicker: View {
     @State private var isDropTargeted = false
     @State private var isHovering = false
     
-    var canSelect: Bool {
+    private var canSelect: Bool {
         !appState.isPackageSelected
     }
     
-    var showsHover: Bool {
+    private var showsHover: Bool {
         canSelect && isHovering
     }
 
