@@ -64,6 +64,7 @@ extension PackageBuildDetails {
 extension PackageBuildDetails.ConfigurationSection {
     
     private func fieldLabel(_ title: String) -> some View {
+
         Text(title)
             .font(.subheadline)
             .foregroundStyle(.secondary)

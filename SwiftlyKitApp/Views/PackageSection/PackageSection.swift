@@ -7,8 +7,8 @@ struct PackageSection: View {
     var body: some View {
         PagingHStack(selection: packageModel.packagePage) {
             PackagePicker()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .geometryGroup()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .geometryGroup()
 
             PackageBuildDetails()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
