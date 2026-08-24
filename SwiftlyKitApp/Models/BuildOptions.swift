@@ -1,19 +1,30 @@
 import Observation
 import SwiftlyKit
 
-@MainActor
+/// Build choices shared by the package configuration controls.
 @Observable
 final class BuildOptions {
-    
-    var target: BuildTarget = .linux(.x86_64)
-    var configuration: BuildConfiguration = .release
+
+    /// Name of the selected package product.
     var selectedProductName = ""
+
+    /// Selected cross-compilation target.
+    var target: BuildTarget = .linux(.x86_64)
+
+    /// Selected SwiftPM build configuration.
+    var configuration: BuildConfiguration = .release
+
+    /// Selected Swift toolchain policy.
     var toolchain: ToolchainSelection = .automatic
+
+    /// Whether the strip-binary toggle is enabled.
     var stripBinary = false
-    
+
 }
 
 extension BuildTarget {
+
+    /// User-facing label for the target picker.
     var displayName: String {
         switch self {
             case .linux(.x86_64): "x86_64 Linux"
@@ -24,6 +35,8 @@ extension BuildTarget {
 }
 
 extension BuildConfiguration {
+
+    /// User-facing label for the configuration picker.
     var displayName: String {
         switch self {
             case .debug: "Debug"
@@ -35,6 +48,7 @@ extension BuildConfiguration {
 
 extension ToolchainSelection {
 
+    /// User-facing label for this toolchain selection.
     var displayName: String {
         switch self {
             case .automatic: "Automatic"
