@@ -31,17 +31,12 @@ extension PackagePicker.PickerLabel {
     }
 
     private var title: some View {
-        ZStack(alignment: .leading) {
-            Text("Drop Package here").hidden()
-            Text("Select Package").hidden()
-            Text("Drop to Select").hidden()
-            Text(showsHover ? "Select Package" : "Drop Package here")
-                .lineLimit(1)
-                .truncationMode(.middle)
-        }
-        .font(.largeTitle)
-        .fontWeight(isDropTargeted ? .medium : .light)
-        .foregroundStyle(isDropTargeted ? .orange : (showsHover ? .primary : .secondary))
+        Text("Select Package")
+            .lineLimit(1)
+            .truncationMode(.middle)
+            .font(.largeTitle)
+            .fontWeight(isDropTargeted ? .medium : .light)
+            .foregroundStyle(isDropTargeted ? .orange : (showsHover ? .primary : .secondary))
     }
 
 }
