@@ -17,23 +17,27 @@ struct PackagePicker: View {
         canSelect && isHovering
     }
 
+    private var isDropTargetedForPresentation: Bool {
+        canSelect && isDropTargeted
+    }
+
     var body: some View {
         Button {
-            guard canSelect else { return }
             isFileImporterPresented = true
         } label: {
             PickerLabel(
                 showsHover: showsHover,
-                isDropTargeted: isDropTargeted
+                isDropTargeted: isDropTargetedForPresentation
             )
         }
         .buttonStyle(
             PickerStyle(
-                isDropTargeted: isDropTargeted,
+                isDropTargeted: isDropTargetedForPresentation,
                 showsHover: showsHover,
                 canSelect: canSelect
             )
         )
+        .disabled(!canSelect)
         .onHover {
             isHovering = $0
         }
@@ -50,17 +54,18 @@ struct PackagePicker: View {
                 }
             }
         }
-        .dropDestination(for: URL.self) { items, session in
+        .dropDestination(for: URL.self, isEnabled: canSelect) { items, _ in
             guard let url = items.first else { return }
             withAnimation {
                 packageModel.selectPackage(at: url)
             }
         }
         .onDropSessionUpdated { session in
-            isDropTargeted = switch session.phase {
+            let isTargeted = switch session.phase {
                 case .entering, .active: true
                 default: false
             }
+            isDropTargeted = canSelect && isTargeted
         }
     }
 
