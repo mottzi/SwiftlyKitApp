@@ -21,6 +21,10 @@ A reader should understand the main behavior before reaching mechanics or consta
 
 - The primary type declaration owns the type's stored state, initialization, and principal behavior.
 - When a type has a clear main entry point or main algorithm, declare it in the primary type declaration immediately after its stored properties and initializers.
+- Keep a private derived-state cluster immediately beside its source state when
+  those properties jointly define one interaction state machine. The principal
+  entry point may follow that cluster; do not split coupled state merely to
+  place `body` first.
 - Do not move the principal behavior into an extension merely to separate state from behavior.
 - Use extensions as semantic chapter boundaries for behavior subordinate or additional to the principal behavior.
 - Keep each semantic chapter homogeneous in role. Do not combine remaining interface, state-dependent instance mechanics, pure static transformations, and live adapters in one extension.

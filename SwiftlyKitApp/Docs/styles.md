@@ -12,7 +12,12 @@ Apply these rules in order. A style-only pass preserves behavior, API, names, ac
 - For new behavioral type and extension declarations, place one blank line immediately inside the opening and closing braces. Case-only enums and passive nested data containers may be compact. Do not reformat an existing declaration solely to normalize brace spacing.
 - When an enum has two or more cases and every case has an immediately preceding documentation comment, place exactly one blank line after the opening brace, between adjacent cases, and before the closing brace. Treat each documentation comment and its case declaration as one unit. This rule applies to existing declarations during a style-only pass.
 - Separate consecutive documented stored properties with one blank line.
-- For new functions with more than three nonblank body lines, place one blank line immediately after the opening brace. Trivial initializers and forwarding bodies may remain compact. Do not add or remove an existing leading blank line solely from the body-line count.
+- For new functions with more than three nonblank body lines, place one blank line
+  immediately after the opening brace. Trivial initializers, forwarding or
+  single-expression bodies, and bodies whose non-declaration statements are
+  only control-flow statements such as `if`, `switch`, `guard`, or `return` may
+  remain compact. Do not add or remove an existing leading blank line solely
+  from the body-line count.
 - Use blank lines to divide a body into conceptual paragraphs. Keep directly coupled statements together. Do not add a blank line or introduce a local solely to manufacture a semantic phase.
 - Keep a function declaration header on one line when its final character would occur before column 125. This rule does not apply to initializers, accessors, closure properties, or function calls.
 - Declare an initializer with four or more parameters across multiple lines, with one parameter per line.
@@ -22,7 +27,8 @@ Apply these rules in order. A style-only pass preserves behavior, API, names, ac
 - Preserve ordered collection-literal grouping unless line length requires expansion.
 - Keep simple one-use expressions inline.
 - Do not introduce a local solely to name a Boolean, raw value, status value, property alias, throwing call, or semantic phase.
-- A rule requiring an intermediate operation result never authorizes extracting a Boolean predicate result.
+- Bind the Boolean result of an operation that also writes an `inout` result before guarding that result. This keeps the operation separate from the predicates that inspect its output.
+- A rule requiring an intermediate operation result never authorizes extracting a Boolean predicate result unless the operation also writes an `inout` result that a later predicate inspects.
 - Preserve a one-use local that names a non-primitive domain value, exposes a meaningful transformation boundary, or makes a multiline construction independently readable.
 - Name each newly introduced local with the shortest unambiguous domain noun. Do not rename an existing reasonable local solely to normalize vocabulary.
 - When a newly bound value is used only to return one of its properties, name it for the underlying domain entity rather than its representation or producing operation.
