@@ -5,6 +5,7 @@ extension View {
     func debug(_ color: Color = .orange, _ width: CGFloat = 1) -> some View {
         self.border(color, width: width)
     }
+    
 }
 
 extension NSPasteboard {
@@ -14,4 +15,5 @@ extension NSPasteboard {
         pasteboard.clearContents()
         pasteboard.setString(url.path(percentEncoded: false), forType: .string)
     }
+    
 }
