@@ -1,12 +1,11 @@
 import SwiftUI
+import SwiftlyKit
 
 extension PackageBuildDetails {
     
     struct ConfigurationSection: View {
 
-        @Environment(PackageModel.self) private var packageModel
         @Environment(BuildOptions.self) private var buildOptions
-        @State private var showAdvanced = false
         
         var body: some View {
             @Bindable var buildOptions = buildOptions
@@ -23,8 +22,8 @@ extension PackageBuildDetails {
                     
                     GridRow {
                         fieldLabel("Target")
-                        menuPicker("Target", selection: $buildOptions.linuxTarget) {
-                            ForEach(LinuxTarget.allCases) { target in
+                        menuPicker("Target", selection: $buildOptions.target) {
+                            ForEach(BuildTarget.allCases, id: \.self) { target in
                                 Text(target.displayName).tag(target)
                             }
                         }
@@ -32,40 +31,29 @@ extension PackageBuildDetails {
                     
                     GridRow {
                         fieldLabel("Configuration")
-                        menuPicker("Configuration", selection: $buildOptions.buildStyle) {
-                            ForEach(BuildStyle.allCases) { style in
-                                Text(style.displayName).tag(style)
+                        menuPicker("Configuration", selection: $buildOptions.configuration) {
+                            ForEach(BuildConfiguration.allCases, id: \.self) { configuration in
+                                Text(configuration.displayName).tag(configuration)
                             }
                         }
                     }
-                }
-                
-                DisclosureGroup(isExpanded: $showAdvanced) {
-                    Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 8) {
-                        GridRow {
-                            fieldLabel("Swift")
-                            menuPicker("Swift", selection: $buildOptions.toolchainOption) {
-                                Text("Automatic").tag(ToolchainOption.automatic)
-                            }
-                        }
-                        
-                        GridRow {
-                            fieldLabel("Strip Binary")
-                            Toggle("Strip Binary", isOn: $buildOptions.stripBinary)
-                                .labelsHidden()
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
+
+                    GridRow {
+                        fieldLabel("Swift")
+                        menuPicker("Swift", selection: $buildOptions.toolchain) {
+                            Text(ToolchainSelection.automatic.displayName)
+                                .tag(ToolchainSelection.automatic)
                         }
                     }
-                    .padding(.top, 8)
-                } label: {
-                    Text("Advanced")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+
+                    GridRow {
+                        fieldLabel("Strip Binary")
+                        Toggle("Strip Binary", isOn: $buildOptions.stripBinary)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .controlSize(.small)
+                    }
                 }
-            }
-            .onChange(of: packageModel.packageURL) {
-                showAdvanced = false
             }
         }
         
