@@ -1,13 +1,8 @@
 import SwiftUI
-import SwiftlyKit
 
 struct PackageBuildDetails: View {
 
-    @Environment(AppState.self) private var appState
-
     var body: some View {
-        @Bindable var appState = appState
-
         VStack(alignment: .leading, spacing: 14) {
             Header()
             Divider().opacity(0.55)
@@ -25,7 +20,8 @@ struct PackageBuildDetails: View {
 }
 
 #Preview {
-    AppView()
-        .environment(AppState())
+    PackageBuildDetails()
+        .environment(PackageModel())
+        .environment(BuildOptions())
         .frame(width: 500, height: 300)
 }

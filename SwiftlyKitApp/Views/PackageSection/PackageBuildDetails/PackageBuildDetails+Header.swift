@@ -4,7 +4,7 @@ extension PackageBuildDetails {
 
     struct Header: View {
 
-        @Environment(AppState.self) private var appState
+        @Environment(PackageModel.self) private var packageModel
 
         var body: some View {
             HStack(alignment: .center, spacing: 12) {
@@ -17,17 +17,17 @@ extension PackageBuildDetails {
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(appState.packageName)
+                    Text(packageModel.packageName)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Color.primary)
                         .lineLimit(1)
 
-                    Text(appState.displayPath)
+                    Text(packageModel.displayPath)
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
-                        .help(appState.displayPath)
+                        .help(packageModel.displayPath)
                 }
 
                 Spacer(minLength: 8)

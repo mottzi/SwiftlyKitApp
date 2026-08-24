@@ -3,13 +3,14 @@ import UniformTypeIdentifiers
 
 struct PackagePicker: View {
 
-    @Environment(AppState.self) private var appState
+    @Environment(PackageModel.self) private var packageModel
     
+    @State private var isFileImporterPresented = false
     @State private var isDropTargeted = false
     @State private var isHovering = false
     
     private var canSelect: Bool {
-        !appState.isPackageSelected
+        !packageModel.isPackageSelected
     }
     
     private var showsHover: Bool {
@@ -17,11 +18,9 @@ struct PackagePicker: View {
     }
 
     var body: some View {
-        @Bindable var appState = appState
-
         Button {
             guard canSelect else { return }
-            appState.isFileImporterPresented = true
+            isFileImporterPresented = true
         } label: {
             PickerLabel(
                 showsHover: showsHover,
@@ -39,14 +38,14 @@ struct PackagePicker: View {
             isHovering = $0
         }
         .fileImporter(
-            isPresented: $appState.isFileImporterPresented,
+            isPresented: $isFileImporterPresented,
             allowedContentTypes: [.folder]
         ) { result in
             if case .success(let url) = result {
                 Task {
                     await Task.yield()
                     withAnimation {
-                        appState.selectPackage(at: url)
+                        packageModel.selectPackage(at: url)
                     }
                 }
             }
@@ -54,7 +53,7 @@ struct PackagePicker: View {
         .dropDestination(for: URL.self) { items, session in
             guard let url = items.first else { return }
             withAnimation {
-                appState.selectPackage(at: url)
+                packageModel.selectPackage(at: url)
             }
         }
         .onDropSessionUpdated { session in
@@ -65,10 +64,4 @@ struct PackagePicker: View {
         }
     }
 
-}
-
-#Preview {
-    AppView()
-        .environment(AppState())
-        .frame(width: 500, height: 300)
 }

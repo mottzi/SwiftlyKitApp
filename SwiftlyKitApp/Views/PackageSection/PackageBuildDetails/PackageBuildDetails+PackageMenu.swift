@@ -4,11 +4,11 @@ extension PackageBuildDetails.Header {
     
     struct PackageMenu: View {
         
-        @Environment(AppState.self) private var appState
+        @Environment(PackageModel.self) private var packageModel
 
         var body: some View {
             Menu {
-                if let url = appState.packageURL {
+                if let url = packageModel.packageURL {
                     Button("Show in Finder", systemImage: "folder") {
                         NSWorkspace.shared.activateFileViewerSelecting([url])
                     }
@@ -22,17 +22,15 @@ extension PackageBuildDetails.Header {
                     }
                 }
 
-                Button("Choose Another Package…", systemImage: "folder.badge.plus") {
-                    appState.isFileImporterPresented = true
-                }
-
                 Divider()
 
                 Button("Close Package", systemImage: "xmark.circle", role: .destructive) {
-                    appState.clearPackage()
+                    withAnimation {
+                        packageModel.clearPackage()
+                    }
                 }
             } label: {
-                Image(systemName: "ellipsis")
+                Image(systemName: "ellipsis.circle")
                     .font(.body.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .frame(width: 28, height: 28)

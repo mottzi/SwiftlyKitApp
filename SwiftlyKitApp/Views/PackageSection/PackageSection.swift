@@ -2,13 +2,13 @@ import SwiftUI
 
 struct PackageSection: View {
 
-    @Environment(AppState.self) private var appState
+    @Environment(PackageModel.self) private var packageModel
 
     var body: some View {
-        PagingHStack(selection: appState.packagePage) {
+        PagingHStack(selection: packageModel.packagePage) {
             PackagePicker()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .geometryGroup()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .geometryGroup()
 
             PackageBuildDetails()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -22,6 +22,7 @@ struct PackageSection: View {
 
 #Preview {
     PackageSection()
-        .environment(AppState())
+        .environment(PackageModel())
+        .environment(BuildOptions())
         .frame(width: 500, height: 300)
 }

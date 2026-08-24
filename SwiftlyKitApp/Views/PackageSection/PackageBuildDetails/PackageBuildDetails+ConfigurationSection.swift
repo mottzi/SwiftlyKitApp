@@ -4,16 +4,18 @@ extension PackageBuildDetails {
     
     struct ConfigurationSection: View {
 
-        @Environment(AppState.self) private var appState
+        @Environment(PackageModel.self) private var packageModel
+        @Environment(BuildOptions.self) private var buildOptions
+        @State private var showAdvanced = false
         
         var body: some View {
-            @Bindable var appState = appState
+            @Bindable var buildOptions = buildOptions
             
             VStack(alignment: .leading, spacing: 8) {
                 Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 8) {
                     GridRow {
                         fieldLabel("Product")
-                        menuPicker("Product", selection: $appState.selectedProductName) {
+                        menuPicker("Product", selection: $buildOptions.selectedProductName) {
                             Text("—").tag("")
                         }
                         .disabled(true)
@@ -21,7 +23,7 @@ extension PackageBuildDetails {
                     
                     GridRow {
                         fieldLabel("Target")
-                        menuPicker("Target", selection: $appState.linuxTarget) {
+                        menuPicker("Target", selection: $buildOptions.linuxTarget) {
                             ForEach(LinuxTarget.allCases) { target in
                                 Text(target.displayName).tag(target)
                             }
@@ -30,7 +32,7 @@ extension PackageBuildDetails {
                     
                     GridRow {
                         fieldLabel("Configuration")
-                        menuPicker("Configuration", selection: $appState.buildStyle) {
+                        menuPicker("Configuration", selection: $buildOptions.buildStyle) {
                             ForEach(BuildStyle.allCases) { style in
                                 Text(style.displayName).tag(style)
                             }
@@ -38,18 +40,18 @@ extension PackageBuildDetails {
                     }
                 }
                 
-                DisclosureGroup(isExpanded: $appState.showAdvanced) {
+                DisclosureGroup(isExpanded: $showAdvanced) {
                     Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 8) {
                         GridRow {
                             fieldLabel("Swift")
-                            menuPicker("Swift", selection: $appState.toolchainOption) {
+                            menuPicker("Swift", selection: $buildOptions.toolchainOption) {
                                 Text("Automatic").tag(ToolchainOption.automatic)
                             }
                         }
                         
                         GridRow {
                             fieldLabel("Strip Binary")
-                            Toggle("Strip Binary", isOn: $appState.stripBinary)
+                            Toggle("Strip Binary", isOn: $buildOptions.stripBinary)
                                 .labelsHidden()
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
@@ -61,6 +63,9 @@ extension PackageBuildDetails {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
+            }
+            .onChange(of: packageModel.packageURL) {
+                showAdvanced = false
             }
         }
         

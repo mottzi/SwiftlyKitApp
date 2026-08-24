@@ -2,22 +2,23 @@ import SwiftUI
 
 struct AppView: View {
 
-    @Environment(AppState.self) private var appState
+    @State private var packageModel = PackageModel()
+    @State private var buildOptions = BuildOptions()
 
     var body: some View {
-        @Bindable var appState = appState
-
         VStack(alignment: .leading, spacing: 16) {
             PackageSection()
             BuildSection()
         }
         .padding(.vertical)
         .toolbar { AppToolbar() }
+        .environment(packageModel)
+        .environment(buildOptions)
     }
+    
 }
 
 #Preview {
     AppView()
-        .environment(AppState())
         .frame(width: 500, height: 300)
 }
