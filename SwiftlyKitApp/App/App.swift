@@ -6,7 +6,7 @@ import SwiftUI
         WindowGroup {
             AppView()
         }
-        .defaultSize(width: 700, height: 500)
+        .defaultSize(width: 500, height: 300)
     }
     
 }
