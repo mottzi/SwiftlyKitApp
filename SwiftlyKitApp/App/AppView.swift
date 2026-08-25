@@ -12,6 +12,7 @@ struct AppView: View {
         }
         .padding(.vertical)
         .toolbar { AppToolbar() }
+        .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
         .environment(packageModel)
         .environment(buildOptions)
     }
