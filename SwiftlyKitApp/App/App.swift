@@ -7,6 +7,8 @@ import SwiftUI
             AppView()
         }
         .defaultSize(width: 500, height: 300)
+        .windowToolbarStyle(.unifiedCompact)
+        .windowResizability(.contentMinSize)
     }
     
 }

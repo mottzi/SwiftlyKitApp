@@ -8,9 +8,21 @@ extension PackagePicker {
         let isDropTargeted: Bool
 
         var body: some View {
-            HStack(spacing: 16) {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 16) {
+                    icon
+                    title
+                }
+                .fixedSize(horizontal: true, vertical: false)
+
+                VStack(spacing: 12) {
+                    icon
+                    title
+                }
+                .fixedSize(horizontal: true, vertical: false)
+
                 icon
-                title
+                    .accessibilityLabel("Select Package")
             }
             .padding()
         }
@@ -36,7 +48,8 @@ extension PackagePicker.PickerLabel {
             .lineLimit(1)
             .truncationMode(.middle)
             .font(.largeTitle)
-            .fontWeight(isDropTargeted ? .medium : .light)
+            // Keep the label's measured width stable while the drop target state changes.
+            .fontWeight(.light)
             .foregroundStyle(isDropTargeted ? .orange : (showsHover ? .primary : .secondary))
     }
 

@@ -54,20 +54,14 @@ extension PagingHStack {
         // tallest page height will be layout height
         let tallestHeight = childSizes.map(\.height).max() ?? 0
 
-        // return the page width, an infinite width, or the current page's width
+        // return the page width, an infinite width, or the widest page
         let width: CGFloat
         if let pageWidth {
             width = pageWidth
         } else if proposal.width == .infinity {
             width = .infinity
         } else {
-            let pageIndex = min(
-                max(Int(progress.rounded()), 0),
-                max(childSizes.count - 1, 0)
-            )
-            width = childSizes.indices.contains(pageIndex)
-                ? childSizes[pageIndex].width
-                : 0
+            width = childSizes.map(\.width).max() ?? 0
         }
 
         return CGSize(width: width, height: tallestHeight)

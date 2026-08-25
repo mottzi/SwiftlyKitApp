@@ -5,14 +5,14 @@ struct AppToolbar: ToolbarContent {
     @Environment(PackageModel.self) private var packageModel
 
     var body: some ToolbarContent {
-        if packageModel.isPackageSelected {
-            ToolbarItem {
-                ClearPackageButton()
-            }
-        }
-
         ToolbarItem(placement: .primaryAction) {
-            RunButton()
+            HStack(spacing: 8) {
+                if packageModel.isPackageSelected {
+                    ClearPackageButton()
+                }
+                RunButton()
+            }
+            .labelStyle(.iconOnly)
         }
     }
     
