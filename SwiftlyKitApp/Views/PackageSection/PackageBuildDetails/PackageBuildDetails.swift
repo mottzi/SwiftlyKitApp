@@ -5,10 +5,13 @@ struct PackageBuildDetails: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Header()
-            Divider().opacity(0.55)
+            Divider()
+                .padding(.horizontal, -16)
+                .opacity(0.55)
             ConfigurationSection()
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .frame(maxHeight: .infinity, alignment: .top)
         .background {
             RoundedRectangle(cornerRadius: 12)
