@@ -37,6 +37,11 @@ struct ClearPackageButton: View {
 struct RunButton: View {
 
     @Environment(PackageModel.self) private var packageModel
+    @Environment(BuildOptions.self) private var buildOptions
+
+    private var canRun: Bool {
+        packageModel.isPackageSelected && buildOptions.selectedProduct != nil
+    }
 
     var body: some View {
         Button {
@@ -44,8 +49,8 @@ struct RunButton: View {
         } label: {
             Label("Run", systemImage: "play.fill")
         }
-        .tint(packageModel.isPackageSelected ? .blue : nil)
-        .disabled(!packageModel.isPackageSelected)
+        .tint(canRun ? .blue : nil)
+        .disabled(!canRun)
     }
     
 }

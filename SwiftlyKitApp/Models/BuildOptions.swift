@@ -4,8 +4,8 @@ import SwiftlyKit
 /// Build choices shared by the package configuration controls.
 @Observable final class BuildOptions {
 
-    /// Name of the selected package product.
-    var selectedProductName = ""
+    /// Selected executable package product.
+    var selectedProduct: ExecutableProduct?
 
     /// Selected cross-compilation target.
     var target: BuildTarget = .linux(.x86_64)

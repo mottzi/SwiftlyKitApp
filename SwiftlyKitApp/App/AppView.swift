@@ -15,6 +15,9 @@ struct AppView: View {
         .padding(.top, 2)
         .toolbar { AppToolbar() }
         .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
+        .onChange(of: packageModel.packageURL) {
+            buildOptions.selectedProduct = nil
+        }
         .environment(packageModel)
         .environment(buildOptions)
     }

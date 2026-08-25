@@ -10,38 +10,70 @@ extension PackageBuildDetails {
         var body: some View {
             @Bindable var buildOptions = buildOptions
 
-            AdaptiveForm {
-                configurationField("Product") {
-                    menuPicker("Product", selection: $buildOptions.selectedProductName) {
-                        Text("—").tag("")
+            LabelControlGrid {
+                configurationField {
+                    Text("Product")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } control: {
+                    Picker("Product", selection: $buildOptions.selectedProduct) {
+                        Text("—").tag(nil as ExecutableProduct?)
                     }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .disabled(true)
                 }
 
-                configurationField("Target") {
-                    menuPicker("Target", selection: $buildOptions.target) {
+                configurationField {
+                    Text("Target")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } control: {
+                    Picker("Target", selection: $buildOptions.target) {
                         ForEach(BuildTarget.allCases, id: \.self) { target in
                             Text(target.displayName).tag(target)
                         }
                     }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                configurationField("Configuration") {
-                    menuPicker("Configuration", selection: $buildOptions.configuration) {
+                configurationField {
+                    Text("Configuration")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } control: {
+                    Picker("Configuration", selection: $buildOptions.configuration) {
                         ForEach(BuildConfiguration.allCases, id: \.self) { configuration in
                             Text(configuration.displayName).tag(configuration)
                         }
                     }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                configurationField("Swift") {
-                    menuPicker("Swift", selection: $buildOptions.toolchain) {
+                configurationField {
+                    Text("Swift")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } control: {
+                    Picker("Swift", selection: $buildOptions.toolchain) {
                         Text(ToolchainSelection.automatic.displayName)
                             .tag(ToolchainSelection.automatic)
                     }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                configurationField("Strip Binary") {
+                configurationField {
+                    Text("Strip Binary")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } control: {
                     Toggle("Strip Binary", isOn: $buildOptions.stripBinary)
                         .labelsHidden()
                         .toggleStyle(.switch)
@@ -58,32 +90,13 @@ extension PackageBuildDetails {
 extension PackageBuildDetails.ConfigurationSection {
 
     @ViewBuilder
-    private func configurationField<Content: View>(
-        _ title: String,
-        @ViewBuilder content: () -> Content
+    private func configurationField<Label: View, Control: View>(
+        @ViewBuilder _ label: () -> Label,
+        @ViewBuilder control: () -> Control
     ) -> some View {
 
-        fieldLabel(title)
-        content()
-    }
-
-    private func fieldLabel(_ title: String) -> some View {
-
-        Text(title)
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-    }
-
-    private func menuPicker<Selection: Hashable, Content: View>(
-        _ title: String,
-        selection: Binding<Selection>,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-
-        Picker(title, selection: selection, content: content)
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        label()
+        control()
     }
 
 }
