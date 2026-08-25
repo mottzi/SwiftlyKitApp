@@ -39,11 +39,17 @@ extension AdaptiveForm {
             proposedWidth: proposal.width,
             columnCount: columnCount
         )
+        let columnMetrics = columnMetrics(for: columnCount, metrics: metrics)
+        let columnWidths = columnWidths(
+            layoutWidth: width,
+            columnCount: columnCount,
+            columnMetrics: columnMetrics
+        )
 
         let rowHeights = rowHeights(
             columnCount: columnCount,
-            columnWidth: columnWidth(layoutWidth: width, columnCount: columnCount),
-            columnMetrics: columnMetrics(for: columnCount, metrics: metrics),
+            columnWidths: columnWidths,
+            columnMetrics: columnMetrics,
             subviews: subviews
         )
 
@@ -59,12 +65,16 @@ extension AdaptiveForm {
 
         let metrics = idealMetrics(for: subviews)
         let columnCount = columnCount(for: bounds.width, metrics: metrics)
-        let columnWidth = columnWidth(layoutWidth: bounds.width, columnCount: columnCount)
         let columnMetrics = columnMetrics(for: columnCount, metrics: metrics)
+        let columnWidths = columnWidths(
+            layoutWidth: bounds.width,
+            columnCount: columnCount,
+            columnMetrics: columnMetrics
+        )
 
         let rowHeights = rowHeights(
             columnCount: columnCount,
-            columnWidth: columnWidth,
+            columnWidths: columnWidths,
             columnMetrics: columnMetrics,
             subviews: subviews
         )
@@ -76,7 +86,10 @@ extension AdaptiveForm {
         for fieldIndex in fieldIndices {
             let row = fieldIndex / columnCount
             let column = fieldIndex % columnCount
-            let columnOriginX = bounds.minX + CGFloat(column) * (columnWidth + columnSpacing)
+            let columnOriginX = bounds.minX
+                + columnWidths.prefix(column).reduce(0, +)
+                + columnSpacing * CGFloat(column)
+            let columnWidth = columnWidths[column]
             let labelIndex = fieldIndex * 2
             let controlIndex = labelIndex + 1
             let rowHeight = rowHeights[row]
@@ -211,18 +224,25 @@ private extension AdaptiveForm {
         return min(max(proposedWidth, 0), idealWidth)
     }
 
-    func columnWidth(layoutWidth: CGFloat, columnCount: Int) -> CGFloat {
-        guard columnCount > 0 else { return 0 }
+    func columnWidths(
+        layoutWidth: CGFloat,
+        columnCount: Int,
+        columnMetrics: [ColumnMetrics]
+    ) -> [CGFloat] {
+        guard columnCount > 0 else { return [] }
 
-        return max(
-            (layoutWidth - columnSpacing * CGFloat(columnCount - 1)) / CGFloat(columnCount),
-            0
-        )
+        if columnCount == 1 {
+            return [max(layoutWidth, 0)]
+        }
+
+        return columnMetrics.map {
+            max($0.labelWidth + labelSpacing + $0.controlWidth, 0)
+        }
     }
 
     func rowHeights(
         columnCount: Int,
-        columnWidth: CGFloat,
+        columnWidths: [CGFloat],
         columnMetrics: [ColumnMetrics],
         subviews: Subviews
     ) -> [CGFloat] {
@@ -234,6 +254,7 @@ private extension AdaptiveForm {
 
         for fieldIndex in fieldIndices {
             let column = fieldIndex % columnCount
+            let columnWidth = columnWidths[column]
             let labelWidth = min(
                 columnMetrics[column].labelWidth,
                 max(columnWidth - labelSpacing, 0)
