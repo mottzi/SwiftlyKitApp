@@ -54,14 +54,23 @@ extension PagingHStack {
         // tallest page height will be layout height
         let tallestHeight = childSizes.map(\.height).max() ?? 0
 
-        // return the page width, an infinite width, or the widest subview
-        return if let pageWidth {
-            CGSize(width: pageWidth, height: tallestHeight)
+        // return the page width, an infinite width, or the current page's width
+        let width: CGFloat
+        if let pageWidth {
+            width = pageWidth
         } else if proposal.width == .infinity {
-            CGSize(width: .infinity, height: tallestHeight)
+            width = .infinity
         } else {
-            CGSize(width: childSizes.map(\.width).max() ?? 0, height: tallestHeight)
+            let pageIndex = min(
+                max(Int(progress.rounded()), 0),
+                max(childSizes.count - 1, 0)
+            )
+            width = childSizes.indices.contains(pageIndex)
+                ? childSizes[pageIndex].width
+                : 0
         }
+
+        return CGSize(width: width, height: tallestHeight)
     }
 
     /// Places pages in a row one page width plus spacing apart, then shifts the row by progress.

@@ -29,8 +29,15 @@ extension PackageBuildDetails {
                         .truncationMode(.middle)
                         .help(packageModel.displayPath)
                 }
+                .frame(
+                    minWidth: 0,
+                    idealWidth: 0,
+                    maxWidth: .infinity,
+                    alignment: .leading
+                )
+                .layoutPriority(-1)
 
-                Spacer(minLength: 8)
+                Spacer(minLength: 0)
 
                 PackageMenu()
             }
