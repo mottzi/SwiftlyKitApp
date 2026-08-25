@@ -15,7 +15,7 @@ struct PackageSection: View {
                 .geometryGroup()
         }
         .fixedSize(horizontal: false, vertical: true)
-        .padding(.horizontal)
+        .padding(.horizontal, 8)
         .clipped()
     }
 }
