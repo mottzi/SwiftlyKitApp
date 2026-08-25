@@ -11,7 +11,42 @@ extension PackageBuildDetails {
             @Bindable var buildOptions = buildOptions
 
             AdaptiveForm {
-                configurationFields($buildOptions)
+                configurationField("Product") {
+                    menuPicker("Product", selection: $buildOptions.selectedProductName) {
+                        Text("—").tag("")
+                    }
+                    .disabled(true)
+                }
+
+                configurationField("Target") {
+                    menuPicker("Target", selection: $buildOptions.target) {
+                        ForEach(BuildTarget.allCases, id: \.self) { target in
+                            Text(target.displayName).tag(target)
+                        }
+                    }
+                }
+
+                configurationField("Configuration") {
+                    menuPicker("Configuration", selection: $buildOptions.configuration) {
+                        ForEach(BuildConfiguration.allCases, id: \.self) { configuration in
+                            Text(configuration.displayName).tag(configuration)
+                        }
+                    }
+                }
+
+                configurationField("Swift") {
+                    menuPicker("Swift", selection: $buildOptions.toolchain) {
+                        Text(ToolchainSelection.automatic.displayName)
+                            .tag(ToolchainSelection.automatic)
+                    }
+                }
+
+                configurationField("Strip Binary") {
+                    Toggle("Strip Binary", isOn: $buildOptions.stripBinary)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .controlSize(.small)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -21,46 +56,6 @@ extension PackageBuildDetails {
 }
 
 extension PackageBuildDetails.ConfigurationSection {
-
-    @ViewBuilder
-    private func configurationFields(_ buildOptions: Bindable<BuildOptions>) -> some View {
-        configurationField("Product") {
-            menuPicker("Product", selection: buildOptions.selectedProductName) {
-                Text("—").tag("")
-            }
-            .disabled(true)
-        }
-
-        configurationField("Target") {
-            menuPicker("Target", selection: buildOptions.target) {
-                ForEach(BuildTarget.allCases, id: \.self) { target in
-                    Text(target.displayName).tag(target)
-                }
-            }
-        }
-
-        configurationField("Configuration") {
-            menuPicker("Configuration", selection: buildOptions.configuration) {
-                ForEach(BuildConfiguration.allCases, id: \.self) { configuration in
-                    Text(configuration.displayName).tag(configuration)
-                }
-            }
-        }
-
-        configurationField("Swift") {
-            menuPicker("Swift", selection: buildOptions.toolchain) {
-                Text(ToolchainSelection.automatic.displayName)
-                    .tag(ToolchainSelection.automatic)
-            }
-        }
-
-        configurationField("Strip Binary") {
-            Toggle("Strip Binary", isOn: buildOptions.stripBinary)
-                .labelsHidden()
-                .toggleStyle(.switch)
-                .controlSize(.small)
-        }
-    }
 
     @ViewBuilder
     private func configurationField<Content: View>(
