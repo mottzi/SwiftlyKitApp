@@ -2,8 +2,7 @@ import Observation
 import SwiftlyKit
 
 /// Build choices shared by the package configuration controls.
-@Observable
-final class BuildOptions {
+@Observable final class BuildOptions {
 
     /// Name of the selected package product.
     var selectedProductName = ""

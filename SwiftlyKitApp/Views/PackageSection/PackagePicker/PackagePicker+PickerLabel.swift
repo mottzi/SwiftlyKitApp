@@ -1,21 +1,22 @@
 import SwiftUI
 
 extension PackagePicker {
-    
+
     struct PickerLabel: View {
-        
+
         let showsHover: Bool
         let isDropTargeted: Bool
-        
+
         var body: some View {
             HStack(spacing: 16) {
                 icon
                 title
             }
+            .padding()
         }
-        
+
     }
-    
+
 }
 
 extension PackagePicker.PickerLabel {

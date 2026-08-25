@@ -2,8 +2,7 @@ import Foundation
 import Observation
 
 /// Package selection state shared by the picker, details page, and toolbar.
-@Observable
-final class PackageModel {
+@Observable final class PackageModel {
 
     /// Root URL of the selected Swift package.
     private(set) var packageURL: URL?
@@ -46,13 +45,8 @@ extension PackageModel {
 
     /// Shortens paths under the user's home directory to use `~`.
     private static func displayPath(for url: URL) -> String {
-
-        let path = url.path(percentEncoded: false)
-        let home = FileManager.default.homeDirectoryForCurrentUser.path(percentEncoded: false)
-        if path == home || path.hasPrefix(home + "/") {
-            return "~" + path.dropFirst(home.count)
-        }
-        return path
+        NSString(string: url.path(percentEncoded: false))
+            .abbreviatingWithTildeInPath
     }
 
     /// Finds the package root from an existing package directory or its regular `Package.swift` manifest.
@@ -95,4 +89,5 @@ enum PackagePage: Int {
 
     /// Selected package details page.
     case details
+
 }
