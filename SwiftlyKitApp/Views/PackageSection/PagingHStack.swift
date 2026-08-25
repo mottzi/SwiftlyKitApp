@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// Horizontal pager. One page wide and as tall as the tallest page.
-/// Progress slides which page sits at the left edge.
+/// Horizontal pager that shows one page at a time.
+/// Progress shifts the page row to show the selected page.
 struct PagingHStack: Layout {
     
-    /// Distance between adjacent pages.
+    /// Gap between adjacent pages.
     let spacing: CGFloat
     
     /// Page index. 0 is the first page. A fraction is a position between pages.
@@ -26,71 +26,71 @@ struct PagingHStack: Layout {
 
 extension PagingHStack {
     
-    /// Progress that SwiftUI interpolates to animate the page slide.
+    /// Interpolates `progress` during page transitions.
     var animatableData: CGFloat {
         get { progress }
         set { progress = newValue }
     }
     
-    /// Layout size. Height is the tallest page's ideal height.
-    /// Width is the finite proposed width, infinity, or the widest page.
+    /// Returns the pager's size for a parent proposal, one page wide and tall enough for every page.
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
            
-        var pageWidth: CGFloat? = nil
+        var childWidthProposal: CGFloat?
         
-        // if proposed width is positive and finite
-        if let proposedWidth = proposal.width,
-           proposedWidth.isFinite,
-           proposedWidth > 0 {
+        // keep the parent's positive finite width for child measurement and pager sizing
+        if let parentProposedWidth = proposal.width,
+           parentProposedWidth.isFinite,
+           parentProposedWidth > 0 {
             
-            // take this concrete proposed width as page width
-            pageWidth = proposedWidth
+            childWidthProposal = parentProposedWidth
         }
 
-        // measure subviews at page width and unspecified height
-        let childProposal = ProposedViewSize(width: pageWidth, height: nil)
+        // propose the parent's positive finite width if present and leave height unspecified
+        let childProposal = ProposedViewSize(width: childWidthProposal, height: nil)
+
+        // ask each page for the size it chooses under this proposal
         let childSizes = subviews.map { $0.sizeThatFits(childProposal) }
         
-        // tallest page height will be layout height
+        // make the pager as tall as its tallest page
         let tallestHeight = childSizes.map(\.height).max() ?? 0
 
-        // return the page width, an infinite width, or the widest page
-        let width: CGFloat
-        if let pageWidth {
-            width = pageWidth
+        // let the parent choose the width, or fit the pager to its widest page
+        return if let childWidthProposal {
+            CGSize(width: childWidthProposal, height: tallestHeight)
         } else if proposal.width == .infinity {
-            width = .infinity
+            CGSize(width: .infinity, height: tallestHeight)
         } else {
-            width = childSizes.map(\.width).max() ?? 0
+            CGSize(width: childSizes.map(\.width).max() ?? 0, height: tallestHeight)
         }
-
-        return CGSize(width: width, height: tallestHeight)
     }
 
-    /// Places pages in a row one page width plus spacing apart, then shifts the row by progress.
+    /// Places each page in the rectangle assigned to the pager, one page width plus spacing apart.
+    /// Progress shifts the row to show the selected page.
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
                 
-        // abort if there is no positive finite page width
+        // abort if the pager's assigned rectangle has no positive finite width
         guard bounds.width.isFinite, bounds.width > 0 else { return }
 
-        // propose the full bounds to each page
+        // propose the pager's full size to each page
         let pageProposal = ProposedViewSize(width: bounds.width, height: bounds.height)
         
-        // space pages one stride apart
+        // calculate the fixed horizontal offset between adjacent pages
         let stride = bounds.width + spacing
         
-        // clamp progress to the page range and convert it to a shift
+        // find the highest valid page index
         let lastPage = CGFloat(max(subviews.count - 1, 0))
+
+        // clamp progress to that range and translate it into a horizontal shift
         let shift = min(max(progress, 0), lastPage) * stride
 
         for index in subviews.indices {
-            // put this page at its stride slot in the shifted row
+            // calculate where this page should be placed after the row shift
             let origin = CGPoint(
                 x: bounds.minX + CGFloat(index) * stride - shift,
                 y: bounds.minY
             )
             
-            // place each page at the origin
+            // place the page at that point
             subviews[index].place(at: origin, proposal: pageProposal)
         }
     }
