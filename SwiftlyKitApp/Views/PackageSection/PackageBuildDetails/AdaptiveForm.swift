@@ -15,7 +15,7 @@ struct AdaptiveForm: Layout {
 
     init(
         labelSpacing: CGFloat = 12,
-        columnSpacing: CGFloat = 0,
+        columnSpacing: CGFloat = 24,
         rowSpacing: CGFloat = 12
     ) {
         self.labelSpacing = labelSpacing
@@ -34,11 +34,16 @@ extension AdaptiveForm {
         let metrics = idealMetrics(for: subviews)
         let columnCount = columnCount(for: proposal.width, metrics: metrics)
         let idealWidth = layoutWidth(columnCount: columnCount, metrics: metrics)
-        let width = resolvedWidth(idealWidth: idealWidth, proposedWidth: proposal.width)
+        let width = resolvedWidth(
+            idealWidth: idealWidth,
+            proposedWidth: proposal.width,
+            columnCount: columnCount
+        )
+
         let rowHeights = rowHeights(
             columnCount: columnCount,
             columnWidth: columnWidth(layoutWidth: width, columnCount: columnCount),
-            labelWidth: metrics.labelWidth,
+            columnMetrics: columnMetrics(for: columnCount, metrics: metrics),
             subviews: subviews
         )
 
@@ -55,12 +60,12 @@ extension AdaptiveForm {
         let metrics = idealMetrics(for: subviews)
         let columnCount = columnCount(for: bounds.width, metrics: metrics)
         let columnWidth = columnWidth(layoutWidth: bounds.width, columnCount: columnCount)
-        let labelWidth = min(metrics.labelWidth, max(columnWidth - labelSpacing, 0))
-        let controlWidth = max(columnWidth - labelWidth - labelSpacing, 0)
+        let columnMetrics = columnMetrics(for: columnCount, metrics: metrics)
+
         let rowHeights = rowHeights(
             columnCount: columnCount,
             columnWidth: columnWidth,
-            labelWidth: labelWidth,
+            columnMetrics: columnMetrics,
             subviews: subviews
         )
 
@@ -75,6 +80,11 @@ extension AdaptiveForm {
             let labelIndex = fieldIndex * 2
             let controlIndex = labelIndex + 1
             let rowHeight = rowHeights[row]
+            let labelWidth = min(
+                columnMetrics[column].labelWidth,
+                max(columnWidth - labelSpacing, 0)
+            )
+            let controlWidth = max(columnWidth - labelWidth - labelSpacing, 0)
 
             let labelSize = subviews[labelIndex].sizeThatFits(
                 ProposedViewSize(width: labelWidth, height: nil)
@@ -92,17 +102,29 @@ extension AdaptiveForm {
 
             if controlIndex < subviews.count {
                 let controlSize = subviews[controlIndex].sizeThatFits(
-                    ProposedViewSize(width: controlWidth, height: nil)
+                    ProposedViewSize(
+                        width: columnCount == 1 ? nil : controlWidth,
+                        height: nil
+                    )
                 )
+                let leadingControlX = columnOriginX + labelWidth + labelSpacing
+                let trailingControlX = columnOriginX + columnWidth - controlSize.width
+                // Trailing-align one-column controls without allowing rigid content to overlap its label.
+                let controlOriginX = columnCount == 1
+                    ? max(leadingControlX, trailingControlX)
+                    : leadingControlX
                 let controlOrigin = CGPoint(
-                    x: columnOriginX + labelWidth + labelSpacing,
+                    x: controlOriginX,
                     y: rowOriginY + (rowHeight - controlSize.height) / 2
                 )
 
                 subviews[controlIndex].place(
                     at: controlOrigin,
                     anchor: .topLeading,
-                    proposal: ProposedViewSize(width: controlWidth, height: controlSize.height)
+                    proposal: ProposedViewSize(
+                        width: columnCount == 1 ? controlSize.width : controlWidth,
+                        height: controlSize.height
+                    )
                 )
             }
 
@@ -117,24 +139,45 @@ extension AdaptiveForm {
 private extension AdaptiveForm {
 
     struct Metrics {
-        let labelWidth: CGFloat
-        let controlWidth: CGFloat
+        let labelWidths: [CGFloat]
+        let controlWidths: [CGFloat]
         let fieldCount: Int
     }
 
+    struct ColumnMetrics {
+        let labelWidth: CGFloat
+        let controlWidth: CGFloat
+    }
+
     func idealMetrics(for subviews: Subviews) -> Metrics {
-        let labelWidths = subviews.indices
-            .filter { $0.isMultiple(of: 2) }
-            .map { subviews[$0].sizeThatFits(.unspecified).width }
-        let controlWidths = subviews.indices
-            .filter { !$0.isMultiple(of: 2) }
-            .map { subviews[$0].sizeThatFits(.unspecified).width }
+        let fieldCount = (subviews.count + 1) / 2
+        let labelWidths = (0..<fieldCount).map { fieldIndex in
+            subviews[fieldIndex * 2].sizeThatFits(.unspecified).width
+        }
+        let controlWidths = (0..<fieldCount).map { fieldIndex in
+            let controlIndex = fieldIndex * 2 + 1
+            return controlIndex < subviews.count
+                ? subviews[controlIndex].sizeThatFits(.unspecified).width
+                : 0
+        }
 
         return Metrics(
-            labelWidth: labelWidths.max() ?? 0,
-            controlWidth: controlWidths.max() ?? 0,
-            fieldCount: (subviews.count + 1) / 2
+            labelWidths: labelWidths,
+            controlWidths: controlWidths,
+            fieldCount: fieldCount
         )
+    }
+
+    func columnMetrics(for columnCount: Int, metrics: Metrics) -> [ColumnMetrics] {
+        guard columnCount > 0 else { return [] }
+
+        return (0..<columnCount).map { column in
+            let fieldIndices = stride(from: column, to: metrics.fieldCount, by: columnCount)
+            return ColumnMetrics(
+                labelWidth: fieldIndices.map { metrics.labelWidths[$0] }.max() ?? 0,
+                controlWidth: fieldIndices.map { metrics.controlWidths[$0] }.max() ?? 0
+            )
+        }
     }
 
     func columnCount(for width: CGFloat?, metrics: Metrics) -> Int {
@@ -148,12 +191,22 @@ private extension AdaptiveForm {
     func layoutWidth(columnCount: Int, metrics: Metrics) -> CGFloat {
         guard columnCount > 0 else { return 0 }
 
-        let fieldWidth = metrics.labelWidth + labelSpacing + metrics.controlWidth
-        return fieldWidth * CGFloat(columnCount) + columnSpacing * CGFloat(columnCount - 1)
+        let columnsWidth = columnMetrics(for: columnCount, metrics: metrics)
+            .map { $0.labelWidth + labelSpacing + $0.controlWidth }
+            .reduce(0, +)
+        return columnsWidth + columnSpacing * CGFloat(columnCount - 1)
     }
 
-    func resolvedWidth(idealWidth: CGFloat, proposedWidth: CGFloat?) -> CGFloat {
+    func resolvedWidth(
+        idealWidth: CGFloat,
+        proposedWidth: CGFloat?,
+        columnCount: Int
+    ) -> CGFloat {
         guard let proposedWidth, proposedWidth.isFinite else { return idealWidth }
+
+        if columnCount == 1 {
+            return max(proposedWidth, 0)
+        }
 
         return min(max(proposedWidth, 0), idealWidth)
     }
@@ -170,26 +223,33 @@ private extension AdaptiveForm {
     func rowHeights(
         columnCount: Int,
         columnWidth: CGFloat,
-        labelWidth: CGFloat,
+        columnMetrics: [ColumnMetrics],
         subviews: Subviews
     ) -> [CGFloat] {
         guard columnCount > 0 else { return [] }
 
-        let resolvedLabelWidth = min(labelWidth, max(columnWidth - labelSpacing, 0))
-        let controlWidth = max(columnWidth - resolvedLabelWidth - labelSpacing, 0)
         let fieldIndices = fieldIndices(for: subviews)
         let rowCount = (fieldIndices.count + columnCount - 1) / columnCount
         var heights = Array(repeating: CGFloat.zero, count: rowCount)
 
         for fieldIndex in fieldIndices {
+            let column = fieldIndex % columnCount
+            let labelWidth = min(
+                columnMetrics[column].labelWidth,
+                max(columnWidth - labelSpacing, 0)
+            )
+            let controlWidth = max(columnWidth - labelWidth - labelSpacing, 0)
             let labelIndex = fieldIndex * 2
             let controlIndex = labelIndex + 1
             let labelHeight = subviews[labelIndex].sizeThatFits(
-                ProposedViewSize(width: resolvedLabelWidth, height: nil)
+                ProposedViewSize(width: labelWidth, height: nil)
             ).height
             let controlHeight = if controlIndex < subviews.count {
                 subviews[controlIndex].sizeThatFits(
-                    ProposedViewSize(width: controlWidth, height: nil)
+                    ProposedViewSize(
+                        width: columnCount == 1 ? nil : controlWidth,
+                        height: nil
+                    )
                 ).height
             } else {
                 CGFloat.zero
