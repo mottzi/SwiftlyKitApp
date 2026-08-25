@@ -18,7 +18,7 @@ extension PackageBuildDetails {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(packageModel.packageName)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.headline)
                         .foregroundStyle(Color.primary)
                         .lineLimit(1)
 
