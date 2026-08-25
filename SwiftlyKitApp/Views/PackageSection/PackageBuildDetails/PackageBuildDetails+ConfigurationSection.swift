@@ -20,6 +20,19 @@ extension PackageBuildDetails {
 
 }
 
+private struct ExpandingMenuPickerButtonStyle: ButtonStyle {
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.quaternary, in: .rect(cornerRadius: 8))
+            .opacity(configuration.isPressed ? 0.8 : 1)
+    }
+
+}
+
 extension PackageBuildDetails.ConfigurationSection {
 
     @ViewBuilder
@@ -88,6 +101,7 @@ extension PackageBuildDetails.ConfigurationSection {
         Picker(title, selection: selection, content: content)
             .labelsHidden()
             .pickerStyle(.menu)
+            .buttonStyle(ExpandingMenuPickerButtonStyle())
     }
 
 }
