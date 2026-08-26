@@ -15,7 +15,7 @@ struct AppView: View {
             BuildSection()
                 .padding(.horizontal, 12)
         }
-        .frame(minWidth: 300)
+        .frame(minWidth: 300, minHeight: 360) // min height = workaround
         .padding(.bottom, 12)
         .padding(.top, 2)
         .toolbar { AppToolbar() }
