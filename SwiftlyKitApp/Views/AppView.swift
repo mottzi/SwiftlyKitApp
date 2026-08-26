@@ -9,7 +9,6 @@ struct AppView: View {
         VStack(alignment: .leading, spacing: 10) {
             PackageSection()
                 .padding(.horizontal, 12)
-                .padding(.trailing, 48)
                 .clipped()
                 .fixedSize(horizontal: false, vertical: true)
 

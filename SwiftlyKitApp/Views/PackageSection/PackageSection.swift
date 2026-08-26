@@ -5,14 +5,13 @@ struct PackageSection: View {
     @Environment(PackageModel.self) private var packageModel
 
     var body: some View {
-        PagingHStack(selection: packageModel.packagePage) {
+        PagingHStack(spacing: 10, pageTrailingInset: 48, selection: packageModel.packagePage) {
             PackagePicker()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .geometryGroup()
 
             PackageBuildDetails()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.trailing, -48)
                 .geometryGroup()
         }
     }
