@@ -43,6 +43,27 @@ struct SwiftlyKitAppTests {
     }
 
     @MainActor
+    @Test
+    func buildSectionKeepsAVisibleHeightBeforePackageSelection() {
+        let capture = SizeCapture()
+        let rootView = SizeProbeLayout(
+            proposal: ProposedViewSize(width: 240, height: 0),
+            capture: capture
+        ) {
+            BuildSection()
+                .environment(PackageModel())
+        }
+        let hostingView = NSHostingView(rootView: rootView)
+        hostingView.frame = CGRect(
+            origin: .zero,
+            size: CGSize(width: 240, height: 1)
+        )
+        hostingView.layoutSubtreeIfNeeded()
+
+        #expect(capture.size.height > 0)
+    }
+
+    @MainActor
     private func pager(inset: CGFloat, progress: CGFloat, size: CGSize) -> some View {
         PagingHStack(spacing: inset, progress: progress) {
             Rectangle().fill(.red)
@@ -71,4 +92,27 @@ struct SwiftlyKitAppTests {
         hostingView.cacheDisplay(in: hostingView.bounds, to: bitmap)
         return bitmap
     }
+}
+
+private final class SizeCapture: @unchecked Sendable {
+
+    var size = CGSize.zero
+
+}
+
+private struct SizeProbeLayout: Layout {
+
+    let proposal: ProposedViewSize
+    let capture: SizeCapture
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let size = subviews.first?.sizeThatFits(self.proposal) ?? .zero
+        capture.size = size
+        return size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        subviews.first?.place(at: bounds.origin, proposal: self.proposal)
+    }
+
 }

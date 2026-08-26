@@ -6,16 +6,16 @@ struct AppView: View {
     @State private var buildOptions = BuildOptions()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             PackageSection()
                 .padding(.horizontal, 12)
+                .padding(.trailing, 48)
                 .clipped()
                 .fixedSize(horizontal: false, vertical: true)
 
             BuildSection()
                 .padding(.horizontal, 12)
         }
-        .debug()
         .padding(.bottom, 12)
         .padding(.top, 2)
         .toolbar { AppToolbar() }

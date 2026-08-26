@@ -12,6 +12,7 @@ struct PackageSection: View {
 
             PackageBuildDetails()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.trailing, -48)
                 .geometryGroup()
         }
     }
