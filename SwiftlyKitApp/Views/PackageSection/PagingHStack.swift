@@ -17,13 +17,13 @@ struct PagingHStack: Layout, Animatable {
 
 extension PagingHStack {
 
-    init(spacing: CGFloat = 10, pageTrailingInset: CGFloat = 0, selection: Int) {
+    init(spacing: CGFloat = 12, pageTrailingInset: CGFloat = 0, selection: Int) {
         self.spacing = spacing
         self.pageTrailingInset = pageTrailingInset
         self.progress = CGFloat(selection)
     }
 
-    init(spacing: CGFloat = 10, pageTrailingInset: CGFloat = 0, selection: some RawRepresentable<Int>) {
+    init(spacing: CGFloat = 12, pageTrailingInset: CGFloat = 0, selection: some RawRepresentable<Int>) {
         self.init(
             spacing: spacing,
             pageTrailingInset: pageTrailingInset,
