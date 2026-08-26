@@ -14,8 +14,6 @@ struct PackageSection: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .geometryGroup()
         }
-        .fixedSize(horizontal: false, vertical: true)
-        .clipped()
     }
 }
 

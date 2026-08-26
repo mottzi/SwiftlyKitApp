@@ -8,9 +8,14 @@ struct AppView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             PackageSection()
+                .padding(.horizontal, 12)
+                .clipped()
+                .fixedSize(horizontal: false, vertical: true)
+
             BuildSection()
+                .padding(.horizontal, 12)
         }
-        .padding(.horizontal, 12)
+        .debug()
         .padding(.bottom, 12)
         .padding(.top, 2)
         .toolbar { AppToolbar() }
