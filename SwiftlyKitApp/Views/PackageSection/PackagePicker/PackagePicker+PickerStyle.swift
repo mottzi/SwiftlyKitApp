@@ -67,7 +67,7 @@ extension PackagePicker.PickerStyle {
     private func border(isDashed: Bool, isPressed: Bool) -> some View {
         shape
             .strokeBorder(
-                borderColor,
+                borderColor(isPressed: isPressed),
                 style: StrokeStyle(
                     lineWidth: lineWidth,
                     dash: isDashed ? dashPattern : [],
@@ -78,8 +78,8 @@ extension PackagePicker.PickerStyle {
     }
 
     /// Uses orange for hover and drag-over feedback, and secondary for the idle invitation.
-    private var borderColor: Color {
-        isDropTargeted || showsHover ? .orange : .secondary
+    private func borderColor(isPressed: Bool) -> Color {
+        isDropTargeted || showsHover || isPressed ? .orange : .secondary
     }
 
     /// Makes the drag-over outline visually distinct from the idle dashed invitation.

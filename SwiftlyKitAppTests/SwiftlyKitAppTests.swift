@@ -8,37 +8,63 @@ struct SwiftlyKitAppTests {
 
     @MainActor
     @Test
-    func pagerTransitionReachesTheOuterViewportEdgeForAnyInset() {
+    func pagerTransitionReachesTheOuterViewportEdgeForAnyOuterPadding() {
         let size = CGSize(width: 240, height: 80)
 
-        for inset in [CGFloat(8), 16, 24] {
+        for outerPadding in [CGFloat(8), 16, 24] {
             let enteringPageAtRestImage = render(
-                pager(inset: inset, progress: 0, size: size),
+                pager(
+                    spacing: outerPadding,
+                    outerPadding: outerPadding,
+                    progress: 0,
+                    size: size
+                ),
                 size: size
             )
             let enteringPageAtRest = trailingEdgeColor(in: enteringPageAtRestImage)
-            #expect(enteringPageAtRest?.alphaComponent ?? 0 < 0.1)
+            #expect((enteringPageAtRest?.alphaComponent ?? 1) < 0.1)
 
             let enteringPageInMotionImage = render(
-                pager(inset: inset, progress: 0.01, size: size),
+                pager(
+                    spacing: outerPadding,
+                    outerPadding: outerPadding,
+                    progress: 0.01,
+                    size: size
+                ),
                 size: size
             )
             let enteringPageInMotion = trailingEdgeColor(in: enteringPageInMotionImage)
-            #expect(enteringPageInMotion?.blueComponent ?? 0 > enteringPageInMotion?.redComponent ?? 1)
+            #expect(
+                (enteringPageInMotion?.blueComponent ?? 0)
+                    > (enteringPageInMotion?.redComponent ?? 1)
+            )
 
             let leavingPageInMotionImage = render(
-                pager(inset: inset, progress: 0.99, size: size),
+                pager(
+                    spacing: outerPadding,
+                    outerPadding: outerPadding,
+                    progress: 0.99,
+                    size: size
+                ),
                 size: size
             )
             let leavingPageInMotion = leadingEdgeColor(in: leavingPageInMotionImage)
-            #expect(leavingPageInMotion?.redComponent ?? 0 > leavingPageInMotion?.blueComponent ?? 1)
+            #expect(
+                (leavingPageInMotion?.redComponent ?? 0)
+                    > (leavingPageInMotion?.blueComponent ?? 1)
+            )
 
             let leavingPageAtRestImage = render(
-                pager(inset: inset, progress: 1, size: size),
+                pager(
+                    spacing: outerPadding,
+                    outerPadding: outerPadding,
+                    progress: 1,
+                    size: size
+                ),
                 size: size
             )
             let leavingPageAtRest = leadingEdgeColor(in: leavingPageAtRestImage)
-            #expect(leavingPageAtRest?.alphaComponent ?? 0 < 0.1)
+            #expect((leavingPageAtRest?.alphaComponent ?? 1) < 0.1)
         }
     }
 
@@ -64,12 +90,20 @@ struct SwiftlyKitAppTests {
     }
 
     @MainActor
-    private func pager(inset: CGFloat, progress: CGFloat, size: CGSize) -> some View {
-        PagingHStack(spacing: inset, progress: progress) {
+    private func pager(
+        spacing: CGFloat,
+        outerPadding: CGFloat,
+        progress: CGFloat,
+        size: CGSize
+    ) -> some View {
+        var layout = PagingHStack(spacing: spacing, pageTrailingInset: 0, selection: 0)
+        layout.progress = progress
+
+        return layout {
             Rectangle().fill(.red)
             Rectangle().fill(.blue)
         }
-        .padding(.horizontal, inset)
+        .padding(.horizontal, outerPadding)
         .clipped()
         .frame(width: size.width, height: size.height)
     }
