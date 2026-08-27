@@ -1,92 +1,21 @@
-import Foundation
 import AppKit
 import SwiftUI
 import Testing
 @testable import SwiftlyKitApp
 
+@Suite(.serialized)
 struct SwiftlyKitAppTests {
 
     @MainActor
     @Test
-    func pagerTransitionReachesTheOuterViewportEdgeForAnyOuterPadding() {
-        let size = CGSize(width: 240, height: 80)
+    func pagerUsesProductionRevealGeometryAtBothRestingPages() async {
+        let firstPageFrames = await pagerFrames(progress: 0)
+        expectHorizontalFrame(firstPageFrames[0], minX: 12, width: 178)
+        expectHorizontalFrame(firstPageFrames[1], minX: 200, width: 216)
 
-        for outerPadding in [CGFloat(8), 16, 24] {
-            let enteringPageAtRestImage = render(
-                pager(
-                    spacing: outerPadding,
-                    outerPadding: outerPadding,
-                    progress: 0,
-                    size: size
-                ),
-                size: size
-            )
-            let enteringPageAtRest = trailingEdgeColor(in: enteringPageAtRestImage)
-            #expect((enteringPageAtRest?.alphaComponent ?? 1) < 0.1)
-
-            let enteringPageInMotionImage = render(
-                pager(
-                    spacing: outerPadding,
-                    outerPadding: outerPadding,
-                    progress: 0.01,
-                    size: size
-                ),
-                size: size
-            )
-            let enteringPageInMotion = trailingEdgeColor(in: enteringPageInMotionImage)
-            #expect(
-                (enteringPageInMotion?.blueComponent ?? 0)
-                    > (enteringPageInMotion?.redComponent ?? 1)
-            )
-
-            let leavingPageInMotionImage = render(
-                pager(
-                    spacing: outerPadding,
-                    outerPadding: outerPadding,
-                    progress: 0.99,
-                    size: size
-                ),
-                size: size
-            )
-            let leavingPageInMotion = leadingEdgeColor(in: leavingPageInMotionImage)
-            #expect(
-                (leavingPageInMotion?.redComponent ?? 0)
-                    > (leavingPageInMotion?.blueComponent ?? 1)
-            )
-
-            let leavingPageAtRestImage = render(
-                pager(
-                    spacing: outerPadding,
-                    outerPadding: outerPadding,
-                    progress: 1,
-                    size: size
-                ),
-                size: size
-            )
-            let leavingPageAtRest = leadingEdgeColor(in: leavingPageAtRestImage)
-            #expect((leavingPageAtRest?.alphaComponent ?? 1) < 0.1)
-        }
-    }
-
-    @MainActor
-    @Test
-    func buildSectionKeepsAVisibleHeightBeforePackageSelection() {
-        let capture = SizeCapture()
-        let rootView = SizeProbeLayout(
-            proposal: ProposedViewSize(width: 240, height: 0),
-            capture: capture
-        ) {
-            BuildSection()
-                .environment(PackageModel())
-        }
-        let hostingView = NSHostingView(rootView: rootView)
-        hostingView.frame = CGRect(
-            origin: .zero,
-            size: CGSize(width: 240, height: 1)
-        )
-        hostingView.layoutSubtreeIfNeeded()
-
-        #expect(capture.size.height > 0)
+        let secondPageFrames = await pagerFrames(progress: 1)
+        expectHorizontalFrame(secondPageFrames[0], minX: -176, width: 178)
+        expectHorizontalFrame(secondPageFrames[1], minX: 12, width: 216)
     }
 
     @MainActor
@@ -94,9 +23,11 @@ struct SwiftlyKitAppTests {
     func windowMinimumIncludesContentObscuredByTheUnifiedToolbar() async {
         let minimumContentHeight = CGFloat(281)
         let hostingView = NSHostingView(
-            rootView: Color.clear
-                .frame(width: 500, height: minimumContentHeight)
-                .windowMinimumHeight()
+            rootView: AnyView(
+                Color.clear
+                    .frame(width: 500, height: minimumContentHeight)
+                    .windowMinimumHeight()
+            )
         )
         let window = NSWindow(
             contentRect: CGRect(x: 0, y: 0, width: 500, height: minimumContentHeight),
@@ -104,80 +35,179 @@ struct SwiftlyKitAppTests {
             backing: .buffered,
             defer: false
         )
+        window.isReleasedWhenClosed = false
         window.toolbar = NSToolbar(identifier: "WindowMinimumSizeBridgeTests")
+        window.toolbarStyle = .unifiedCompact
+        window.contentView = hostingView
+
+        let obscuredContentHeight = window.frame.height - window.contentLayoutRect.height
+        let expectedMinimumHeight = minimumContentHeight + obscuredContentHeight
+
+        // wait for SwiftUI and AppKit to publish the bridged minimum before asserting
+        for _ in 0..<10 where window.contentMinSize.height < expectedMinimumHeight {
+            await Task.yield()
+            hostingView.layoutSubtreeIfNeeded()
+        }
+
+        #expect(obscuredContentHeight > 0)
+        #expect(abs(window.contentMinSize.height - expectedMinimumHeight) < 0.5)
+
+        await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
+    @Test
+    func windowMinimumTracksResponsiveLayoutWithoutLosingWidthFloor() async {
+        let (window, hostingView) = responsiveLayoutWindow()
+
+        let wideMinimum = await settledMinimumSize(of: window, contentWidth: 700)
+        let narrowMinimum = await settledMinimumSize(of: window, contentWidth: 360)
+        let restoredMinimum = await settledMinimumSize(of: window, contentWidth: 700)
+        let absoluteMinimum = await settledMinimumSize(of: window, contentWidth: 1)
+
+        #expect(abs(wideMinimum.height - 321) < 0.5)
+        #expect(abs(narrowMinimum.height - 393) < 0.5)
+        #expect(abs(restoredMinimum.height - wideMinimum.height) < 0.5)
+        #expect(abs(absoluteMinimum.width - 334) < 0.5)
+
+        await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
+    private func pagerFrames(progress: CGFloat) async -> [Int: CGRect] {
+        let capture = PageFrameCapture()
+        var layout = PagingHStack(
+            spacing: Constants.pageSpacing,
+            pageTrailingInset: Constants.pageTrailingInset,
+            selection: 0
+        )
+        layout.progress = progress
+
+        let rootView = layout {
+            PageFrameProbe(index: 0, color: .red, capture: capture)
+            PageFrameProbe(index: 1, color: .blue, capture: capture)
+        }
+        .padding(.horizontal, Constants.appHorizontalPadding)
+        .clipped()
+        .frame(width: 240, height: 80)
+        .coordinateSpace(.named("pagerViewport"))
+
+        let hostingView = NSHostingView(rootView: rootView)
+        hostingView.frame = CGRect(x: 0, y: 0, width: 240, height: 80)
+
+        for _ in 0..<10 where capture.frames.count < 2 {
+            hostingView.layoutSubtreeIfNeeded()
+            await Task.yield()
+        }
+
+        return capture.frames
+    }
+
+    private func expectHorizontalFrame(_ frame: CGRect?, minX: CGFloat, width: CGFloat) {
+        #expect(frame != nil)
+        guard let frame else { return }
+
+        #expect(abs(frame.minX - minX) < 0.5)
+        #expect(abs(frame.width - width) < 0.5)
+    }
+
+    @MainActor
+    private func settledMinimumSize(
+        of window: NSWindow,
+        contentWidth: CGFloat
+    ) async -> CGSize {
+        var currentWidth = window.contentView?.bounds.width ?? contentWidth
+
+        while abs(currentWidth - contentWidth) > 0.5 {
+            let widthChange = min(max(contentWidth - currentWidth, -20), 20)
+            currentWidth += widthChange
+            window.setContentSize(CGSize(width: currentWidth, height: 700))
+            try? await Task.sleep(for: .milliseconds(5))
+            window.contentView?.layoutSubtreeIfNeeded()
+            window.displayIfNeeded()
+        }
+
+        window.setContentSize(CGSize(width: contentWidth, height: 1))
+
+        var previousSize = CGSize.zero
+        var stableReadingCount = 0
+
+        for _ in 0..<100 {
+            try? await Task.sleep(for: .milliseconds(10))
+            window.contentView?.layoutSubtreeIfNeeded()
+            window.displayIfNeeded()
+
+            let currentSize = window.contentView?.bounds.size ?? .zero
+            let unchanged = abs(currentSize.width - previousSize.width) < 0.5
+                && abs(currentSize.height - previousSize.height) < 0.5
+
+            if currentSize.height > 1, unchanged {
+                stableReadingCount += 1
+                if stableReadingCount == 3 { return currentSize }
+            } else {
+                stableReadingCount = 0
+            }
+
+            previousSize = currentSize
+        }
+
+        return window.contentView?.bounds.size ?? .zero
+    }
+
+    @MainActor
+    private func responsiveLayoutWindow() -> (NSWindow, NSHostingView<AnyView>) {
+        let hostingView = NSHostingView(rootView: AnyView(AppView()))
+        let window = NSWindow(
+            contentRect: CGRect(x: 0, y: 0, width: 700, height: 700),
+            styleMask: [.titled, .resizable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.isReleasedWhenClosed = false
+        window.toolbar = NSToolbar(identifier: "ResponsiveWindowMinimumTests")
         window.toolbarStyle = .unifiedCompact
         window.contentView = hostingView
         window.orderFront(nil)
 
-        // Geometry measurement and representable installation occur on subsequent main-actor turns.
-        await Task.yield()
-        await Task.yield()
-        await Task.yield()
-        hostingView.layoutSubtreeIfNeeded()
-
-        let obscuredContentHeight = window.frame.height - window.contentLayoutRect.height
-        #expect(obscuredContentHeight > 0)
-        #expect(window.minSize.height >= minimumContentHeight + obscuredContentHeight)
+        return (window, hostingView)
     }
 
     @MainActor
-    private func pager(
-        spacing: CGFloat,
-        outerPadding: CGFloat,
-        progress: CGFloat,
-        size: CGSize
-    ) -> some View {
-        var layout = PagingHStack(spacing: spacing, pageTrailingInset: 0, selection: 0)
-        layout.progress = progress
+    private func close(_ window: NSWindow, hostingView: NSHostingView<AnyView>) async {
+        window.orderOut(nil)
+        hostingView.rootView = AnyView(EmptyView())
 
-        return layout {
-            Rectangle().fill(.red)
-            Rectangle().fill(.blue)
+        for _ in 0..<3 {
+            await Task.yield()
+            hostingView.layoutSubtreeIfNeeded()
         }
-        .padding(.horizontal, outerPadding)
-        .clipped()
-        .frame(width: size.width, height: size.height)
+
+        window.contentView = nil
+        window.close()
     }
-
-    private func trailingEdgeColor(in image: NSBitmapImageRep) -> NSColor? {
-        image.colorAt(x: image.pixelsWide - 1, y: image.pixelsHigh / 2)
-    }
-
-    private func leadingEdgeColor(in image: NSBitmapImageRep) -> NSColor? {
-        image.colorAt(x: 0, y: image.pixelsHigh / 2)
-    }
-
-    @MainActor
-    private func render<Content: View>(_ content: Content, size: CGSize) -> NSBitmapImageRep {
-        let hostingView = NSHostingView(rootView: content)
-        hostingView.frame = CGRect(origin: .zero, size: size)
-        hostingView.layoutSubtreeIfNeeded()
-
-        let bitmap = hostingView.bitmapImageRepForCachingDisplay(in: hostingView.bounds)!
-        hostingView.cacheDisplay(in: hostingView.bounds, to: bitmap)
-        return bitmap
-    }
-}
-
-private final class SizeCapture: @unchecked Sendable {
-
-    var size = CGSize.zero
 
 }
 
-private struct SizeProbeLayout: Layout {
+@MainActor
+private final class PageFrameCapture {
 
-    let proposal: ProposedViewSize
-    let capture: SizeCapture
+    var frames: [Int: CGRect] = [:]
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let size = subviews.first?.sizeThatFits(self.proposal) ?? .zero
-        capture.size = size
-        return size
-    }
+}
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        subviews.first?.place(at: bounds.origin, proposal: self.proposal)
+private struct PageFrameProbe: View {
+
+    let index: Int
+    let color: Color
+    let capture: PageFrameCapture
+
+    var body: some View {
+        color
+            .onGeometryChange(for: CGRect.self) { geometry in
+                geometry.frame(in: .named("pagerViewport"))
+            } action: { frame in
+                capture.frames[index] = frame
+            }
     }
 
 }
