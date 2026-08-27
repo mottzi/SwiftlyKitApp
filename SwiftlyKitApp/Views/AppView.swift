@@ -11,9 +11,7 @@ struct AppView: View {
                 .padding(.horizontal, Constants.appHorizontalPadding)
                 .clipped()
                 .fixedSize(horizontal: false, vertical: true)
-                .windowMinimumHeight(
-                    additionalContentHeight: Constants.windowHeightAllowance
-                )
+                .windowMinimumHeight(adding: Constants.windowHeightAllowance)
 
             BuildSection()
                 .padding(.horizontal, Constants.appHorizontalPadding)
