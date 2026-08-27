@@ -5,25 +5,14 @@ struct AppView: View {
     @State private var packageModel = PackageModel()
     @State private var buildOptions = BuildOptions()
 
-    /// Natural package height reported by the active layout.
-    @State private var packageSectionHeight: CGFloat?
-
-    private var minimumContentHeight: CGFloat? {
-        packageSectionHeight.map { $0 + 10 + 80 + 14 }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             PackageSection()
                 .padding(.horizontal, 12)
                 .clipped()
                 .fixedSize(horizontal: false, vertical: true)
-                .onGeometryChange(for: CGFloat.self) { geometry in
-                    geometry.size.height
-                } action: { height in
-                    guard height.isFinite, height > 0 else { return }
-                    packageSectionHeight = height
-                }
+                // Stack spacing, BuildSection minimum, and outer vertical padding.
+                .windowMinimumHeight(additionalContentHeight: 10 + 80 + 14)
 
             BuildSection()
                 .padding(.horizontal, 12)
@@ -38,12 +27,6 @@ struct AppView: View {
         }
         .environment(packageModel)
         .environment(buildOptions)
-        .background {
-            if let minimumContentHeight {
-                WindowMinimumSizeBridge(minimumHeight: minimumContentHeight)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-        }
     }
     
 }

@@ -1,7 +1,53 @@
 import AppKit
 import SwiftUI
 
+/// SwiftUI computes the correct width-dependent height, but it exports one coupled minimum size to the window.
+/// This bridge measures the active SwiftUI height, disables the hosting view's coupled `.minSize` export, and applies
+/// independent AppKit limits after adding the unified toolbar region excluded from `contentLayoutRect`.
+
+extension View {
+
+    /// Sets the window's minimum height to this view's measured height plus `additionalContentHeight`.
+    /// The minimum updates if this view's height changes.
+    func windowMinimumHeight(additionalContentHeight: CGFloat = 0) -> some View {
+        modifier(
+            WindowMinimumHeightModifier(
+                additionalContentHeight: additionalContentHeight
+            )
+        )
+    }
+
+}
+
+/// Window minimum that follows the modified view's height as its width changes.
+private struct WindowMinimumHeightModifier: ViewModifier {
+
+    let additionalContentHeight: CGFloat
+
+    @State private var measuredContentHeight: CGFloat?
+
+    func body(content: Content) -> some View {
+        content
+            .onGeometryChange(for: CGFloat.self) { geometry in
+                geometry.size.height
+            } action: { height in
+                guard height.isFinite, height > 0 else { return }
+                measuredContentHeight = height
+            }
+            .background {
+                if let measuredContentHeight {
+                    WindowMinimumSizeBridge(
+                        minimumHeight: measuredContentHeight + additionalContentHeight
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+    }
+
+}
+
 @MainActor
+/// Mutable access to a hosting view's automatic sizing options.
 private protocol HostingViewSizingOptionsAccess: AnyObject {
 
     var sizingOptions: NSHostingSizingOptions { get set }
@@ -10,8 +56,8 @@ private protocol HostingViewSizingOptionsAccess: AnyObject {
 
 extension NSHostingView: HostingViewSizingOptionsAccess {}
 
-/// Synchronizes a SwiftUI content height requirement with its containing window.
-struct WindowMinimumSizeBridge: NSViewRepresentable {
+/// AppKit adapter that applies a measured content height as the containing window's minimum height.
+private struct WindowMinimumSizeBridge: NSViewRepresentable {
 
     let minimumHeight: CGFloat
 
@@ -25,7 +71,8 @@ struct WindowMinimumSizeBridge: NSViewRepresentable {
 
 }
 
-final class WindowMinimumSizeView: NSView {
+/// AppKit view that separates SwiftUI's coupled minimum size into independent width and height limits.
+private final class WindowMinimumSizeView: NSView {
 
     var minimumHeight = CGFloat.zero {
         didSet {
@@ -70,25 +117,23 @@ final class WindowMinimumSizeView: NSView {
         guard let hostingView = hostingView() else { return }
         guard let contentView = window.contentView else { return }
 
-        // The hosting view extends behind the unified toolbar. Add the obscured region so the
-        // SwiftUI minimum describes the window-sized hosting view rather than only visible content.
+        // add the unified toolbar region so visible content keeps the requested minimum height
         let obscuredContentHeight = max(
             window.frame.height - window.contentLayoutRect.height,
             0
         )
         let requiredWindowHeight = minimumHeight + obscuredContentHeight
 
-        // Keep SwiftUI's ideal-size measurement available while we replace only its coupled minimum.
+        // retain ideal-size measurement after disabling SwiftUI's coupled minimum-size export
         enableHostingIntrinsicSizing(on: hostingView)
 
-        // Preserve SwiftUI's horizontal content minimum before removing the coupled width-and-height option.
+        // capture SwiftUI's initial width minimum before disabling its coupled minimum-size export
         let contentMinimumWidth = didRemoveHostingMinimumSizing ? 0 : window.contentMinSize.width
         let hostingMinimumWidth = max(contentMinimumWidth, minimumWidth(for: hostingView))
         removeHostingViewMinimumSizing(from: hostingView)
         didRemoveHostingMinimumSizing = true
 
-        // Auto Layout ignores contentMinSize, so keep the height floor on the view that hosts
-        // the full SwiftUI hierarchy and the width floor on the visible content region.
+        // enforce independent dimensions because contentMinSize does not affect Auto Layout
         let contentLayoutGuide = window.contentLayoutGuide as? NSLayoutGuide
         installMinimumHeightConstraint(
             on: hostingView,
@@ -116,6 +161,7 @@ final class WindowMinimumSizeView: NSView {
         let obscuredContentWidth = max(contentView.bounds.width - visibleContentWidth, 0)
         let requiredContentWidth = hostingMinimumWidth + obscuredContentWidth
 
+        // prevent user resizing below either independent minimum
         var contentMinimumSize = window.contentMinSize
         contentMinimumSize.width = requiredContentWidth
         contentMinimumSize.height = requiredWindowHeight
@@ -127,6 +173,7 @@ final class WindowMinimumSizeView: NSView {
         guard contentView.bounds.width < requiredContentWidth
                 || contentView.bounds.height < requiredWindowHeight else { return }
 
+        // restore the minimum if a layout transition leaves the window too small
         var contentSize = contentView.bounds.size
         contentSize.width = max(contentSize.width, requiredContentWidth)
         contentSize.height = requiredWindowHeight
@@ -191,7 +238,7 @@ final class WindowMinimumSizeView: NSView {
         }
     }
 
-    /// Returns the widest width reported by the SwiftUI hosting hierarchy.
+    /// Returns the largest positive finite width from the hosting view's fitting and intrinsic sizes.
     private func minimumWidth(for hostingView: NSView) -> CGFloat {
         [hostingView.fittingSize.width, hostingView.intrinsicContentSize.width]
             .filter { $0.isFinite && $0 > 0 }

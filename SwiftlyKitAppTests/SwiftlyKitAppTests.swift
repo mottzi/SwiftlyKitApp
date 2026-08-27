@@ -94,8 +94,9 @@ struct SwiftlyKitAppTests {
     func windowMinimumIncludesContentObscuredByTheUnifiedToolbar() async {
         let minimumContentHeight = CGFloat(281)
         let hostingView = NSHostingView(
-            rootView: WindowMinimumSizeBridge(minimumHeight: minimumContentHeight)
+            rootView: Color.clear
                 .frame(width: 500, height: minimumContentHeight)
+                .windowMinimumHeight()
         )
         let window = NSWindow(
             contentRect: CGRect(x: 0, y: 0, width: 500, height: minimumContentHeight),
@@ -108,7 +109,8 @@ struct SwiftlyKitAppTests {
         window.contentView = hostingView
         window.orderFront(nil)
 
-        // The representable receives its NSWindow on the next main-actor turn.
+        // Geometry measurement and representable installation occur on subsequent main-actor turns.
+        await Task.yield()
         await Task.yield()
         await Task.yield()
         hostingView.layoutSubtreeIfNeeded()
