@@ -8,7 +8,7 @@ extension PackagePicker {
         let isDropTargeted: Bool
 
         var body: some View {
-            VStack(spacing: 16) {
+            HStack(spacing: 16) {
                 icon
                 title
             }

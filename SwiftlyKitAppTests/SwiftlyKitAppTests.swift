@@ -90,6 +90,35 @@ struct SwiftlyKitAppTests {
     }
 
     @MainActor
+    @Test
+    func windowMinimumIncludesContentObscuredByTheUnifiedToolbar() async {
+        let minimumContentHeight = CGFloat(281)
+        let hostingView = NSHostingView(
+            rootView: WindowMinimumSizeBridge(minimumHeight: minimumContentHeight)
+                .frame(width: 500, height: minimumContentHeight)
+        )
+        let window = NSWindow(
+            contentRect: CGRect(x: 0, y: 0, width: 500, height: minimumContentHeight),
+            styleMask: [.titled, .resizable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.toolbar = NSToolbar(identifier: "WindowMinimumSizeBridgeTests")
+        window.toolbarStyle = .unifiedCompact
+        window.contentView = hostingView
+        window.orderFront(nil)
+
+        // The representable receives its NSWindow on the next main-actor turn.
+        await Task.yield()
+        await Task.yield()
+        hostingView.layoutSubtreeIfNeeded()
+
+        let obscuredContentHeight = window.frame.height - window.contentLayoutRect.height
+        #expect(obscuredContentHeight > 0)
+        #expect(window.minSize.height >= minimumContentHeight + obscuredContentHeight)
+    }
+
+    @MainActor
     private func pager(
         spacing: CGFloat,
         outerPadding: CGFloat,
