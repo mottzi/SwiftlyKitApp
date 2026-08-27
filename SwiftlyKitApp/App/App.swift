@@ -6,7 +6,7 @@ import SwiftUI
         WindowGroup {
             AppView()
         }
-        .defaultSize(width: 500, height: 300)
+        .defaultSize(Constants.windowSize)
         .windowToolbarStyle(.unifiedCompact)
         .windowResizability(.contentMinSize)
     }

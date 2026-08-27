@@ -6,7 +6,7 @@ extension PackagePicker {
     struct PickerStyle: ButtonStyle {
 
         /// Keeps the interaction region, fill, and outline on the same rounded geometry.
-        let shape = RoundedRectangle(cornerRadius: 12)
+        let shape = RoundedRectangle(cornerRadius: Constants.pickerRadius)
 
         /// Marks the import affordance as the current destination for a dragged package.
         let isDropTargeted: Bool
@@ -28,7 +28,7 @@ extension PackagePicker {
                 .background { background(isPressed: isPressed) }
                 .overlay { border(isDashed: true, isPressed: isPressed) }
                 .overlay { border(isDashed: false, isPressed: isPressed) }
-                .scaleEffect(isPressed ? 0.98 : 1)
+                .scaleEffect(isPressed ? Constants.pickerPressedScale : 1)
                 .animation(.default, value: isDropTargeted)
                 .animation(.default, value: showsHover)
                 .animation(.default, value: isPressed)
@@ -49,11 +49,11 @@ extension PackagePicker.PickerStyle {
     /// Keeps the empty picker transparent and raises orange fill through hover, press, and drag-over feedback.
     private func fillOpacity(isPressed: Bool) -> Double {
         if isPressed {
-            0.10
+            Constants.pickerPressedFillOpacity
         } else if isDropTargeted {
-            0.12
+            Constants.pickerTargetedFillOpacity
         } else if showsHover {
-            0.04
+            Constants.pickerHoverFillOpacity
         } else {
             0
         }
@@ -85,8 +85,8 @@ extension PackagePicker.PickerStyle {
     /// Makes the drag-over outline visually distinct from the idle dashed invitation.
     private var dashPattern: [CGFloat] {
         isDropTargeted
-            ? [10, 6]
-            : [8, 6]
+            ? Constants.pickerTargetedDashPattern
+            : Constants.pickerIdleDashPattern
     }
 
     /// Hides the outline after selection and thickens it to reinforce an active drop target.
@@ -94,18 +94,20 @@ extension PackagePicker.PickerStyle {
         if !canSelect {
             0
         } else if isDropTargeted {
-            3
+            Constants.pickerTargetedLineWidth
         } else {
-            2
+            Constants.pickerIdleLineWidth
         }
     }
 
     /// Shifts the dashes as the outline animates into hover, press, or drag-over feedback.
     private func dashPhase(isPressed: Bool) -> CGFloat {
         if isDropTargeted {
-            -12
+            Constants.pickerActiveDashPhase
         } else if showsHover {
-            isPressed ? -12 : -6
+            isPressed
+                ? Constants.pickerActiveDashPhase
+                : Constants.pickerHoverDashPhase
         } else {
             0
         }

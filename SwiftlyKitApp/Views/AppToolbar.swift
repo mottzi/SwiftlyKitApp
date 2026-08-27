@@ -5,14 +5,16 @@ struct AppToolbar: ToolbarContent {
     @Environment(PackageModel.self) private var packageModel
 
     var body: some ToolbarContent {
-        ToolbarItem(placement: .primaryAction) {
-            HStack(spacing: 8) {
-                if packageModel.isPackageSelected {
-                    ClearPackageButton()
-                }
-                RunButton()
+        if packageModel.isPackageSelected {
+            ToolbarItem(placement: .primaryAction) {
+                ClearPackageButton()
+                    .labelStyle(.iconOnly)
             }
-            .labelStyle(.iconOnly)
+        }
+
+        ToolbarItem(placement: .primaryAction) {
+            RunButton()
+                .labelStyle(.iconOnly)
         }
     }
     
@@ -40,7 +42,7 @@ struct RunButton: View {
     @Environment(BuildOptions.self) private var buildOptions
 
     private var canRun: Bool {
-        packageModel.isPackageSelected && buildOptions.selectedProduct != nil
+        packageModel.isPackageSelected && buildOptions.hasValidSelections
     }
 
     var body: some View {

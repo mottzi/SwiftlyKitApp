@@ -6,21 +6,23 @@ struct AppView: View {
     @State private var buildOptions = BuildOptions()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: Constants.appSpacing) {
             PackageSection()
-                .padding(.horizontal, 12)
+                .padding(.horizontal, Constants.appHorizontalPadding)
                 .clipped()
                 .fixedSize(horizontal: false, vertical: true)
-                // Stack spacing, BuildSection minimum, and outer vertical padding.
-                .windowMinimumHeight(additionalContentHeight: 10 + 80 + 14)
+                .windowMinimumHeight(
+                    additionalContentHeight: Constants.windowHeightAllowance
+                )
 
             BuildSection()
-                .padding(.horizontal, 12)
+                .padding(.horizontal, Constants.appHorizontalPadding)
         }
-        .frame(minWidth: 300)
-        .padding(.bottom, 12)
-        .padding(.top, 2)
+        .frame(minWidth: Constants.minWindowWidth)
+        .padding(.bottom, Constants.appBottomPadding)
+        .padding(.top, Constants.appTopPadding)
         .toolbar { AppToolbar() }
+        .animation(.default, value: packageModel.isPackageSelected)
         .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
         .onChange(of: packageModel.packageURL) {
             buildOptions.selectedProduct = nil
@@ -33,5 +35,8 @@ struct AppView: View {
 
 #Preview {
     AppView()
-        .frame(width: 500, height: 300)
+        .frame(
+            width: Constants.windowSize.width,
+            height: Constants.windowSize.height
+        )
 }

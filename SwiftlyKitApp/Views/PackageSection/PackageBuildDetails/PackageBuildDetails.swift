@@ -3,20 +3,23 @@ import SwiftUI
 struct PackageBuildDetails: View {
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: Constants.detailsSpacing) {
             Header()
             Divider()
-                .padding(.horizontal, -16)
-                .opacity(0.55)
+                .padding(.horizontal, -Constants.detailsHorizontalPadding)
+                .opacity(Constants.detailsDividerOpacity)
             ConfigurationSection()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, Constants.detailsHorizontalPadding)
+        .padding(.vertical, Constants.detailsVerticalPadding)
         .frame(maxHeight: .infinity, alignment: .top)
         .background {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.quaternary.opacity(0.38))
-                .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Constants.sectionRadius)
+                .fill(.quaternary.opacity(Constants.sectionFillOpacity))
+                .strokeBorder(
+                    Color.primary.opacity(Constants.sectionBorderOpacity),
+                    lineWidth: Constants.sectionBorderWidth
+                )
         }
     }
 
@@ -26,5 +29,8 @@ struct PackageBuildDetails: View {
     PackageBuildDetails()
         .environment(PackageModel())
         .environment(BuildOptions())
-        .frame(width: 500, height: 300)
+        .frame(
+            width: Constants.windowSize.width,
+            height: Constants.windowSize.height
+        )
 }

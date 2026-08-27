@@ -19,6 +19,11 @@ import SwiftlyKit
     /// Whether the strip-binary toggle is enabled.
     var stripBinary = false
 
+    /// Whether every required build choice has a valid selection.
+    var hasValidSelections: Bool {
+        selectedProduct != nil
+    }
+
 }
 
 extension BuildTarget {

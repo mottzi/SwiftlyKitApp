@@ -33,7 +33,10 @@ extension PackageBuildDetails.Header {
                 Image(systemName: "ellipsis.circle")
                     .font(.body.weight(.semibold))
                     .foregroundStyle(.secondary)
-                    .frame(width: 28, height: 28)
+                    .frame(
+                        width: Constants.menuButtonLength,
+                        height: Constants.menuButtonLength
+                    )
                     .contentShape(.rect)
             }
             .menuStyle(.borderlessButton)

@@ -14,9 +14,9 @@ struct LabelControlGrid: Layout {
     let rowSpacing: CGFloat
 
     init(
-        labelSpacing: CGFloat = 12,
-        columnSpacing: CGFloat = 24,
-        rowSpacing: CGFloat = 12
+        labelSpacing: CGFloat = Constants.configLabelSpacing,
+        columnSpacing: CGFloat = Constants.configColumnSpacing,
+        rowSpacing: CGFloat = Constants.configRowSpacing
     ) {
         self.labelSpacing = labelSpacing
         self.columnSpacing = columnSpacing

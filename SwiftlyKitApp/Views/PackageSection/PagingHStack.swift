@@ -13,13 +13,21 @@ struct PagingHStack {
     /// Page index. 0 is the first page. A fraction is a position between pages.
     var progress: CGFloat
     
-    init(spacing: CGFloat = 12, pageTrailingInset: CGFloat = 0, selection: Int) {
+    init(
+        spacing: CGFloat,
+        pageTrailingInset: CGFloat = 0,
+        selection: Int
+    ) {
         self.spacing = spacing
         self.pageTrailingInset = pageTrailingInset
         self.progress = CGFloat(selection)
     }
 
-    init(spacing: CGFloat = 12, pageTrailingInset: CGFloat = 0, selection: some RawRepresentable<Int>) {
+    init(
+        spacing: CGFloat,
+        pageTrailingInset: CGFloat = 0,
+        selection: some RawRepresentable<Int>
+    ) {
         self.init(
             spacing: spacing,
             pageTrailingInset: pageTrailingInset,

@@ -5,7 +5,11 @@ struct PackageSection: View {
     @Environment(PackageModel.self) private var packageModel
 
     var body: some View {
-        PagingHStack(spacing: 10, pageTrailingInset: 38, selection: packageModel.packagePage) {
+        PagingHStack(
+            spacing: Constants.pageSpacing,
+            pageTrailingInset: Constants.pageTrailingInset,
+            selection: packageModel.packagePage
+        ) {
             PackagePicker()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .geometryGroup()
@@ -27,31 +31,31 @@ extension PackageSection {
     private var detailsSaturation: Double {
         packageModel.isPackageSelected
             ? 1
-            : 0
+            : Constants.inactiveSaturation
     }
 
     private var detailsOpacity: Double {
         packageModel.isPackageSelected
             ? 1
-            : 0.65
+            : Constants.inactiveOpacity
     }
 
     private var detailsScale: CGFloat {
         packageModel.isPackageSelected
             ? 1
-            : 0.9
+            : Constants.inactiveDetailsScale
     }
 
     private var detailsRotation: Angle {
         packageModel.isPackageSelected
             ? .zero
-            : .degrees(0.8)
+            : Constants.inactiveDetailsRotation
     }
 
     private var detailsOffset: CGSize {
         packageModel.isPackageSelected
             ? .zero
-            : CGSize(width: 2, height: -2)
+            : Constants.inactiveDetailsOffset
     }
 
 }

@@ -45,13 +45,9 @@ struct PackagePicker: View {
             isPresented: $isFileImporterPresented,
             allowedContentTypes: [.folder]
         ) { result in
-            if case .success(let url) = result {
-                Task {
-                    await Task.yield()
-                    withAnimation {
-                        packageModel.selectPackage(at: url)
-                    }
-                }
+            guard case .success(let url) = result else { return }
+            withAnimation {
+                packageModel.selectPackage(at: url)
             }
         }
         .dropDestination(for: URL.self, isEnabled: canSelect) { items, _ in

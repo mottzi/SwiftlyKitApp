@@ -8,7 +8,7 @@ extension PackagePicker {
         let isDropTargeted: Bool
 
         var body: some View {
-            HStack(spacing: 16) {
+            HStack(spacing: Constants.pickerLabelSpacing) {
                 icon
                 title
             }
@@ -26,15 +26,18 @@ extension PackagePicker.PickerLabel {
         Image(systemName: "swift")
             .resizable()
             .scaledToFit()
-            .frame(width: 80, height: 80)
-            .rotationEffect(showsHover && !isDropTargeted ? .degrees(4) : .zero)
-            .scaleEffect(isDropTargeted ? 1.10 : 1)
+            .frame(
+                width: Constants.pickerIconLength,
+                height: Constants.pickerIconLength
+            )
+            .rotationEffect(showsHover && !isDropTargeted ? Constants.pickerHoverRotation : .zero)
+            .scaleEffect(isDropTargeted ? Constants.pickerTargetedScale : 1)
             .foregroundStyle(isDropTargeted || showsHover ? .orange : .secondary)
     }
 
     private var title: some View {
         Text("Select Package")
-            .lineLimit(1)
+            .lineLimit(Constants.pickerTitleLineLimit)
             .truncationMode(.middle)
             .font(.title)
             // Keep the label's measured width stable while the drop target state changes.

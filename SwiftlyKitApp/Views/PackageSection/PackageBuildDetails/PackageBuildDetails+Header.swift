@@ -7,25 +7,28 @@ extension PackageBuildDetails {
         @Environment(PackageModel.self) private var packageModel
 
         var body: some View {
-            HStack(alignment: .center, spacing: 12) {
+            HStack(alignment: .center, spacing: Constants.headerSpacing) {
                 Image(systemName: "swift")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 26, height: 26)
+                    .frame(
+                        width: Constants.headerIconLength,
+                        height: Constants.headerIconLength
+                    )
                     .foregroundStyle(.orange)
                     .symbolRenderingMode(.monochrome)
                     .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Constants.headerTextSpacing) {
                     Text(packageModel.packageName)
                         .font(.headline)
                         .foregroundStyle(Color.primary)
-                        .lineLimit(1)
+                        .lineLimit(Constants.headerLineLimit)
 
                     Text(packageModel.displayPath)
-                        .font(.system(size: 11))
+                        .font(.system(size: Constants.pathFontSize))
                         .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                        .lineLimit(Constants.headerLineLimit)
                         .truncationMode(.middle)
                         .help(packageModel.displayPath)
                 }
@@ -35,7 +38,7 @@ extension PackageBuildDetails {
                     maxWidth: .infinity,
                     alignment: .leading
                 )
-                .layoutPriority(-1)
+                .layoutPriority(Constants.headerTextPriority)
 
                 Spacer(minLength: 0)
 
