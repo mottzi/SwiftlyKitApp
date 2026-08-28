@@ -4,7 +4,7 @@
 
 SwiftUI has no public API that explicitly requests a morph or materialize transition for a native toolbar item. The native toolbar decides the effect. Apple documents morphing for navigation transitions and presentations, but does not promise the same effect for every state-driven insertion or removal.
 
-For this macOS toolbar, the working native implementation is a conditional `ToolbarItem` for Clear followed by a persistent `ToolbarItem` for Run. AppKit automatically puts adjacent actions in shared Liquid Glass. Apply `.animation(_:value:)` to the view that owns `.toolbar`, after the toolbar modifier.
+For this macOS toolbar, the working native implementation is a conditional `ToolbarItem` for Clear followed by a persistent `ToolbarItem` for Build. AppKit automatically puts adjacent actions in shared Liquid Glass. Apply `.animation(_:value:)` to the view that owns `.toolbar`, after the toolbar modifier.
 
 ```swift
 struct AppToolbar: ToolbarContent {
@@ -19,7 +19,7 @@ struct AppToolbar: ToolbarContent {
         }
 
         ToolbarItem(placement: .primaryAction) {
-            RunButton()
+            BuildButton()
                 .labelStyle(.iconOnly)
         }
     }
@@ -31,7 +31,7 @@ content
     .animation(.default, value: packageModel.isPackageSelected)
 ```
 
-This keeps the Run item's identity stable while inserting or removing only the Clear item. The native toolbar can then animate its shared background from a single-item capsule to a two-item capsule and back. Replacing a complete `ToolbarItemGroup` makes macOS replace the logical group, which snapped in the verified reproduction instead of morphing.
+This keeps the Build item's identity stable while inserting or removing only the Clear item. The native toolbar can then animate its shared background from a single-item capsule to a two-item capsule and back. Replacing a complete `ToolbarItemGroup` makes macOS replace the logical group, which snapped in the verified reproduction instead of morphing.
 
 ## What Apple actually documents
 
@@ -49,11 +49,11 @@ The system sees one toolbar item. It cannot detach one button from the shared na
 
 ### A `ToolbarItemGroup`, whether persistent or conditionally replaced
 
-Both forms are valid SwiftUI. The linked iOS workaround reports better results when the conditional surrounds two complete `ToolbarItemGroup` values. Testing that exact arrangement on macOS 26.5.2 still produced a one-frame replacement. A group is a logical toolbar configuration; swapping it does not preserve the identity of the persistent Run item in the way required for this macOS resize animation. See [Liquid Glass Animation for resizing a collection of controls](https://stackoverflow.com/questions/79683015/liquid-glass-animation-for-resizing-a-collection-of-controls) and the [idle-time/rapid-switch report](https://stackoverflow.com/questions/79876073/liquid-glass-toolbar-animation-only-plays-when-switching-state-rapidly).
+Both forms are valid SwiftUI. The linked iOS workaround reports better results when the conditional surrounds two complete `ToolbarItemGroup` values. Testing that exact arrangement on macOS 26.5.2 still produced a one-frame replacement. A group is a logical toolbar configuration; swapping it does not preserve the identity of the persistent Build item in the way required for this macOS resize animation. See [Liquid Glass Animation for resizing a collection of controls](https://stackoverflow.com/questions/79683015/liquid-glass-animation-for-resizing-a-collection-of-controls) and the [idle-time/rapid-switch report](https://stackoverflow.com/questions/79876073/liquid-glass-toolbar-animation-only-plays-when-switching-state-rapidly).
 
 ### Independent `ToolbarItem` values
 
-This is the working macOS structure. Clear is conditionally inserted and Run remains present as a stable sibling. Because both use `.primaryAction` with no separating `ToolbarSpacer`, the system groups them on one glass surface. Insertion and removal animate the shared capsule while the Run button stays anchored.
+This is the working macOS structure. Clear is conditionally inserted and Build remains present as a stable sibling. Because both use `.primaryAction` with no separating `ToolbarSpacer`, the system groups them on one glass surface. Insertion and removal animate the shared capsule while the Build button stays anchored.
 
 ### `ToolbarContent.hidden(_:)`
 
@@ -80,7 +80,7 @@ The variants were built and screen-recorded on macOS 26.5.2 with Xcode 26.6. Eac
 - One toolbar item containing an `HStack`: snaps.
 - One `ToolbarItemGroup` with conditional children: snaps.
 - Two alternate complete `ToolbarItemGroup` branches: snaps.
-- A conditional Clear `ToolbarItem` plus a persistent Run `ToolbarItem`: animates in both directions. Ten-frame-per-second inspection shows the shared capsule expanding and contracting across several frames, with the Run item remaining anchored.
+- A conditional Clear `ToolbarItem` plus a persistent Build `ToolbarItem`: animates in both directions. Ten-frame-per-second inspection shows the shared capsule expanding and contracting across several frames, with the Build item remaining anchored.
 
 ## macOS limits and checks
 
