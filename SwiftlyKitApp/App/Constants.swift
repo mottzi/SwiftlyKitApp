@@ -50,6 +50,13 @@ enum Constants {
     nonisolated static let configColumnSpacing: CGFloat = 24
     nonisolated static let configRowSpacing: CGFloat = 12
 
+    // Configuration accessories
+    static let configurationAccessoryLength: CGFloat = 20
+    static let configurationAccessorySpacing: CGFloat = 6
+    static let configurationAccessoryTrailingPadding: CGFloat = configurationAccessorySpacing
+    static let configurationInfoPopoverWidth: CGFloat = 280
+    static let productDiscoveryPopoverWidth: CGFloat = 320
+
     // Package picker
     static let pickerRadius: CGFloat = 12
     static let pickerLabelSpacing: CGFloat = 16

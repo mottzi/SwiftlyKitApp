@@ -5,12 +5,13 @@ struct PackageBuildDetails: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.detailsSpacing) {
             Header()
+                .padding(.horizontal, Constants.detailsHorizontalPadding)
             Divider()
-                .padding(.horizontal, -Constants.detailsHorizontalPadding)
                 .opacity(Constants.detailsDividerOpacity)
             ConfigurationSection()
+                .padding(.leading, Constants.detailsHorizontalPadding)
+                .padding(.trailing, Constants.configurationAccessoryTrailingPadding)
         }
-        .padding(.horizontal, Constants.detailsHorizontalPadding)
         .padding(.vertical, Constants.detailsVerticalPadding)
         .frame(maxHeight: .infinity, alignment: .top)
         .background {

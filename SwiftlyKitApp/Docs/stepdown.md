@@ -6,7 +6,7 @@ A reader should understand the main behavior before reaching mechanics or consta
 
 ## Preferred order
 
-1. Stored instance properties with `@State`, `@Binding`, `@Environment`, or `@Bindable`.
+1. Stored instance properties with `@Environment`, `@State`, `@Binding`, or `@Bindable`.
 2. Other stored instance properties, ordered from externally visible to private state.
 3. Initializers.
 4. The principal entry point or main algorithm.
@@ -37,8 +37,9 @@ A reader should understand the main behavior before reaching mechanics or consta
 - Keep implementation helpers private unless a production caller needs them or they form an intentional internal seam.
 - Do not widen a helper's visibility solely so `@testable` tests can call it directly. Prefer testing through the module interface. If the helper deserves direct callers and tests, extract a coherent helper module with an interface worth learning.
 - Keep live adapters used only to provide default dependency behavior private unless they have independent production callers.
-- Declare properties with `@State`, `@Binding`, `@Environment`, or `@Bindable`
+- Declare properties with `@Environment`, `@State`, `@Binding`, or `@Bindable`
   before other stored instance properties.
+- Separate consecutive stored properties with different property-wrapper kinds with one blank line.
 - Declare every stored instance property at the top of the primary type declaration.
 - If a type has no clear principal operation, do not invent or arbitrarily designate one merely to satisfy this ordering.
 - Put callers before the functions they call, unless a larger behavioral layer deserves priority.

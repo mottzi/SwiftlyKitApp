@@ -6,10 +6,12 @@ struct AppView: View {
     @State private var packageModel = PackageModel()
     @State private var buildOptions = BuildOptions()
 
+    /// Identifies one package, environment, or explicit retry request.
     private struct ProductDiscoveryKey: Hashable, Sendable {
         let packageRoot: URL
         let target: BuildTarget
         let toolchain: ToolchainSelection
+        let retryRevision: Int
     }
 
     private var productDiscoveryKey: ProductDiscoveryKey? {
@@ -18,7 +20,8 @@ struct AppView: View {
         return ProductDiscoveryKey(
             packageRoot: packageRoot,
             target: buildOptions.target,
-            toolchain: buildOptions.toolchain
+            toolchain: buildOptions.toolchain,
+            retryRevision: buildOptions.productDiscoveryRetryRevision
         )
     }
 

@@ -28,6 +28,9 @@ enum ProductDiscoveryState: Equatable {
     /// Current executable-product discovery state.
     private(set) var productDiscoveryState: ProductDiscoveryState = .idle
 
+    /// Revision that requests another app-level product discovery task.
+    private(set) var productDiscoveryRetryRevision = 0
+
     /// Executable products available for selection.
     var availableProducts: [ExecutableProduct] {
         guard case .ready(let products) = productDiscoveryState else { return [] }
@@ -96,6 +99,11 @@ enum ProductDiscoveryState: Equatable {
                 .packageInspectionFailed("An unexpected product discovery error occurred.")
             )
         }
+    }
+
+    /// Requests another product discovery through the existing app-level task.
+    func requestProductDiscoveryRetry() {
+        productDiscoveryRetryRevision += 1
     }
 
     /// Clears products that belong to a package or environment that is no longer selected.
