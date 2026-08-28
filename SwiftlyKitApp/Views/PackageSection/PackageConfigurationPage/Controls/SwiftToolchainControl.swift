@@ -8,7 +8,7 @@ struct SwiftToolchainControl: View {
     @Binding var infoPopoverPresented: Bool
 
     var body: some View {
-        HStack(spacing: Constants.configurationAccessorySpacing) {
+        HStack(spacing: ConfigurationAccessoryMetrics.spacing) {
             Picker("Swift", selection: $toolchain) {
                 Text(ToolchainSelection.automatic.displayName)
                     .tag(ToolchainSelection.automatic)
@@ -16,7 +16,7 @@ struct SwiftToolchainControl: View {
             .labelsHidden()
             .pickerStyle(.menu)
 
-            ConfigurationInfoButton(
+            BuildOptionInfoButton(
                 isPresented: $infoPopoverPresented,
                 option: .swift
             )

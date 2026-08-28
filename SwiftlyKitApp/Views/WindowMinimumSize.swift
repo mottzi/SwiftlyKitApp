@@ -1,17 +1,17 @@
 import AppKit
 import SwiftUI
 
-/// SwiftUI derives a minimum height that changes with width, but the window receives only one minimum `CGSize`.
-/// This bridge measures the modified view, disables the hosting view's `.minSize` export, and applies separate AppKit
-/// width and height limits that include the unified toolbar area outside `contentLayoutRect`.
+/// SwiftUI derives a minimum size whose height changes with width, but the window receives only one minimum `CGSize`.
+/// This bridge measures the modified view, disables the hosting view's `.minSize` export, and applies independent
+/// AppKit width and height limits that include the unified toolbar area outside `contentLayoutRect`.
 
 extension View {
 
-    /// Sets a window minimum height that follows this view's measured height.
-    /// The supplied value reserves height for required content outside this view.
-    func windowMinimumHeight(adding extraHeight: CGFloat = 0) -> some View {
+    /// Sets an independent window minimum size while allowing height to follow this view's measured height.
+    /// The supplied height reserves space for required content outside this view.
+    func windowMinimumSize(addingHeight extraHeight: CGFloat = 0) -> some View {
         modifier(
-            WindowMinimumHeightModifier(
+            WindowMinimumSizeModifier(
                 extraHeight: extraHeight
             )
         )
@@ -19,8 +19,8 @@ extension View {
 
 }
 
-/// View modifier that derives the window minimum height from measured content and a fixed height allowance.
-private struct WindowMinimumHeightModifier: ViewModifier {
+/// View modifier that derives independent window minimum dimensions from the measured content.
+private struct WindowMinimumSizeModifier: ViewModifier {
 
     /// Latest positive finite height measured for the modified view.
     @State private var viewHeight: CGFloat?
@@ -77,7 +77,7 @@ private struct WindowMinimumSizeBridge: NSViewRepresentable {
 }
 
 /// AppKit view that separates SwiftUI's coupled minimum size into independent window limits.
-private final class WindowMinimumSizeView: NSView {
+final class WindowMinimumSizeView: NSView {
 
     /// Minimum height for visible SwiftUI content, excluding window chrome.
     var visibleMinHeight = CGFloat.zero {
@@ -101,6 +101,9 @@ private final class WindowMinimumSizeView: NSView {
     /// Whether the hosting view's `.minSize` sizing option was removed.
     private var didDisableHostMinSize = false
 
+    /// Coalesces window updates until the active AppKit layout pass has returned.
+    private var minimumUpdateTask: Task<Void, Never>?
+
     /// Schedules a minimum-size update after the window association changes.
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
@@ -123,15 +126,28 @@ private final class WindowMinimumSizeView: NSView {
         super.viewWillMove(toWindow: newWindow)
     }
 
-    /// Updates the window limits after AppKit resolves the current layout.
+    /// Schedules the window limits to update after AppKit resolves the current layout.
     override func layout() {
         super.layout()
-        updateMinimum()
+        scheduleMinimumUpdate()
     }
 
 }
 
 extension WindowMinimumSizeView {
+
+    /// Defers window mutations because resizing a window from `layout()` re-enters AppKit layout.
+    private func scheduleMinimumUpdate() {
+        guard minimumUpdateTask == nil else { return }
+
+        minimumUpdateTask = Task { @MainActor [weak self] in
+            await Task.yield()
+            guard let self else { return }
+
+            updateMinimum()
+            minimumUpdateTask = nil
+        }
+    }
 
     /// Applies independent width and height minimums to the containing window.
     private func updateMinimum() {

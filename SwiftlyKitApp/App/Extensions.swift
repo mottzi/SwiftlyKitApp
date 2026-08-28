@@ -10,10 +10,9 @@ extension View {
 
 extension NSPasteboard {
     
-    func setURL(_ url: URL) {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(url.path(percentEncoded: false), forType: .string)
+    static func copyPath(_ url: URL) {
+        general.clearContents()
+        general.setString(url.path(percentEncoded: false), forType: .string)
     }
     
 }

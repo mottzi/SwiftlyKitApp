@@ -14,14 +14,22 @@ struct LabelControlGrid: Layout {
     let rowSpacing: CGFloat
 
     init(
-        labelSpacing: CGFloat = Constants.configLabelSpacing,
-        columnSpacing: CGFloat = Constants.configColumnSpacing,
-        rowSpacing: CGFloat = Constants.configRowSpacing
+        labelSpacing: CGFloat = Self.defaultLabelSpacing,
+        columnSpacing: CGFloat = Self.defaultColumnSpacing,
+        rowSpacing: CGFloat = Self.defaultRowSpacing
     ) {
         self.labelSpacing = labelSpacing
         self.columnSpacing = columnSpacing
         self.rowSpacing = rowSpacing
     }
+
+}
+
+private extension LabelControlGrid {
+
+    nonisolated static let defaultLabelSpacing: CGFloat = 12
+    nonisolated static let defaultColumnSpacing: CGFloat = 24
+    nonisolated static let defaultRowSpacing: CGFloat = 12
 
 }
 

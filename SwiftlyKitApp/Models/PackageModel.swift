@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// Package selection state shared by the picker, details page, and toolbar.
+/// Package selection state shared by the picker, configuration page, and toolbar.
 @Observable final class PackageModel {
 
     /// Root URL of the selected Swift package.
@@ -14,7 +14,7 @@ import Observation
 
     /// Page shown for the current package selection.
     var packagePage: PackagePage {
-        isPackageSelected ? .details : .picker
+        isPackageSelected ? .configuration : .picker
     }
 
     /// Name shown for the selected package, or `Package` before selection.
@@ -87,7 +87,7 @@ enum PackagePage: Int {
     /// Package selection page.
     case picker
 
-    /// Selected package details page.
-    case details
+    /// Selected package configuration page.
+    case configuration
 
 }

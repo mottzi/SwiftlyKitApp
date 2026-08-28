@@ -8,7 +8,7 @@ struct BuildConfigurationControl: View {
     @Binding var infoPopoverPresented: Bool
 
     var body: some View {
-        HStack(spacing: Constants.configurationAccessorySpacing) {
+        HStack(spacing: ConfigurationAccessoryMetrics.spacing) {
             Picker("Configuration", selection: $configuration) {
                 ForEach(BuildConfiguration.allCases, id: \.self) { configuration in
                     Text(configuration.displayName).tag(configuration)
@@ -17,7 +17,7 @@ struct BuildConfigurationControl: View {
             .labelsHidden()
             .pickerStyle(.menu)
 
-            ConfigurationInfoButton(
+            BuildOptionInfoButton(
                 isPresented: $infoPopoverPresented,
                 option: .configuration
             )

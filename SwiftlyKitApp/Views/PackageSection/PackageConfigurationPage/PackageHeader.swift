@@ -1,0 +1,66 @@
+import SwiftUI
+
+struct PackageHeader: View {
+
+    @Environment(PackageModel.self) private var packageModel
+
+    var body: some View {
+        HStack(alignment: .center, spacing: Self.spacing) {
+            Image(systemName: "swift")
+                .resizable()
+                .scaledToFit()
+                .frame(
+                    width: Self.iconLength,
+                    height: Self.iconLength
+                )
+                .foregroundStyle(.orange)
+                .symbolRenderingMode(.monochrome)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: Self.textSpacing) {
+                HStack(alignment: .firstTextBaseline, spacing: Self.titleSpacing) {
+                    Text(packageModel.packageName)
+                        .font(.headline)
+                        .foregroundStyle(Color.primary)
+                        .lineLimit(Self.lineLimit)
+
+                    PackageActionsMenu()
+                }
+
+                Text(packageModel.displayPath)
+                    .font(.system(size: Self.pathFontSize))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(Self.lineLimit)
+                    .truncationMode(.middle)
+                    .help(packageModel.displayPath)
+            }
+            .frame(
+                minWidth: 0,
+                idealWidth: 0,
+                maxWidth: .infinity,
+                alignment: .leading
+            )
+            .layoutPriority(Self.textPriority)
+
+            Spacer(minLength: 0)
+
+            BuildButton()
+                .labelStyle(.iconOnly)
+//                .padding(.trailing, -6)
+                .offset(x: 8, y: -2)
+        }
+    }
+
+}
+
+private extension PackageHeader {
+
+    static let spacing: CGFloat = 12
+    static let iconLength: CGFloat = 26
+    static let textSpacing: CGFloat = 2
+    static let titleSpacing: CGFloat = 4
+    static let pathFontSize: CGFloat = 11
+    static let lineLimit = 1
+    static let textPriority = -1.0
+
+}

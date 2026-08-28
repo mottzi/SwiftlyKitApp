@@ -26,20 +26,19 @@ struct AppView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Constants.appSpacing) {
+        VStack(alignment: .leading, spacing: Self.spacing) {
             PackageSection()
-                .padding(.horizontal, Constants.appHorizontalPadding)
+                .padding(.horizontal, Self.horizontalPadding)
                 .clipped()
                 .fixedSize(horizontal: false, vertical: true)
-                .windowMinimumHeight(adding: Constants.windowHeightAllowance)
+                .windowMinimumSize(addingHeight: Self.windowHeightAllowance)
 
             BuildSection()
-                .padding(.horizontal, Constants.appHorizontalPadding)
+                .padding(.horizontal, Self.horizontalPadding)
         }
-        .frame(minWidth: Constants.minWindowWidth)
-        .padding(.bottom, Constants.appBottomPadding)
-        .padding(.top, Constants.appTopPadding)
-        .toolbar { AppToolbar() }
+        .frame(minWidth: Self.minWindowWidth)
+        .padding(.bottom, Self.bottomPadding)
+        .padding(.top, Self.topPadding)
         .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
         .task(id: productDiscoveryKey) {
             guard let productDiscoveryKey else {
@@ -62,7 +61,21 @@ struct AppView: View {
 #Preview {
     AppView()
         .frame(
-            width: Constants.windowSize.width,
-            height: Constants.windowSize.height
+            width: SwiftlyKitApp.defaultWindowSize.width,
+            height: SwiftlyKitApp.defaultWindowSize.height
         )
+}
+
+private extension AppView {
+
+    static let spacing: CGFloat = 10
+    static let horizontalPadding: CGFloat = 12
+    static let topPadding: CGFloat = 2
+    static let bottomPadding: CGFloat = 12
+    static let minWindowWidth: CGFloat = 300
+    static let windowHeightAllowance = spacing
+        + BuildSectionMetrics.minimumHeight
+        + topPadding
+        + bottomPadding
+
 }

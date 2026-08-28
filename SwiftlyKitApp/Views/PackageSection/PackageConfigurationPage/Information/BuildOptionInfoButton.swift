@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// One configuration choice with its contextual information popover.
-struct ConfigurationInfoButton: View {
+struct BuildOptionInfoButton: View {
 
     @Binding var isPresented: Bool
-    let option: ConfigurationOption
+    let option: BuildOptionInfo
 
     var body: some View {
         Button {
@@ -15,14 +15,14 @@ struct ConfigurationInfoButton: View {
         .buttonStyle(.borderless)
         .controlSize(.small)
         .frame(
-            width: Constants.configurationAccessoryLength,
-            height: Constants.configurationAccessoryLength
+            width: ConfigurationAccessoryMetrics.length,
+            height: ConfigurationAccessoryMetrics.length
         )
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Color.secondary.opacity(ConfigurationAccessoryMetrics.opacity))
         .help(option.accessibilityLabel)
         .accessibilityLabel(option.accessibilityLabel)
         .popover(isPresented: $isPresented, arrowEdge: .trailing) {
-            ConfigurationInfoPopover(option: option)
+            BuildOptionInfoPopover(option: option)
         }
     }
 

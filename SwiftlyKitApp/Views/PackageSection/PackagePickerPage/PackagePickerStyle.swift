@@ -1,44 +1,40 @@
 import SwiftUI
 
-extension PackagePicker {
+/// Visual treatment for the package import affordance.
+struct PackagePickerStyle: ButtonStyle {
 
-    /// Visual treatment for the package import affordance.
-    struct PickerStyle: ButtonStyle {
+    /// Keeps the interaction region, fill, and outline on the same rounded geometry.
+    let shape = RoundedRectangle(cornerRadius: PackagePickerStyle.cornerRadius)
 
-        /// Keeps the interaction region, fill, and outline on the same rounded geometry.
-        let shape = RoundedRectangle(cornerRadius: Constants.pickerRadius)
+    /// Marks the import affordance as the current destination for a dragged package.
+    let isDropTargeted: Bool
 
-        /// Marks the import affordance as the current destination for a dragged package.
-        let isDropTargeted: Bool
+    /// Replaces the idle outline with active hover feedback while the picker can accept a package.
+    let showsHover: Bool
 
-        /// Replaces the idle outline with active hover feedback while the picker can accept a package.
-        let showsHover: Bool
+    /// Keeps pressed and border feedback off after a package is selected.
+    let canSelect: Bool
 
-        /// Keeps pressed and border feedback off after a package is selected.
-        let canSelect: Bool
+    /// Presents a dashed idle outline, active hover and press feedback, and a stronger drag-over state.
+    func makeBody(configuration: Configuration) -> some View {
 
-        /// Presents a dashed idle outline, active hover and press feedback, and a stronger drag-over state.
-        func makeBody(configuration: Configuration) -> some View {
+        let isPressed = canSelect && configuration.isPressed
 
-            let isPressed = canSelect && configuration.isPressed
-
-            configuration.label
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(.interaction, shape)
-                .background { background(isPressed: isPressed) }
-                .overlay { border(isDashed: true, isPressed: isPressed) }
-                .overlay { border(isDashed: false, isPressed: isPressed) }
-                .scaleEffect(isPressed ? Constants.pickerPressedScale : 1)
-                .animation(.default, value: isDropTargeted)
-                .animation(.default, value: showsHover)
-                .animation(.default, value: isPressed)
-        }
-        
+        configuration.label
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(.interaction, shape)
+            .background { background(isPressed: isPressed) }
+            .overlay { border(isDashed: true, isPressed: isPressed) }
+            .overlay { border(isDashed: false, isPressed: isPressed) }
+            .scaleEffect(isPressed ? Self.pressedScale : 1)
+            .animation(.default, value: isDropTargeted)
+            .animation(.default, value: showsHover)
+            .animation(.default, value: isPressed)
     }
-    
+
 }
 
-extension PackagePicker.PickerStyle {
+extension PackagePickerStyle {
 
     /// Draws the orange feedback layer for hover, press, and drag-over states.
     private func background(isPressed: Bool) -> some View {
@@ -49,11 +45,11 @@ extension PackagePicker.PickerStyle {
     /// Keeps the empty picker transparent and raises orange fill through hover, press, and drag-over feedback.
     private func fillOpacity(isPressed: Bool) -> Double {
         if isPressed {
-            Constants.pickerPressedFillOpacity
+            Self.pressedFillOpacity
         } else if isDropTargeted {
-            Constants.pickerTargetedFillOpacity
+            Self.targetedFillOpacity
         } else if showsHover {
-            Constants.pickerHoverFillOpacity
+            Self.hoverFillOpacity
         } else {
             0
         }
@@ -61,7 +57,7 @@ extension PackagePicker.PickerStyle {
 
 }
 
-extension PackagePicker.PickerStyle {
+extension PackagePickerStyle {
 
     /// Draws the outline that represents the current phase of package selection.
     private func border(isDashed: Bool, isPressed: Bool) -> some View {
@@ -85,8 +81,8 @@ extension PackagePicker.PickerStyle {
     /// Makes the drag-over outline visually distinct from the idle dashed invitation.
     private var dashPattern: [CGFloat] {
         isDropTargeted
-            ? Constants.pickerTargetedDashPattern
-            : Constants.pickerIdleDashPattern
+            ? Self.targetedDashPattern
+            : Self.idleDashPattern
     }
 
     /// Hides the outline after selection and thickens it to reinforce an active drop target.
@@ -94,20 +90,20 @@ extension PackagePicker.PickerStyle {
         if !canSelect {
             0
         } else if isDropTargeted {
-            Constants.pickerTargetedLineWidth
+            Self.targetedLineWidth
         } else {
-            Constants.pickerIdleLineWidth
+            Self.idleLineWidth
         }
     }
 
     /// Shifts the dashes as the outline animates into hover, press, or drag-over feedback.
     private func dashPhase(isPressed: Bool) -> CGFloat {
         if isDropTargeted {
-            Constants.pickerActiveDashPhase
+            Self.activeDashPhase
         } else if showsHover {
             isPressed
-                ? Constants.pickerActiveDashPhase
-                : Constants.pickerHoverDashPhase
+                ? Self.activeDashPhase
+                : Self.hoverDashPhase
         } else {
             0
         }
@@ -115,7 +111,23 @@ extension PackagePicker.PickerStyle {
 
 }
 
-extension PackagePicker.PickerStyle {
+private extension PackagePickerStyle {
+
+    static let cornerRadius: CGFloat = 12
+    static let pressedScale: CGFloat = 0.98
+    static let pressedFillOpacity = 0.10
+    static let targetedFillOpacity = 0.12
+    static let hoverFillOpacity = 0.04
+    static let idleDashPattern: [CGFloat] = [8, 6]
+    static let targetedDashPattern: [CGFloat] = [10, 6]
+    static let idleLineWidth: CGFloat = 2
+    static let targetedLineWidth: CGFloat = 3
+    static let hoverDashPhase: CGFloat = -6
+    static let activeDashPhase: CGFloat = -12
+
+}
+
+extension PackagePickerStyle {
 
     /// Switches from the dashed idle invitation to a solid active outline, and hides both after selection.
     private func isBorderVisible(isDashed: Bool, isPressed: Bool) -> Bool {

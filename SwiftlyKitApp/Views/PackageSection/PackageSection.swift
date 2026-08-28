@@ -6,56 +6,66 @@ struct PackageSection: View {
 
     var body: some View {
         PagingHStack(
-            spacing: Constants.pageSpacing,
-            pageTrailingInset: Constants.pageTrailingInset,
+            spacing: Self.pageSpacing,
+            pageTrailingInset: Self.pageTrailingInset,
             selection: packageModel.packagePage
         ) {
-            PackagePicker()
+            PackagePickerPage()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .geometryGroup()
 
-            PackageBuildDetails()
+            PackageConfigurationPage()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .geometryGroup()
-                .saturation(detailsSaturation)
-                .opacity(detailsOpacity)
-                .scaleEffect(detailsScale, anchor: .bottomLeading)
-                .rotationEffect(detailsRotation, anchor: .bottomLeading)
-                .offset(detailsOffset)
+                .saturation(configurationSaturation)
+                .opacity(configurationOpacity)
+                .scaleEffect(configurationScale, anchor: .bottomLeading)
+                .rotationEffect(configurationRotation, anchor: .bottomLeading)
+                .offset(configurationOffset)
         }
     }
 }
 
 extension PackageSection {
 
-    private var detailsSaturation: Double {
+    private var configurationSaturation: Double {
         packageModel.isPackageSelected
             ? 1
-            : Constants.inactiveSaturation
+            : InactiveContentMetrics.saturation
     }
 
-    private var detailsOpacity: Double {
+    private var configurationOpacity: Double {
         packageModel.isPackageSelected
             ? 1
-            : Constants.inactiveOpacity
+            : InactiveContentMetrics.opacity
     }
 
-    private var detailsScale: CGFloat {
+    private var configurationScale: CGFloat {
         packageModel.isPackageSelected
             ? 1
-            : Constants.inactiveDetailsScale
+            : Self.inactiveConfigurationScale
     }
 
-    private var detailsRotation: Angle {
+    private var configurationRotation: Angle {
         packageModel.isPackageSelected
             ? .zero
-            : Constants.inactiveDetailsRotation
+            : Self.inactiveConfigurationRotation
     }
 
-    private var detailsOffset: CGSize {
+    private var configurationOffset: CGSize {
         packageModel.isPackageSelected
             ? .zero
-            : Constants.inactiveDetailsOffset
+            : Self.inactiveConfigurationOffset
     }
+
+}
+
+private extension PackageSection {
+
+    static let pageSpacing: CGFloat = 10
+    static let pageTrailingInset: CGFloat = 38
+    static let inactiveConfigurationScale: CGFloat = 0.9
+    static let inactiveConfigurationRotation = Angle.degrees(0.8)
+    static let inactiveConfigurationOffset = CGSize(width: 2, height: -2)
 
 }

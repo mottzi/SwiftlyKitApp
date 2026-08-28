@@ -1,5 +1,5 @@
-/// Configuration choices that have generic contextual explanations.
-enum ConfigurationOption: Equatable {
+/// Build options that have contextual explanations.
+enum BuildOptionInfo: Equatable {
     
     case product
     case target
@@ -9,7 +9,7 @@ enum ConfigurationOption: Equatable {
     
 }
 
-extension ConfigurationOption {
+extension BuildOptionInfo {
 
     /// Short label used as the information popover title.
     var title: String {

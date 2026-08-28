@@ -6,9 +6,15 @@ import SwiftUI
         WindowGroup {
             AppView()
         }
-        .defaultSize(Constants.windowSize)
+        .defaultSize(Self.defaultWindowSize)
         .windowToolbarStyle(.unifiedCompact)
         .windowResizability(.contentMinSize)
     }
     
+}
+
+extension SwiftlyKitApp {
+
+    static let defaultWindowSize = CGSize(width: 500, height: 300)
+
 }

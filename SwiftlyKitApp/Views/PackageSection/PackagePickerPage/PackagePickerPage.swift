@@ -1,7 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct PackagePicker: View {
+struct PackagePickerPage: View {
 
     @Environment(PackageModel.self) private var packageModel
     
@@ -25,13 +25,13 @@ struct PackagePicker: View {
         Button {
             isFileImporterPresented = true
         } label: {
-            PickerLabel(
+            PackagePickerLabel(
                 showsHover: showsHover,
                 isDropTargeted: isDropTargetedForPresentation
             )
         }
         .buttonStyle(
-            PickerStyle(
+            PackagePickerStyle(
                 isDropTargeted: isDropTargetedForPresentation,
                 showsHover: showsHover,
                 canSelect: canSelect

@@ -6,18 +6,18 @@ struct BuildSection: View {
     @Environment(BuildOptions.self) private var buildOptions
 
     var body: some View {
-        RoundedRectangle(cornerRadius: Constants.sectionRadius)
-            .fill(.quaternary.opacity(Constants.sectionFillOpacity))
+        RoundedRectangle(cornerRadius: SectionSurfaceMetrics.cornerRadius)
+            .fill(.quaternary.opacity(SectionSurfaceMetrics.fillOpacity))
             .strokeBorder(
-                Color.primary.opacity(Constants.sectionBorderOpacity),
-                lineWidth: Constants.sectionBorderWidth
+                Color.primary.opacity(SectionSurfaceMetrics.borderOpacity),
+                lineWidth: SectionSurfaceMetrics.borderWidth
             )
-        .frame(minHeight: Constants.minBuildSectionHeight)
+        .frame(minHeight: BuildSectionMetrics.minimumHeight)
             .saturation(
-                buildOptions.hasValidSelections ? 1 : Constants.inactiveSaturation
+                buildOptions.hasValidSelections ? 1 : InactiveContentMetrics.saturation
             )
             .opacity(
-                buildOptions.hasValidSelections ? 1 : Constants.inactiveOpacity
+                buildOptions.hasValidSelections ? 1 : InactiveContentMetrics.opacity
             )
             .disabled(!packageModel.isPackageSelected)
     }

@@ -8,13 +8,13 @@ struct StripBinaryControl: View {
     @Binding var infoPopoverPresented: Bool
 
     var body: some View {
-        HStack(spacing: Constants.configurationAccessorySpacing) {
+        HStack(spacing: ConfigurationAccessoryMetrics.spacing) {
             Toggle("Strip Binary", isOn: $isEnabled)
                 .labelsHidden()
                 .toggleStyle(.switch)
                 .controlSize(.small)
 
-            ConfigurationInfoButton(
+            BuildOptionInfoButton(
                 isPresented: $infoPopoverPresented,
                 option: .stripBinary
             )

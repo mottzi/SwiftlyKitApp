@@ -31,6 +31,9 @@ enum ProductDiscoveryState: Equatable {
     /// Revision that requests another app-level product discovery task.
     private(set) var productDiscoveryRetryRevision = 0
 
+    /// Package root associated with the current product discovery state.
+    private var productDiscoveryPackageRoot: URL?
+
     /// Executable products available for selection.
     var availableProducts: [ExecutableProduct] {
         guard case .ready(let products) = productDiscoveryState else { return [] }
@@ -54,7 +57,11 @@ enum ProductDiscoveryState: Equatable {
 
     /// Whether every required build choice has a valid selection.
     var hasValidSelections: Bool {
-        selectedProduct != nil
+        if case .ready = productDiscoveryState {
+            return selectedProduct != nil
+        }
+
+        return false
     }
 
     private let swiftlyKit: SwiftlyKit
@@ -70,7 +77,10 @@ enum ProductDiscoveryState: Equatable {
         toolchain: ToolchainSelection
     ) async {
 
-        selectedProduct = nil
+        if productDiscoveryPackageRoot != packageRoot {
+            selectedProduct = nil
+        }
+        productDiscoveryPackageRoot = packageRoot
         productDiscoveryState = .discovering
 
         do {
@@ -85,6 +95,9 @@ enum ProductDiscoveryState: Equatable {
             guard !Task.isCancelled else { return }
 
             let discoveredProducts = Array(products)
+            selectedProduct = discoveredProducts.count == 1
+                ? discoveredProducts[0]
+                : nil
             productDiscoveryState = discoveredProducts.isEmpty
                 ? .empty
                 : .ready(discoveredProducts)
@@ -92,9 +105,11 @@ enum ProductDiscoveryState: Equatable {
             // A replacement task owns the next state transition.
         } catch let error as SwiftlyKitError {
             guard !Task.isCancelled else { return }
+            selectedProduct = nil
             productDiscoveryState = .failed(error)
         } catch {
             guard !Task.isCancelled else { return }
+            selectedProduct = nil
             productDiscoveryState = .failed(
                 .packageInspectionFailed("An unexpected product discovery error occurred.")
             )
@@ -109,6 +124,7 @@ enum ProductDiscoveryState: Equatable {
     /// Clears products that belong to a package or environment that is no longer selected.
     func clearProducts() {
         productDiscoveryState = .idle
+        productDiscoveryPackageRoot = nil
         selectedProduct = nil
     }
 
