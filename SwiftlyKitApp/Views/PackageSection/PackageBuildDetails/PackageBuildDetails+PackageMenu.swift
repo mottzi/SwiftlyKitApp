@@ -7,12 +7,12 @@ extension PackageBuildDetails.Header {
         @Environment(PackageModel.self) private var packageModel
 
         var body: some View {
-            Menu {
+            Menu("Package actions", systemImage: "ellipsis.circle") {
                 if let url = packageModel.packageURL {
                     Button("Show in Finder", systemImage: "folder") {
                         NSWorkspace.shared.activateFileViewerSelecting([url])
                     }
-
+                    
                     Button("Copy Path", systemImage: "doc.on.doc") {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(
@@ -21,24 +21,16 @@ extension PackageBuildDetails.Header {
                         )
                     }
                 }
-
+                
                 Divider()
-
-                Button("Close Package", systemImage: "xmark.circle", role: .destructive) {
+                
+                Button("Close Package", systemImage: "xmark", role: .destructive) {
                     withAnimation {
                         packageModel.clearPackage()
                     }
                 }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .frame(
-                        width: Constants.menuButtonLength,
-                        height: Constants.menuButtonLength
-                    )
-                    .contentShape(.rect)
             }
+            .labelStyle(.iconOnly)
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
             .help("Package actions")

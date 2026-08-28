@@ -18,11 +18,14 @@ extension PackageBuildDetails {
                 } control: {
                     Picker("Product", selection: $buildOptions.selectedProduct) {
                         Text("—").tag(nil as ExecutableProduct?)
+                        ForEach(buildOptions.availableProducts, id: \.name) { product in
+                            Text(product.name).tag(product as ExecutableProduct?)
+                        }
                     }
                     .labelsHidden()
                     .pickerStyle(.menu)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .disabled(true)
+                    .disabled(buildOptions.availableProducts.isEmpty)
                 }
 
                 configurationField {

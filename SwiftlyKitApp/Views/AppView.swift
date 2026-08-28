@@ -1,9 +1,26 @@
+import SwiftlyKit
 import SwiftUI
 
 struct AppView: View {
 
     @State private var packageModel = PackageModel()
     @State private var buildOptions = BuildOptions()
+
+    private struct ProductDiscoveryKey: Hashable, Sendable {
+        let packageRoot: URL
+        let target: BuildTarget
+        let toolchain: ToolchainSelection
+    }
+
+    private var productDiscoveryKey: ProductDiscoveryKey? {
+        guard let packageRoot = packageModel.packageURL else { return nil }
+
+        return ProductDiscoveryKey(
+            packageRoot: packageRoot,
+            target: buildOptions.target,
+            toolchain: buildOptions.toolchain
+        )
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.appSpacing) {
@@ -20,10 +37,18 @@ struct AppView: View {
         .padding(.bottom, Constants.appBottomPadding)
         .padding(.top, Constants.appTopPadding)
         .toolbar { AppToolbar() }
-        .animation(.default, value: packageModel.isPackageSelected)
         .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
-        .onChange(of: packageModel.packageURL) {
-            buildOptions.selectedProduct = nil
+        .task(id: productDiscoveryKey) {
+            guard let productDiscoveryKey else {
+                buildOptions.clearProducts()
+                return
+            }
+
+            await buildOptions.discoverProducts(
+                in: productDiscoveryKey.packageRoot,
+                for: productDiscoveryKey.target,
+                toolchain: productDiscoveryKey.toolchain
+            )
         }
         .environment(packageModel)
         .environment(buildOptions)
