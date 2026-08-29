@@ -8,6 +8,9 @@ final class PackageModel {
     /// Root URL of the selected Swift package.
     private(set) var packageURL: URL?
 
+    /// Whether the selected package completed its transition to configuration.
+    private(set) var isConfigurationReady = false
+
     /// Whether a valid Swift package is selected.
     var isPackageSelected: Bool {
         packageURL != nil
@@ -32,11 +35,19 @@ final class PackageModel {
     /// Selects the package root if `url` names an existing package directory or its `Package.swift` manifest.
     func selectPackage(at url: URL) {
         guard let packageURL = Self.swiftPackageRoot(for: url) else { return }
+        isConfigurationReady = false
         self.packageURL = packageURL
+    }
+
+    /// Enables discovery after the selected package finishes its page transition.
+    func finishConfigurationTransition() {
+        guard isPackageSelected else { return }
+        isConfigurationReady = true
     }
 
     /// Clears the selected package and returns the package section to the picker.
     func clearPackage() {
+        isConfigurationReady = false
         packageURL = nil
     }
 

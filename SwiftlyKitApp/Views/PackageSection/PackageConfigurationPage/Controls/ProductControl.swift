@@ -18,7 +18,7 @@ struct ProductControl: View {
             ProductPicker(
                 selectedProduct: $discovery.selectedProduct,
                 products: discovery.availableProducts,
-                discoveryState: discovery.state
+                allowsSelection: allowsSelection(for: discovery.state)
             )
 
             DiscoveryAccessory(
@@ -27,8 +27,9 @@ struct ProductControl: View {
                 option: .product,
                 presentation: accessoryPresentation(for: discovery.state)
             ) {
-                ProductDiscoveryStatusContent(
+                ProductDiscoveryStatus(
                     state: discovery.state,
+                    onReviewInstallation: discovery.requestInstallationApproval,
                     onRetry: onRetry
                 )
             }
@@ -70,15 +71,20 @@ struct ProductControl: View {
         }
     }
 
+    private func allowsSelection(for state: ProductDiscoveryState) -> Bool {
+        if case .ready = state { return true }
+        return false
+    }
+
 }
 
-/// Executable-product picker with placeholders for each discovery state.
+/// Executable-product picker that displays only product choices.
 private struct ProductPicker: View {
 
     @Binding var selectedProduct: ExecutableProduct?
 
     let products: [ExecutableProduct]
-    let discoveryState: ProductDiscoveryState
+    let allowsSelection: Bool
 
     var body: some View {
         Picker(selection: $selectedProduct) {
@@ -89,67 +95,11 @@ private struct ProductPicker: View {
         } label: {
             Text("Product")
         } currentValueLabel: {
-            Text(selectedProduct?.name ?? placeholder)
+            Text(selectedProduct?.name ?? "—")
         }
         .labelsHidden()
         .pickerStyle(.menu)
         .disabled(!allowsSelection || products.count <= 1)
-    }
-
-    private var placeholder: String {
-        switch discoveryState {
-            case .idle, .discovering: "—"
-            case .installationRequired: "Installation Required"
-            case .ready: "Choose Product"
-            case .empty: "No Executables"
-            case .failed: "Couldn’t Load"
-        }
-    }
-
-    private var allowsSelection: Bool {
-        if case .ready = discoveryState { return true }
-        return false
-    }
-
-}
-
-/// Contextual explanation for a product discovery status.
-private struct ProductDiscoveryStatusContent: View {
-
-    let state: ProductDiscoveryState
-    let onRetry: () -> Void
-
-    var body: some View {
-        switch state {
-            case .installationRequired(let approval):
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Swift components required")
-                        .font(.headline)
-
-                    Text(approval.message)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Button("Review Installation…", action: onRetry)
-                        .keyboardShortcut(.defaultAction)
-                }
-
-            case .empty:
-                EmptyDiscoveryStatus(
-                    title: "No executable products",
-                    message: "SwiftPM inspected this package but found no executable products.",
-                    onRetry: onRetry
-                )
-
-            case .failed(let error):
-                FailedDiscoveryStatus(
-                    title: "Couldn’t discover executable products.",
-                    detail: error.errorDescription ?? error.localizedDescription,
-                    onRetry: onRetry
-                )
-
-            case .idle, .discovering, .ready:
-                EmptyView()
-        }
     }
 
 }

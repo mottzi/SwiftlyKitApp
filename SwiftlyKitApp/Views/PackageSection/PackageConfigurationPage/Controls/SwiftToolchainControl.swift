@@ -13,34 +13,96 @@ struct SwiftToolchainControl: View {
 
     var body: some View {
         @Bindable var buildOptions = buildOptions
+        let hostDiscovery = buildOptions.hostDiscovery
         let discovery = buildOptions.toolchainDiscovery
 
         HStack(spacing: ConfigurationAccessoryMetrics.spacing) {
             ToolchainPicker(
                 toolchain: $buildOptions.toolchain,
                 availableToolchains: discovery.availableToolchains,
-                discoveryState: discovery.state
+                allowsSelection: allowsSelection(
+                    for: hostDiscovery.state,
+                    discoveryState: discovery.state
+                )
             )
 
             DiscoveryAccessory(
                 infoPopoverPresented: $infoPopoverPresented,
                 statusPopoverPresented: $statusPopoverPresented,
                 option: .swift,
-                presentation: accessoryPresentation(for: discovery.state)
+                presentation: accessoryPresentation(
+                    for: hostDiscovery.state,
+                    discoveryState: discovery.state
+                )
             ) {
-                ToolchainDiscoveryStatusContent(
-                    state: discovery.state,
-                    onRetry: onRetry
+                SwiftDiscoveryStatus(
+                    hostState: hostDiscovery.state,
+                    toolchainState: discovery.state,
+                    onRequestCommandLineTools: hostDiscovery.requestInstallationApproval,
+                    onHostRetry: hostDiscovery.requestRetry,
+                    onToolchainRetry: onRetry
                 )
             }
         }
     }
 
     private func accessoryPresentation(
+        for hostState: HostDiscoveryState,
+        discoveryState: ToolchainDiscoveryState
+    ) -> DiscoveryAccessoryPresentation {
+        switch hostState {
+            case .idle:
+                return .information
+            case .checking:
+                return .progress(accessibilityLabel: "Checking developer tools")
+            case .ready:
+                return toolchainAccessoryPresentation(for: discoveryState)
+            case .commandLineToolsRequired:
+                return .status(
+                    DiscoveryAccessoryPresentation.Status(
+                        symbol: "wrench.and.screwdriver",
+                        color: .secondary,
+                        label: "Command Line Tools required"
+                    )
+                )
+            case .requestingCommandLineTools:
+                return .progress(accessibilityLabel: "Opening Command Line Tools installer")
+            case .waitingForCommandLineTools:
+                return .status(
+                    DiscoveryAccessoryPresentation.Status(
+                        symbol: "clock.arrow.circlepath",
+                        color: .secondary,
+                        label: "Waiting for Command Line Tools"
+                    )
+                )
+            case .unsupported:
+                return .status(
+                    DiscoveryAccessoryPresentation.Status(
+                        symbol: "exclamationmark.triangle",
+                        color: .orange,
+                        label: "Unsupported Mac"
+                    )
+                )
+            case .failed:
+                return .status(
+                    DiscoveryAccessoryPresentation.Status(
+                        symbol: "exclamationmark.triangle",
+                        color: .orange,
+                        label: "Developer tools inspection failed"
+                    )
+                )
+        }
+    }
+
+    private func toolchainAccessoryPresentation(
         for state: ToolchainDiscoveryState
     ) -> DiscoveryAccessoryPresentation {
         switch state {
-            case .idle, .ready:
+            case .idle:
+                return .progress(
+                    accessibilityLabel: "Starting compatible Swift toolchain discovery"
+                )
+            case .ready:
                 return .information
             case .discovering:
                 return .progress(
@@ -65,15 +127,24 @@ struct SwiftToolchainControl: View {
         }
     }
 
+    private func allowsSelection(
+        for hostState: HostDiscoveryState,
+        discoveryState: ToolchainDiscoveryState
+    ) -> Bool {
+        guard case .ready = hostState else { return false }
+        if case .ready = discoveryState { return true }
+        return false
+    }
+
 }
 
-/// Swift toolchain picker with labels for each discovery state.
+/// Swift toolchain picker that displays only toolchain choices.
 private struct ToolchainPicker: View {
 
     @Binding var toolchain: ToolchainSelection
 
     let availableToolchains: [ToolchainSelection]
-    let discoveryState: ToolchainDiscoveryState
+    let allowsSelection: Bool
 
     var body: some View {
         Picker(selection: $toolchain) {
@@ -87,56 +158,11 @@ private struct ToolchainPicker: View {
         } label: {
             Text("Swift")
         } currentValueLabel: {
-            Text(pickerLabel)
+            Text(toolchain.displayName)
         }
         .labelsHidden()
         .pickerStyle(.menu)
         .disabled(!allowsSelection)
-    }
-
-    private var pickerLabel: String {
-        switch discoveryState {
-            case .idle: "—"
-            case .discovering: "Discovering…"
-            case .ready: toolchain.displayName
-            case .empty: "No Compatible Releases"
-            case .failed: "Couldn’t Load"
-        }
-    }
-
-    private var allowsSelection: Bool {
-        if case .ready = discoveryState { return true }
-        return false
-    }
-
-}
-
-/// Contextual explanation for a toolchain discovery status.
-private struct ToolchainDiscoveryStatusContent: View {
-
-    let state: ToolchainDiscoveryState
-    let onRetry: () -> Void
-
-    var body: some View {
-        switch state {
-            case .empty:
-                EmptyDiscoveryStatus(
-                    title: "No compatible Swift toolchains",
-                    message: "SwiftlyKit found no official stable Swift release compatible "
-                        + "with this package and target.",
-                    onRetry: onRetry
-                )
-
-            case .failed(let detail):
-                FailedDiscoveryStatus(
-                    title: "Couldn’t discover compatible Swift toolchains.",
-                    detail: detail,
-                    onRetry: onRetry
-                )
-
-            case .idle, .discovering, .ready:
-                EmptyView()
-        }
     }
 
 }

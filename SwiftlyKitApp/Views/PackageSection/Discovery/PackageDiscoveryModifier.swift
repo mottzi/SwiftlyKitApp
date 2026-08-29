@@ -14,23 +14,32 @@ extension View {
                 buildOptions: buildOptions
             )
         )
+        .modifier(
+            PackageDiscoveryApprovalModifier(buildOptions: buildOptions)
+        )
     }
 
 }
 
-/// Coordinates toolchain discovery, product discovery, and installation approval.
+/// Schedules host, toolchain, and product discovery for the selected package.
 private struct PackageDiscoveryModifier: ViewModifier {
-
-    @State private var installationApprovalPresented = false
 
     let packageModel: PackageModel
     let buildOptions: BuildOptions
 
     func body(content: Content) -> some View {
         content
+            .task(id: hostDiscoveryKey) {
+                guard hostDiscoveryKey != nil else {
+                    buildOptions.clearDiscoveries()
+                    return
+                }
+
+                await buildOptions.discoverHost()
+            }
             .task(id: toolchainDiscoveryKey) {
                 guard let toolchainDiscoveryKey else {
-                    buildOptions.clearDiscoveries()
+                    buildOptions.clearEnvironmentDiscoveries()
                     return
                 }
 
@@ -48,29 +57,26 @@ private struct PackageDiscoveryModifier: ViewModifier {
                     toolchain: productDiscoveryKey.toolchain
                 )
             }
-            .onChange(
-                of: buildOptions.productDiscovery.installationApprovalRequest,
-                initial: true
-            ) {
-                installationApprovalPresented = buildOptions.productDiscovery
-                    .installationApprovalRequest != nil
-            }
-            .alert(
-                "Install required tools?",
-                isPresented: $installationApprovalPresented,
-                presenting: buildOptions.productDiscovery.installationApprovalRequest
-            ) { _ in
-                Button("Install") {
-                    buildOptions.productDiscovery.approveInstallation()
-                }
-                .keyboardShortcut(.defaultAction)
+    }
 
-                Button("Cancel", role: .cancel) {
-                    buildOptions.cancelInstallation()
-                }
-            } message: { approval in
-                Text(approval.message)
-            }
+}
+
+extension PackageDiscoveryModifier {
+
+    /// Identifies one selected package, completed page transition, or explicit host retry request.
+    private struct HostDiscoveryKey: Equatable {
+        let packageRoot: URL
+        let retryRevision: Int
+    }
+
+    private var hostDiscoveryKey: HostDiscoveryKey? {
+        guard packageModel.isConfigurationReady else { return nil }
+        guard let packageRoot = packageModel.packageURL else { return nil }
+
+        return HostDiscoveryKey(
+            packageRoot: packageRoot,
+            retryRevision: buildOptions.hostDiscovery.retryRevision
+        )
     }
 
 }
@@ -84,8 +90,8 @@ extension PackageDiscoveryModifier {
         let retryRevision: Int
     }
 
-    ///
     private var toolchainDiscoveryKey: ToolchainDiscoveryKey? {
+        guard case .ready = buildOptions.hostDiscovery.state else { return nil }
         guard let packageRoot = packageModel.packageURL else { return nil }
 
         return ToolchainDiscoveryKey(
@@ -108,7 +114,6 @@ extension PackageDiscoveryModifier {
         let productDiscoveryRetryRevision: Int
     }
 
-    ///
     private var productDiscoveryKey: ProductDiscoveryKey? {
         guard let packageRoot = packageModel.packageURL else { return nil }
         guard buildOptions.hasDiscoveredToolchains(

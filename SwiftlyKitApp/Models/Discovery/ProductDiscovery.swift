@@ -32,11 +32,11 @@ final class ProductDiscovery {
     /// Current executable-product discovery state.
     private(set) var state: ProductDiscoveryState = .idle
 
-    /// Installation that discovery is waiting for the user to approve.
-    private(set) var installationApprovalRequest: InstallationApprovalRequest?
-
     /// Revision that requests another app-level discovery task.
     private(set) var retryRevision = 0
+
+    /// Revision that requests presentation of the current installation approval.
+    private(set) var installationApprovalRevision = 0
 
     /// Most recently discovered executable products.
     private(set) var availableProducts: [ExecutableProduct] = []
@@ -44,12 +44,8 @@ final class ProductDiscovery {
     /// Selected executable package product.
     var selectedProduct: ExecutableProduct?
 
-    /// Whether product discovery has one valid selection.
-    var hasValidSelection: Bool {
-        guard case .ready = state else { return false }
-        return selectedProduct != nil
-    }
-
+    @ObservationIgnored private var preparedEnvironment: LocalBuildEnvironment?
+    @ObservationIgnored private var preparedContext: Context?
     @ObservationIgnored private var pendingInstallationContext: Context?
     @ObservationIgnored private var approvedInstallationContext: Context?
     @ObservationIgnored private var lastPreparedContext: Context?
@@ -92,13 +88,12 @@ final class ProductDiscovery {
                 )
                 installationCancellationSnapshot = cancellationSnapshot()
                 pendingInstallationContext = context
-                installationApprovalRequest = approval
                 state = .installationRequired(approval)
+                installationApprovalRevision += 1
                 return
             }
 
             pendingInstallationContext = nil
-            installationApprovalRequest = nil
             state = .discovering(
                 detail: "Preparing Swift \(assessment.swiftVersion) for product discovery."
             )
@@ -118,6 +113,8 @@ final class ProductDiscovery {
 
             guard !Task.isCancelled else { return }
 
+            preparedEnvironment = environment
+            preparedContext = context
             replaceProducts(with: Array(products))
         } catch is CancellationError {
             // a replacement task owns the next state transition
@@ -137,12 +134,40 @@ final class ProductDiscovery {
         retryRevision += 1
     }
 
+    /// Requests presentation of the current installation approval.
+    func requestInstallationApproval() {
+        guard case .installationRequired = state else { return }
+        installationApprovalRevision += 1
+    }
+
+    /// Returns the prepared environment and selection for one matching package configuration.
+    func preparedPackage(
+        in packageRoot: URL,
+        for target: BuildTarget,
+        toolchain: ToolchainSelection
+    ) -> PreparedPackage? {
+        let context = Context(
+            packageRoot: packageRoot,
+            target: target,
+            toolchain: toolchain
+        )
+
+        guard case .ready = state else { return nil }
+        guard preparedContext == context else { return nil }
+        guard let preparedEnvironment else { return nil }
+        guard let selectedProduct, availableProducts.contains(selectedProduct) else { return nil }
+
+        return PreparedPackage(
+            environment: preparedEnvironment,
+            selectedProduct: selectedProduct
+        )
+    }
+
     /// Approves the pending installation and resumes product discovery.
     func approveInstallation() {
         guard let pendingInstallationContext else { return }
 
         approvedInstallationContext = pendingInstallationContext
-        installationApprovalRequest = nil
         self.pendingInstallationContext = nil
         installationCancellationSnapshot = nil
         retryRevision += 1
@@ -153,8 +178,6 @@ final class ProductDiscovery {
         guard let pendingInstallationContext else { return nil }
 
         let cancellationSnapshot = installationCancellationSnapshot
-        installationApprovalRequest = nil
-        self.pendingInstallationContext = nil
         installationCancellationSnapshot = nil
 
         guard
@@ -162,8 +185,11 @@ final class ProductDiscovery {
             lastPreparedContext.packageRoot == pendingInstallationContext.packageRoot,
             lastPreparedContext.target == pendingInstallationContext.target,
             lastPreparedContext.toolchain != pendingInstallationContext.toolchain
-        else { return nil }
+        else {
+            return nil
+        }
 
+        self.pendingInstallationContext = nil
         if let cancellationSnapshot {
             state = cancellationSnapshot.state
             selectedProduct = cancellationSnapshot.selectedProduct
@@ -219,7 +245,8 @@ extension ProductDiscovery {
     }
 
     private func resetContext() {
-        installationApprovalRequest = nil
+        preparedEnvironment = nil
+        preparedContext = nil
         pendingInstallationContext = nil
         approvedInstallationContext = nil
         lastPreparedContext = nil

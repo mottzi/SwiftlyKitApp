@@ -66,8 +66,10 @@ struct PackagePickerPage: View {
 extension PackagePickerPage {
 
     private func selectPackage(at url: URL) {
-        withAnimation {
+        withAnimation(.default, completionCriteria: .removed) {
             packageModel.selectPackage(at: url)
+        } completion: {
+            packageModel.finishConfigurationTransition()
         }
     }
 

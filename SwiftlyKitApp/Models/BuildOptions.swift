@@ -6,6 +6,7 @@ import SwiftlyKit
 /// Build choices and the discovery workflows that keep them valid.
 final class BuildOptions {
 
+    let hostDiscovery: HostDiscovery
     let toolchainDiscovery: ToolchainDiscovery
     let productDiscovery: ProductDiscovery
 
@@ -22,13 +23,24 @@ final class BuildOptions {
     var stripBinary = false
 
     init(swiftlyKit: SwiftlyKit = SwiftlyKit()) {
+        hostDiscovery = HostDiscovery()
         toolchainDiscovery = ToolchainDiscovery(swiftlyKit: swiftlyKit)
         productDiscovery = ProductDiscovery(swiftlyKit: swiftlyKit)
     }
 
-    /// Whether every required build choice has a valid selection.
-    var hasValidSelections: Bool {
-        productDiscovery.hasValidSelection
+    /// Returns a prepared package only if it matches every current discovery choice.
+    func preparedPackage(in packageRoot: URL) -> PreparedPackage? {
+        productDiscovery.preparedPackage(
+            in: packageRoot,
+            for: target,
+            toolchain: toolchain
+        )
+    }
+
+    /// Inspects host readiness before package environment discovery begins.
+    func discoverHost() async {
+        clearEnvironmentDiscoveries()
+        await hostDiscovery.inspect()
     }
 
     /// Whether successful toolchain discovery belongs to the supplied package and target.
@@ -79,6 +91,16 @@ final class BuildOptions {
 
     /// Clears discoveries that belong to a package or target that is no longer selected.
     func clearDiscoveries() {
+        hostDiscovery.clear()
+        clearEnvironmentDiscoveries()
+    }
+
+}
+
+extension BuildOptions {
+
+    /// Clears package environment discoveries but preserves current host readiness.
+    func clearEnvironmentDiscoveries() {
         toolchainDiscovery.clear()
         productDiscovery.clear()
         toolchain = .automatic

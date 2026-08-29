@@ -6,7 +6,8 @@ struct BuildButton: View {
     @Environment(BuildOptions.self) private var buildOptions
 
     private var canBuild: Bool {
-        packageModel.isPackageSelected && buildOptions.hasValidSelections
+        guard let packageRoot = packageModel.packageURL else { return false }
+        return buildOptions.preparedPackage(in: packageRoot) != nil
     }
 
     var body: some View {

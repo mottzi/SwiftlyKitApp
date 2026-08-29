@@ -52,7 +52,7 @@ struct DiscoveryAccessory<StatusContent: View>: View {
                 .transition(indicatorTransition)
 
             case .progress(let accessibilityLabel):
-                DiscoverySpinner(accessibilityLabel: accessibilityLabel)
+                progressButton(accessibilityLabel: accessibilityLabel)
                     .transition(indicatorTransition)
 
             case .status(let status):
@@ -74,17 +74,33 @@ struct DiscoveryAccessory<StatusContent: View>: View {
         return .opacity.combined(with: .scale(scale: Self.transitionScale))
     }
 
+    private func progressButton(accessibilityLabel: String) -> some View {
+        popoverButton(accessibilityLabel: accessibilityLabel) {
+            DiscoverySpinner(accessibilityLabel: accessibilityLabel)
+        }
+        .accessibilityValue("In progress")
+    }
+
     private func statusButton(_ status: DiscoveryAccessoryPresentation.Status) -> some View {
-        Button {
-            statusPopoverPresented = true
-        } label: {
+        popoverButton(accessibilityLabel: status.label) {
             Image(systemName: status.symbol)
         }
+        .foregroundStyle(status.color)
+    }
+
+    private func popoverButton<Label: View>(
+        accessibilityLabel: String,
+        @ViewBuilder label: () -> Label
+    ) -> some View {
+        Button(
+            action: { statusPopoverPresented = true },
+            label: label
+        )
         .buttonStyle(.borderless)
         .controlSize(.small)
-        .foregroundStyle(status.color)
-        .help(status.label)
-        .accessibilityLabel(status.label)
+        .help(accessibilityLabel)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
         .popover(isPresented: $statusPopoverPresented, arrowEdge: .trailing) {
             statusContent
                 .padding()
@@ -96,10 +112,7 @@ struct DiscoveryAccessory<StatusContent: View>: View {
         switch phase {
             case .information:
                 statusPopoverPresented = false
-            case .progress:
-                infoPopoverPresented = false
-                statusPopoverPresented = false
-            case .status:
+            case .progress, .status:
                 infoPopoverPresented = false
         }
     }
