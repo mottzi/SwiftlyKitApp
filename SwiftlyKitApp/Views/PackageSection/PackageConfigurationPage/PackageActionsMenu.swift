@@ -3,6 +3,7 @@ import SwiftUI
 struct PackageActionsMenu: View {
 
     @Environment(PackageModel.self) private var packageModel
+    @Environment(BuildOptions.self) private var buildOptions
 
     var body: some View {
 
@@ -28,6 +29,7 @@ struct PackageActionsMenu: View {
                     packageModel.clearPackage()
                 }
             }
+            .disabled(buildOptions.buildWorkflow.isRunning)
         } label: {
             Image(systemName: "ellipsis.circle")
                 .tint(Color.secondary.opacity(ConfigurationAccessoryMetrics.opacity))

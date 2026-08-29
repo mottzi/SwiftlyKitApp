@@ -48,6 +48,7 @@ struct PackageConfigurator: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .disabled(buildOptions.buildWorkflow.isRunning)
     }
 
 }

@@ -9,6 +9,7 @@ final class BuildOptions {
     let hostDiscovery: HostDiscovery
     let toolchainDiscovery: ToolchainDiscovery
     let productDiscovery: ProductDiscovery
+    let buildWorkflow: BuildWorkflow
 
     /// Selected cross-compilation target.
     var target: BuildTarget = .linux(.x86_64)
@@ -26,6 +27,7 @@ final class BuildOptions {
         hostDiscovery = HostDiscovery()
         toolchainDiscovery = ToolchainDiscovery(swiftlyKit: swiftlyKit)
         productDiscovery = ProductDiscovery(swiftlyKit: swiftlyKit)
+        buildWorkflow = BuildWorkflow(swiftlyKit: swiftlyKit)
     }
 
     /// Returns a prepared package only if it matches every current discovery choice.
@@ -34,6 +36,17 @@ final class BuildOptions {
             in: packageRoot,
             for: target,
             toolchain: toolchain
+        )
+    }
+
+    /// Starts a build from the prepared package and a snapshot of the current build choices.
+    func startBuild(in packageRoot: URL) {
+        guard let preparedPackage = preparedPackage(in: packageRoot) else { return }
+
+        buildWorkflow.start(
+            preparedPackage,
+            configuration: configuration,
+            stripBinary: stripBinary
         )
     }
 
@@ -91,6 +104,7 @@ final class BuildOptions {
 
     /// Clears discoveries that belong to a package or target that is no longer selected.
     func clearDiscoveries() {
+        buildWorkflow.cancel()
         hostDiscovery.clear()
         clearEnvironmentDiscoveries()
     }

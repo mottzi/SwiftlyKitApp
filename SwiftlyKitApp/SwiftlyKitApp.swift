@@ -16,6 +16,6 @@ struct SwiftlyKitApp: App {
 
 extension SwiftlyKitApp {
 
-    static let defaultWindowSize = CGSize(width: 500, height: 300)
+    static let defaultWindowSize = CGSize(width: 500, height: 420)
 
 }
