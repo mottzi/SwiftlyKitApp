@@ -25,7 +25,12 @@ struct BuildSection: View {
             .padding(.horizontal, Self.consoleInset)
             .padding(.bottom, Self.consoleInset)
         }
-        .frame(minHeight: Self.minimumHeight)
+        .frame(
+            minWidth: 0,
+            idealWidth: 0,
+            maxWidth: .infinity
+        )
+        .frame(height: Self.height)
         .background {
             SectionSurface()
         }
@@ -56,7 +61,7 @@ extension BuildSection {
 
 extension BuildSection {
 
-    static let minimumHeight: CGFloat = 176
+    static let height: CGFloat = 176
     private static let consoleInset: CGFloat = 8
 
 }

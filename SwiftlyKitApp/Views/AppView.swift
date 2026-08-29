@@ -46,7 +46,7 @@ extension AppView {
     private static let bottomPadding: CGFloat = 12
     private static let minWindowWidth: CGFloat = 300
     private static let windowHeightAllowance = spacing
-        + BuildSection.minimumHeight
+        + BuildSection.height
         + topPadding
         + bottomPadding
 
