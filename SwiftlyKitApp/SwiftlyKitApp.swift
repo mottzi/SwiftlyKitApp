@@ -1,6 +1,7 @@
 import SwiftUI
 
-@main struct SwiftlyKitApp: App {
+@main
+struct SwiftlyKitApp: App {
 
     var body: some Scene {
         WindowGroup {
@@ -10,7 +11,7 @@ import SwiftUI
         .windowToolbarStyle(.unifiedCompact)
         .windowResizability(.contentMinSize)
     }
-    
+
 }
 
 extension SwiftlyKitApp {
