@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftlyKit
 
 struct PackageConfigurator: View {
 
@@ -35,8 +34,9 @@ struct PackageConfigurator: View {
 
             buildOptionField("Swift") {
                 SwiftToolchainControl(
-                    toolchain: $buildOptions.toolchain,
-                    infoPopoverPresented: isPopoverPresented(.info(.swift))
+                    infoPopoverPresented: isPopoverPresented(.info(.swift)),
+                    statusPopoverPresented: isPopoverPresented(.toolchainDiscoveryStatus),
+                    onRetry: requestToolchainDiscoveryRetry
                 )
             }
 
@@ -57,7 +57,13 @@ extension PackageConfigurator {
     /// Closes the contextual popover before the existing discovery task starts again.
     private func requestProductDiscoveryRetry() {
         presentedPopover = nil
-        buildOptions.requestProductDiscoveryRetry()
+        buildOptions.productDiscovery.requestRetry()
+    }
+
+    /// Closes the contextual popover before compatible toolchains are discovered again.
+    private func requestToolchainDiscoveryRetry() {
+        presentedPopover = nil
+        buildOptions.toolchainDiscovery.requestRetry()
     }
 
     /// Binds one contextual anchor to the section's single presented-popover state.
@@ -78,7 +84,7 @@ extension PackageConfigurator {
     @ViewBuilder
     private func buildOptionField<Control: View>(
         _ title: LocalizedStringKey,
-        @ViewBuilder control: () -> Control
+        control: () -> Control
     ) -> some View {
 
         Text(title)
@@ -95,5 +101,6 @@ private enum PresentedBuildOptionPopover: Equatable {
 
     case info(BuildOptionInfo)
     case productDiscoveryStatus
+    case toolchainDiscoveryStatus
 
 }

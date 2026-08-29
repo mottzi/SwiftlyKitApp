@@ -1,12 +1,12 @@
 /// Build options that have contextual explanations.
-enum BuildOptionInfo: Equatable {
-    
+enum BuildOptionInfo {
+
     case product
     case target
     case configuration
     case swift
     case stripBinary
-    
+
 }
 
 extension BuildOptionInfo {
@@ -29,12 +29,13 @@ extension BuildOptionInfo {
                 "Choose the executable product SwiftPM should build. " +
                 "Available products are discovered for the selected target and Swift toolchain."
             case .target:
-                "Choose the Linux architecture for the output executable. Changing the target refreshes available products."
+                "Choose the Linux architecture for the output executable. "
+                    + "Changing the target refreshes compatible Swift toolchains and products."
             case .configuration:
                 "Choose the SwiftPM build configuration used for the executable."
             case .swift:
                 "Choose the Swift toolchain used to prepare the build environment. " +
-                "Automatic selects a compatible Swift release."
+                "Automatic selects a compatible release, or you can choose an exact discovered version."
             case .stripBinary:
                 "Strip symbols from the finished executable to reduce its size."
         }

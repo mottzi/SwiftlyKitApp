@@ -1,29 +1,9 @@
-import SwiftlyKit
 import SwiftUI
 
 struct AppView: View {
 
     @State private var packageModel = PackageModel()
     @State private var buildOptions = BuildOptions()
-
-    /// Identifies one package, environment, or explicit retry request.
-    private struct ProductDiscoveryKey: Hashable, Sendable {
-        let packageRoot: URL
-        let target: BuildTarget
-        let toolchain: ToolchainSelection
-        let retryRevision: Int
-    }
-
-    private var productDiscoveryKey: ProductDiscoveryKey? {
-        guard let packageRoot = packageModel.packageURL else { return nil }
-
-        return ProductDiscoveryKey(
-            packageRoot: packageRoot,
-            target: buildOptions.target,
-            toolchain: buildOptions.toolchain,
-            retryRevision: buildOptions.productDiscoveryRetryRevision
-        )
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Self.spacing) {
@@ -40,22 +20,14 @@ struct AppView: View {
         .padding(.bottom, Self.bottomPadding)
         .padding(.top, Self.topPadding)
         .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
-        .task(id: productDiscoveryKey) {
-            guard let productDiscoveryKey else {
-                buildOptions.clearProducts()
-                return
-            }
-
-            await buildOptions.discoverProducts(
-                in: productDiscoveryKey.packageRoot,
-                for: productDiscoveryKey.target,
-                toolchain: productDiscoveryKey.toolchain
-            )
-        }
+        .managesPackageDiscovery(
+            packageModel: packageModel,
+            buildOptions: buildOptions
+        )
         .environment(packageModel)
         .environment(buildOptions)
     }
-    
+
 }
 
 #Preview {
@@ -66,15 +38,15 @@ struct AppView: View {
         )
 }
 
-private extension AppView {
+extension AppView {
 
-    static let spacing: CGFloat = 10
-    static let horizontalPadding: CGFloat = 12
-    static let topPadding: CGFloat = 2
-    static let bottomPadding: CGFloat = 12
-    static let minWindowWidth: CGFloat = 300
-    static let windowHeightAllowance = spacing
-        + BuildSectionMetrics.minimumHeight
+    private static let spacing: CGFloat = 10
+    private static let horizontalPadding: CGFloat = 12
+    private static let topPadding: CGFloat = 2
+    private static let bottomPadding: CGFloat = 12
+    private static let minWindowWidth: CGFloat = 300
+    private static let windowHeightAllowance = spacing
+        + BuildSection.minimumHeight
         + topPadding
         + bottomPadding
 

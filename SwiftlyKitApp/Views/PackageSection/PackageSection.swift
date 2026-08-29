@@ -17,8 +17,7 @@ struct PackageSection: View {
             PackageConfigurationPage()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .geometryGroup()
-                .saturation(configurationSaturation)
-                .opacity(configurationOpacity)
+                .deemphasiseContent(when: !packageModel.isPackageSelected)
                 .scaleEffect(configurationScale, anchor: .bottomLeading)
                 .rotationEffect(configurationRotation, anchor: .bottomLeading)
                 .offset(configurationOffset)
@@ -27,18 +26,6 @@ struct PackageSection: View {
 }
 
 extension PackageSection {
-
-    private var configurationSaturation: Double {
-        packageModel.isPackageSelected
-            ? 1
-            : InactiveContentMetrics.saturation
-    }
-
-    private var configurationOpacity: Double {
-        packageModel.isPackageSelected
-            ? 1
-            : InactiveContentMetrics.opacity
-    }
 
     private var configurationScale: CGFloat {
         packageModel.isPackageSelected
@@ -60,12 +47,12 @@ extension PackageSection {
 
 }
 
-private extension PackageSection {
+extension PackageSection {
 
-    static let pageSpacing: CGFloat = 10
-    static let pageTrailingInset: CGFloat = 38
-    static let inactiveConfigurationScale: CGFloat = 0.9
-    static let inactiveConfigurationRotation = Angle.degrees(0.8)
-    static let inactiveConfigurationOffset = CGSize(width: 2, height: -2)
+    private static let pageSpacing: CGFloat = 10
+    private static let pageTrailingInset: CGFloat = 38
+    private static let inactiveConfigurationScale: CGFloat = 0.9
+    private static let inactiveConfigurationRotation = Angle.degrees(0.8)
+    private static let inactiveConfigurationOffset = CGSize(width: 2, height: -2)
 
 }

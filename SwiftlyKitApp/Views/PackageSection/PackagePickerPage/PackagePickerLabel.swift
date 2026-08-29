@@ -43,12 +43,12 @@ extension PackagePickerLabel {
 
 }
 
-private extension PackagePickerLabel {
+extension PackagePickerLabel {
 
-    static let labelSpacing: CGFloat = 16
-    static let iconLength: CGFloat = 80
-    static let titleLineLimit = 1
-    static let hoverRotation = Angle.degrees(4)
-    static let targetedScale: CGFloat = 1.10
+    private static let labelSpacing: CGFloat = 16
+    private static let iconLength: CGFloat = 80
+    private static let titleLineLimit = 1
+    private static let hoverRotation = Angle.degrees(4)
+    private static let targetedScale: CGFloat = 1.10
 
 }

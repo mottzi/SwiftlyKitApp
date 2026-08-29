@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftlyKit
 
 /// Strip-binary toggle and its contextual information button.
 struct StripBinaryControl: View {

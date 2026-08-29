@@ -10,12 +10,6 @@ struct BuildButton: View {
     }
 
     var body: some View {
-        buildButton
-    }
-
-    @ViewBuilder
-    private var buildButton: some View {
-//        if #available(macOS 26.0, *) {
         Button {
             // action
         } label: {
@@ -23,14 +17,9 @@ struct BuildButton: View {
                 .padding(4)
         }
         .labelStyle(.iconOnly)
-//        .tint(canBuild ? .blue : nil)
         .disabled(!canBuild)
         .buttonStyle(.glass)
         .buttonBorderShape(.circle)
-//        } else {
-//            button
-//                .buttonStyle(.glassProminent)
-//        }
     }
 
 }

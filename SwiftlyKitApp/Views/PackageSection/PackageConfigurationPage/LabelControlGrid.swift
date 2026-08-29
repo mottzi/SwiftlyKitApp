@@ -5,13 +5,13 @@ import SwiftUI
 struct LabelControlGrid: Layout {
 
     /// Gap between a label and its control.
-    let labelSpacing: CGFloat
+    private let labelSpacing: CGFloat
 
     /// Gap between form columns.
-    let columnSpacing: CGFloat
+    private let columnSpacing: CGFloat
 
     /// Gap between form rows.
-    let rowSpacing: CGFloat
+    private let rowSpacing: CGFloat
 
     init(
         labelSpacing: CGFloat = Self.defaultLabelSpacing,
@@ -22,18 +22,6 @@ struct LabelControlGrid: Layout {
         self.columnSpacing = columnSpacing
         self.rowSpacing = rowSpacing
     }
-
-}
-
-private extension LabelControlGrid {
-
-    nonisolated static let defaultLabelSpacing: CGFloat = 12
-    nonisolated static let defaultColumnSpacing: CGFloat = 24
-    nonisolated static let defaultRowSpacing: CGFloat = 12
-
-}
-
-extension LabelControlGrid {
 
     /// Returns the form's size for a parent proposal.
     /// Uses two columns if the fields' ideal widths fit the proposed width.
@@ -112,15 +100,15 @@ extension LabelControlGrid {
 
     /// Returns ideal label and control widths for each field.
     private func idealFieldWidths(for subviews: Subviews) -> [LabelControlWidths] {
-        
+
         var idealWidths: [LabelControlWidths] = []
 
         // Measure each label-control pair at its ideal width.
         for labelIndex in stride(from: 0, to: subviews.count, by: 2) {
             let controlIndex = labelIndex + 1
-            
+
             let labelWidth = subviews[labelIndex].sizeThatFits(.unspecified).width
-            
+
             let controlWidth = if controlIndex < subviews.count {
                 subviews[controlIndex].sizeThatFits(.unspecified).width
             } else {
@@ -337,5 +325,13 @@ extension LabelControlGrid {
         let label: CGFloat
         let control: CGFloat
     }
+
+}
+
+extension LabelControlGrid {
+
+    private static let defaultLabelSpacing: CGFloat = 12
+    private static let defaultColumnSpacing: CGFloat = 24
+    private static let defaultRowSpacing: CGFloat = 12
 
 }

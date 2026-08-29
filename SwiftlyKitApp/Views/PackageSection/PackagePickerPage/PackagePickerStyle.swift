@@ -4,16 +4,22 @@ import SwiftUI
 struct PackagePickerStyle: ButtonStyle {
 
     /// Keeps the interaction region, fill, and outline on the same rounded geometry.
-    let shape = RoundedRectangle(cornerRadius: PackagePickerStyle.cornerRadius)
+    private let shape = RoundedRectangle(cornerRadius: PackagePickerStyle.cornerRadius)
 
     /// Marks the import affordance as the current destination for a dragged package.
-    let isDropTargeted: Bool
+    private let isDropTargeted: Bool
 
     /// Replaces the idle outline with active hover feedback while the picker can accept a package.
-    let showsHover: Bool
+    private let showsHover: Bool
 
     /// Keeps pressed and border feedback off after a package is selected.
-    let canSelect: Bool
+    private let canSelect: Bool
+
+    init(isDropTargeted: Bool, showsHover: Bool, canSelect: Bool) {
+        self.isDropTargeted = isDropTargeted
+        self.showsHover = showsHover
+        self.canSelect = canSelect
+    }
 
     /// Presents a dashed idle outline, active hover and press feedback, and a stronger drag-over state.
     func makeBody(configuration: Configuration) -> some View {
@@ -111,22 +117,6 @@ extension PackagePickerStyle {
 
 }
 
-private extension PackagePickerStyle {
-
-    static let cornerRadius: CGFloat = 12
-    static let pressedScale: CGFloat = 0.98
-    static let pressedFillOpacity = 0.10
-    static let targetedFillOpacity = 0.12
-    static let hoverFillOpacity = 0.04
-    static let idleDashPattern: [CGFloat] = [8, 6]
-    static let targetedDashPattern: [CGFloat] = [10, 6]
-    static let idleLineWidth: CGFloat = 2
-    static let targetedLineWidth: CGFloat = 3
-    static let hoverDashPhase: CGFloat = -6
-    static let activeDashPhase: CGFloat = -12
-
-}
-
 extension PackagePickerStyle {
 
     /// Switches from the dashed idle invitation to a solid active outline, and hides both after selection.
@@ -148,5 +138,21 @@ extension PackagePickerStyle {
     private func showsSolidBorder(isPressed: Bool) -> Bool {
         !isDropTargeted && (showsHover || isPressed)
     }
+
+}
+
+extension PackagePickerStyle {
+
+    private static let cornerRadius: CGFloat = 12
+    private static let pressedScale: CGFloat = 0.98
+    private static let pressedFillOpacity = 0.10
+    private static let targetedFillOpacity = 0.12
+    private static let hoverFillOpacity = 0.04
+    private static let idleDashPattern: [CGFloat] = [8, 6]
+    private static let targetedDashPattern: [CGFloat] = [10, 6]
+    private static let idleLineWidth: CGFloat = 2
+    private static let targetedLineWidth: CGFloat = 3
+    private static let hoverDashPhase: CGFloat = -6
+    private static let activeDashPhase: CGFloat = -12
 
 }

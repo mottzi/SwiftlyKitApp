@@ -4,15 +4,15 @@ import UniformTypeIdentifiers
 struct PackagePickerPage: View {
 
     @Environment(PackageModel.self) private var packageModel
-    
+
     @State private var isFileImporterPresented = false
     @State private var isDropTargeted = false
     @State private var isHovering = false
-    
+
     private var canSelect: Bool {
         !packageModel.isPackageSelected
     }
-    
+
     private var showsHover: Bool {
         canSelect && isHovering
     }
@@ -46,15 +46,11 @@ struct PackagePickerPage: View {
             allowedContentTypes: [.folder]
         ) { result in
             guard case .success(let url) = result else { return }
-            withAnimation {
-                packageModel.selectPackage(at: url)
-            }
+            selectPackage(at: url)
         }
         .dropDestination(for: URL.self, isEnabled: canSelect) { items, _ in
             guard let url = items.first else { return }
-            withAnimation {
-                packageModel.selectPackage(at: url)
-            }
+            selectPackage(at: url)
         }
         .onDropSessionUpdated { session in
             let isTargeted = switch session.phase {
@@ -62,6 +58,16 @@ struct PackagePickerPage: View {
                 default: false
             }
             isDropTargeted = canSelect && isTargeted
+        }
+    }
+
+}
+
+extension PackagePickerPage {
+
+    private func selectPackage(at url: URL) {
+        withAnimation {
+            packageModel.selectPackage(at: url)
         }
     }
 

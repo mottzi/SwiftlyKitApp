@@ -15,12 +15,7 @@ struct PackageConfigurationPage: View {
         .padding(.vertical, Self.verticalPadding)
         .frame(maxHeight: .infinity, alignment: .top)
         .background {
-            RoundedRectangle(cornerRadius: SectionSurfaceMetrics.cornerRadius)
-                .fill(.quaternary.opacity(SectionSurfaceMetrics.fillOpacity))
-                .strokeBorder(
-                    Color.primary.opacity(SectionSurfaceMetrics.borderOpacity),
-                    lineWidth: SectionSurfaceMetrics.borderWidth
-                )
+            SectionSurface()
         }
     }
 
@@ -36,11 +31,11 @@ struct PackageConfigurationPage: View {
         )
 }
 
-private extension PackageConfigurationPage {
+extension PackageConfigurationPage {
 
-    static let spacing: CGFloat = 14
-    static let horizontalPadding: CGFloat = 16
-    static let verticalPadding: CGFloat = 12
-    static let dividerOpacity = 0.55
+    private static let spacing: CGFloat = 14
+    private static let horizontalPadding: CGFloat = 16
+    private static let verticalPadding: CGFloat = 12
+    private static let dividerOpacity = 0.55
 
 }

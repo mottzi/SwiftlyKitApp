@@ -1,8 +1,9 @@
 import Foundation
 import Observation
 
-/// Package selection state shared by the picker, configuration page, and toolbar.
-@Observable final class PackageModel {
+@Observable
+/// Package selection state shared by the picker, configuration page, and build action.
+final class PackageModel {
 
     /// Root URL of the selected Swift package.
     private(set) var packageURL: URL?
@@ -13,7 +14,7 @@ import Observation
     }
 
     /// Page shown for the current package selection.
-    var packagePage: PackagePage {
+    var packagePage: Page {
         isPackageSelected ? .configuration : .picker
     }
 
@@ -39,6 +40,17 @@ import Observation
         packageURL = nil
     }
 
+    /// Page selected by the package model for the package section.
+    enum Page: Int {
+
+        /// Package selection page.
+        case picker
+
+        /// Selected package configuration page.
+        case configuration
+
+    }
+
 }
 
 extension PackageModel {
@@ -48,6 +60,10 @@ extension PackageModel {
         NSString(string: url.path(percentEncoded: false))
             .abbreviatingWithTildeInPath
     }
+
+}
+
+extension PackageModel {
 
     /// Finds the package root from an existing package directory or its regular `Package.swift` manifest.
     private static func swiftPackageRoot(for url: URL) -> URL? {
@@ -78,16 +94,5 @@ extension PackageModel {
 
         return packageURL
     }
-
-}
-
-/// Page selected by `PackageModel` for the package section.
-enum PackagePage: Int {
-
-    /// Package selection page.
-    case picker
-
-    /// Selected package configuration page.
-    case configuration
 
 }

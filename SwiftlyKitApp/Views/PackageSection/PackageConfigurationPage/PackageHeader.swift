@@ -45,22 +45,20 @@ struct PackageHeader: View {
             Spacer(minLength: 0)
 
             BuildButton()
-                .labelStyle(.iconOnly)
-//                .padding(.trailing, -6)
                 .offset(x: 8, y: -2)
         }
     }
 
 }
 
-private extension PackageHeader {
+extension PackageHeader {
 
-    static let spacing: CGFloat = 12
-    static let iconLength: CGFloat = 26
-    static let textSpacing: CGFloat = 2
-    static let titleSpacing: CGFloat = 4
-    static let pathFontSize: CGFloat = 11
-    static let lineLimit = 1
-    static let textPriority = -1.0
+    private static let spacing: CGFloat = 12
+    private static let iconLength: CGFloat = 26
+    private static let textSpacing: CGFloat = 2
+    private static let titleSpacing: CGFloat = 4
+    private static let pathFontSize: CGFloat = 11
+    private static let lineLimit = 1
+    private static let textPriority = -1.0
 
 }
