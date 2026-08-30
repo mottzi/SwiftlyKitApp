@@ -14,7 +14,7 @@ struct PackageConfigurationBackgroundTests {
             rootView: AnyView(
                 ZStack {
                     Color(nsColor: .windowBackgroundColor)
-                    PackageConfigurationPage(onIdealHeightChange: { _ in })
+                    PackageConfigurationPage()
                         .frame(width: size.width, height: size.height)
                         .geometryGroup()
                         .deemphasiseContent(when: true)
@@ -84,7 +84,7 @@ struct PackageConfigurationBackgroundTests {
             rootView: AnyView(
                 ZStack {
                     Color(nsColor: .windowBackgroundColor)
-                    PackageConfigurationPage(onIdealHeightChange: { _ in })
+                    PackageConfigurationPage()
                         .frame(width: size.width, height: size.height)
                 }
                 .preferredColorScheme(.dark)
@@ -103,7 +103,7 @@ struct PackageConfigurationBackgroundTests {
         hostingView.cacheDisplay(in: hostingView.bounds, to: representation)
 
         let configurationColor = try #require(
-            color(at: CGPoint(x: size.width / 2, y: 70), in: representation, viewSize: size)
+            color(at: CGPoint(x: size.width / 2, y: 55), in: representation, viewSize: size)
         )
         let lowerEdgeColor = try #require(
             color(at: CGPoint(x: size.width / 2, y: size.height - 8), in: representation, viewSize: size)
@@ -112,6 +112,49 @@ struct PackageConfigurationBackgroundTests {
         #expect(
             colorDistance(configurationColor, lowerEdgeColor) < 0.01,
             "Configuration color: \(configurationColor), lower edge color: \(lowerEdgeColor)"
+        )
+    }
+
+    @MainActor
+    @Test
+    func keepsSurfaceBorderAtPresentedHeightWhenContentIsTaller() throws {
+        let size = CGSize(width: 300, height: 180)
+        let hostingView = NSHostingView(
+            rootView: AnyView(
+                ZStack {
+                    Color(nsColor: .windowBackgroundColor)
+                    PackageConfigurationPage()
+                        .frame(width: size.width, height: size.height)
+                }
+                .preferredColorScheme(.dark)
+                .environment(PackageModel())
+                .environment(BuildOptions())
+                .frame(width: size.width, height: size.height)
+            )
+        )
+        hostingView.frame = CGRect(origin: .zero, size: size)
+        hostingView.layoutSubtreeIfNeeded()
+        hostingView.displayIfNeeded()
+
+        let representation = try #require(
+            hostingView.bitmapImageRepForCachingDisplay(in: hostingView.bounds)
+        )
+        hostingView.cacheDisplay(in: hostingView.bounds, to: representation)
+
+        let interiorColor = color(
+            at: CGPoint(x: size.width / 2, y: size.height - 5),
+            in: representation,
+            viewSize: size
+        )
+        let borderColor = color(
+            at: CGPoint(x: size.width / 2, y: size.height - 1),
+            in: representation,
+            viewSize: size
+        )
+
+        #expect(
+            abs(luminance(borderColor) - luminance(interiorColor)) > 0.005,
+            "Interior color: \(String(describing: interiorColor)), border color: \(String(describing: borderColor))"
         )
     }
 

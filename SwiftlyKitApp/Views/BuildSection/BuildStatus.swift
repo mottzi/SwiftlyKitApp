@@ -10,16 +10,16 @@ struct BuildStatus: View {
     let onCancel: () -> Void
 
     var body: some View {
-        HStack(spacing: Self.spacing) {
+        HStack(spacing: SectionHeaderMetrics.contentSpacing) {
             statusIcon
 
-            VStack(alignment: .leading, spacing: Self.textSpacing) {
+            VStack(alignment: .leading, spacing: SectionHeaderMetrics.textSpacing) {
                 Text(presentation.title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.system(size: Self.titleFontSize, weight: .semibold))
                     .lineLimit(1)
 
                 Text(presentation.detail)
-                    .font(.caption)
+                    .font(.system(size: SectionHeaderMetrics.subtitleFontSize))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -29,8 +29,8 @@ struct BuildStatus: View {
 
             statusAction
         }
-        .padding(.horizontal, Self.horizontalPadding)
-        .frame(height: Self.height)
+        .padding(.horizontal, SectionHeaderMetrics.horizontalPadding)
+        .frame(height: SectionHeaderMetrics.height)
         .accessibilityElement(children: .contain)
     }
 
@@ -46,11 +46,15 @@ extension BuildStatus {
                     .controlSize(.small)
             } else {
                 Image(systemName: presentation.symbolName)
+                    .font(.system(size: Self.iconGlyphLength, weight: .medium))
                     .foregroundStyle(presentation.symbolColor)
                     .symbolRenderingMode(.hierarchical)
             }
         }
-        .frame(width: Self.iconLength, height: Self.iconLength)
+        .frame(
+            width: SectionHeaderMetrics.iconSlotLength,
+            height: SectionHeaderMetrics.iconSlotLength
+        )
         .accessibilityHidden(true)
     }
 
@@ -176,11 +180,8 @@ extension BuildWorkflowPhase {
 
 extension BuildStatus {
 
-    private static let height: CGFloat = 48
-    private static let spacing: CGFloat = 10
-    private static let textSpacing: CGFloat = 1
-    private static let horizontalPadding: CGFloat = 12
-    private static let iconLength: CGFloat = 17
+    private static let titleFontSize: CGFloat = 12
+    private static let iconGlyphLength: CGFloat = 22
     private static let actionLength: CGFloat = 24
 
 }

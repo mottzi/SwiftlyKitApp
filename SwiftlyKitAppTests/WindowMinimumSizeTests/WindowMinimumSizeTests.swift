@@ -8,6 +8,22 @@ struct WindowMinimumSizeTests {
 
     @MainActor
     @Test
+    func fitsOnlyWindowsWithoutRestoredFrames() throws {
+        let suiteName = "InitialWindowSizingTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        InitialWindowSizing.captureRestoredFrames(in: defaults)
+        defaults.set("new-frame", forKey: "NSWindow Frame new-window")
+        #expect(InitialWindowSizing.shouldFitWindow(named: "new-window"))
+
+        defaults.set("saved-frame", forKey: "NSWindow Frame restored-window")
+        InitialWindowSizing.captureRestoredFrames(in: defaults)
+        #expect(!InitialWindowSizing.shouldFitWindow(named: "restored-window"))
+    }
+
+    @MainActor
+    @Test
     func includesContentObscuredByTheUnifiedToolbar() async {
         let minimumContentHeight = CGFloat(281)
         let hostingView = NSHostingView(
