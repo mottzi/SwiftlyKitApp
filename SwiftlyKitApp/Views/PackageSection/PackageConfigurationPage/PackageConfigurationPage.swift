@@ -18,6 +18,11 @@ struct PackageConfigurationPage: View {
                 .padding(.trailing, ConfigurationAccessoryMetrics.spacing)
                 .padding(.top, Self.spacing)
                 .padding(.bottom, Self.verticalPadding)
+                .onGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.frame(in: .named(Self.coordinateSpaceName)).maxY
+                } action: { height in
+                    onIdealHeightChange(height)
+                }
                 .frame(
                     maxWidth: .infinity,
                     maxHeight: .infinity,
@@ -28,11 +33,7 @@ struct PackageConfigurationPage: View {
                         .opacity(Self.configurationBackgroundOpacity)
                 )
         }
-        .onGeometryChange(for: CGFloat.self) { geometry in
-            geometry.size.height
-        } action: { height in
-            onIdealHeightChange(height)
-        }
+        .coordinateSpace(.named(Self.coordinateSpaceName))
         .frame(maxHeight: .infinity, alignment: .top)
         .sectionSurface()
     }
@@ -46,5 +47,6 @@ extension PackageConfigurationPage {
     private static let verticalPadding: CGFloat = 12
     private static let dividerOpacity = 0.55
     private static let configurationBackgroundOpacity = 0.5
+    private static let coordinateSpaceName = "PackageConfigurationPage"
 
 }

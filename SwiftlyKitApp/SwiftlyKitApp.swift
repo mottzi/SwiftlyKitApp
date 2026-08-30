@@ -7,15 +7,9 @@ struct SwiftlyKitApp: App {
         WindowGroup {
             AppView()
         }
-        .defaultSizeAtMinimumHeight(width: Self.defaultWindowWidth)
+        .defaultSize(width: 500, height: 420)
         .windowToolbarStyle(.unifiedCompact)
         .windowResizability(.contentMinSize)
     }
-
-}
-
-extension SwiftlyKitApp {
-
-    static let defaultWindowWidth: CGFloat = 500
 
 }

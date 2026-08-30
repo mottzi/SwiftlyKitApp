@@ -30,6 +30,7 @@ private struct WindowMinimumSizeModifier: ViewModifier {
                 geometry.size.height
             } action: { height in
                 guard height.isFinite, height > 0 else { return }
+                guard viewHeight != height else { return }
                 viewHeight = height
             }
             .background {

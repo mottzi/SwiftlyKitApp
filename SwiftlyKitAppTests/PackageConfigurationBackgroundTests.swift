@@ -115,6 +115,45 @@ struct PackageConfigurationBackgroundTests {
         )
     }
 
+    @MainActor
+    @Test
+    func reportsContentHeightIndependentlyOfPresentedHeight() async throws {
+        let compactHeight = try await reportedHeight(
+            for: CGSize(width: 620, height: 220)
+        )
+        let expandedHeight = try await reportedHeight(
+            for: CGSize(width: 620, height: 280)
+        )
+
+        #expect(
+            abs(compactHeight - expandedHeight) < 0.5,
+            "Compact allocation: \(compactHeight), expanded allocation: \(expandedHeight)"
+        )
+    }
+
+    @MainActor
+    private func reportedHeight(for size: CGSize) async throws -> CGFloat {
+        let capture = HeightCapture()
+        let hostingView = NSHostingView(
+            rootView: AnyView(
+                PackageConfigurationPage { capture.height = $0 }
+                    .preferredColorScheme(.dark)
+                    .environment(PackageModel())
+                    .environment(BuildOptions())
+                    .frame(width: size.width, height: size.height)
+            )
+        )
+        hostingView.frame = CGRect(origin: .zero, size: size)
+
+        for _ in 0..<10 {
+            hostingView.layoutSubtreeIfNeeded()
+            hostingView.displayIfNeeded()
+            await Task.yield()
+        }
+
+        return try #require(capture.height)
+    }
+
     private func color(
         at point: CGPoint,
         in representation: NSBitmapImageRep,
@@ -141,5 +180,12 @@ struct PackageConfigurationBackgroundTests {
             + 0.7152 * color.greenComponent
             + 0.0722 * color.blueComponent
     }
+
+}
+
+@MainActor
+private final class HeightCapture {
+
+    var height: CGFloat?
 
 }
