@@ -8,6 +8,20 @@ struct PagingHStackTests {
 
     @MainActor
     @Test
+    func tallestPageDeterminesIntrinsicHeight() {
+        let rootView = PagingHStack(spacing: 10, selection: 0) {
+            Color.red.frame(height: 80)
+            Color.blue.frame(height: 140)
+        }
+        .frame(width: 240)
+
+        let hostingView = NSHostingView(rootView: rootView)
+
+        #expect(abs(hostingView.fittingSize.height - 140) < 0.5)
+    }
+
+    @MainActor
+    @Test
     func usesProductionRevealGeometryAtBothRestingPages() async {
         let firstPageFrames = await pagerFrames(progress: 0)
         expectHorizontalFrame(firstPageFrames[0], minX: 12, width: 178)
