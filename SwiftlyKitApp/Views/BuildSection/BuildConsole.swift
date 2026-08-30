@@ -5,6 +5,7 @@ import SwiftUI
 struct BuildConsole: View {
 
     @State private var followsOutput = true
+    @State private var wrapsLines = true
 
     let entries: [BuildLogEntry]
     let logRevision: Int
@@ -49,6 +50,13 @@ extension BuildConsole {
             .toggleStyle(.button)
             .help(followsOutput ? "Stop following build output" : "Follow build output")
 
+            Toggle(isOn: $wrapsLines) {
+                Label("Wrap Lines", systemImage: "arrow.turn.down.left")
+            }
+            .labelStyle(.iconOnly)
+            .toggleStyle(.button)
+            .help(wrapsLines ? "Stop wrapping build output" : "Wrap build output")
+
             Button("Copy Build Output", systemImage: "doc.on.doc", action: copyLog)
                 .labelStyle(.iconOnly)
                 .disabled(logText.isEmpty)
@@ -72,11 +80,17 @@ extension BuildConsole {
 
     private var consoleScrollView: some View {
         ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: Self.lineSpacing) {
-                    ForEach(entries) { entry in
-                        BuildLogRow(entry: entry)
-                    }
+            ScrollView(wrapsLines ? .vertical : [.horizontal, .vertical]) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(attributedLog)
+                        .font(.system(.caption, design: .monospaced))
+                        .lineSpacing(Self.lineSpacing)
+                        .fixedSize(horizontal: !wrapsLines, vertical: true)
+                        .frame(
+                            maxWidth: wrapsLines ? .infinity : nil,
+                            alignment: .leading
+                        )
+                        .textSelection(.enabled)
 
                     Color.clear
                         .frame(height: 1)
@@ -84,7 +98,6 @@ extension BuildConsole {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(Self.outputPadding)
-                .textSelection(.enabled)
             }
             .overlay {
                 if entries.isEmpty {
@@ -102,43 +115,49 @@ extension BuildConsole {
             }
             .onChange(of: followsOutput) { _, isFollowing in
                 guard isFollowing else { return }
-                proxy.scrollTo(Self.bottomID, anchor: .bottom)
+                scrollToBottom(using: proxy)
+            }
+            .onChange(of: wrapsLines) {
+                scrollToBottomAfterLayout(using: proxy)
             }
         }
     }
 
+    private var attributedLog: AttributedString {
+        var text = AttributedString()
+
+        for index in entries.indices {
+            if index != entries.startIndex {
+                text.append(AttributedString("\n"))
+            }
+
+            let entry = entries[index]
+            var line = AttributedString(
+                entry.kind.visiblePrefix + (entry.text.isEmpty ? " " : entry.text)
+            )
+            line.foregroundColor = entry.kind.foregroundStyle
+            text.append(line)
+        }
+
+        return text
+    }
+
     private func scrollToBottom(using proxy: ScrollViewProxy) {
         guard followsOutput else { return }
-        proxy.scrollTo(Self.bottomID, anchor: .bottom)
+        proxy.scrollTo(
+            Self.bottomID,
+            anchor: wrapsLines ? .bottom : .bottomLeading
+        )
     }
 
-}
+    private func scrollToBottomAfterLayout(using proxy: ScrollViewProxy) {
+        guard followsOutput else { return }
 
-private struct BuildLogRow: View {
-
-    let entry: BuildLogEntry
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Self.spacing) {
-            Text(entry.kind.visiblePrefix)
-                .foregroundStyle(entry.kind.foregroundStyle)
-                .frame(width: Self.prefixWidth, alignment: .trailing)
-
-            Text(entry.text.isEmpty ? " " : entry.text)
-                .foregroundStyle(entry.kind.foregroundStyle)
-                .fixedSize(horizontal: false, vertical: true)
+        Task { @MainActor in
+            await Task.yield()
+            scrollToBottom(using: proxy)
         }
-        .font(.system(.caption, design: .monospaced))
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
     }
-
-}
-
-extension BuildLogRow {
-
-    private static let spacing: CGFloat = 6
-    private static let prefixWidth: CGFloat = 9
 
 }
 
@@ -146,12 +165,12 @@ extension BuildLogEntry.Kind {
 
     fileprivate var visiblePrefix: String {
         switch self {
-            case .status: "›"
-            case .command: "$"
-            case .standardOutput: ""
-            case .standardError: "!"
-            case .success: "✓"
-            case .failure: "!"
+            case .status: "› "
+            case .command: "$ "
+            case .standardOutput: "  "
+            case .standardError: "! "
+            case .success: "✓ "
+            case .failure: "! "
         }
     }
 
