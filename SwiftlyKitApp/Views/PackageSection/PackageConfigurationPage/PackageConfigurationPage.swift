@@ -2,6 +2,8 @@ import SwiftUI
 
 struct PackageConfigurationPage: View {
 
+    let onIdealHeightChange: (CGFloat) -> Void
+
     var body: some View {
         VStack(alignment: .leading, spacing: Self.spacing) {
             PackageHeader()
@@ -13,13 +15,10 @@ struct PackageConfigurationPage: View {
                 .padding(.trailing, ConfigurationAccessoryMetrics.spacing)
         }
         .padding(.vertical, Self.verticalPadding)
-        .background {
-            GeometryReader { geometry in
-                Color.clear.preference(
-                    key: PackageSectionIdealHeightPreferenceKey.self,
-                    value: geometry.size.height
-                )
-            }
+        .onGeometryChange(for: CGFloat.self) { geometry in
+            geometry.size.height
+        } action: { height in
+            onIdealHeightChange(height)
         }
         .frame(maxHeight: .infinity, alignment: .top)
         .background {
@@ -30,7 +29,7 @@ struct PackageConfigurationPage: View {
 }
 
 #Preview {
-    PackageConfigurationPage()
+    PackageConfigurationPage(onIdealHeightChange: { _ in })
         .environment(PackageModel())
         .environment(BuildOptions())
         .frame(

@@ -17,7 +17,7 @@ struct PackageSection: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .geometryGroup()
 
-            PackageConfigurationPage()
+            PackageConfigurationPage(onIdealHeightChange: updatePresentedHeight)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .geometryGroup()
                 .deemphasiseContent(when: !packageModel.isPackageSelected)
@@ -26,9 +26,6 @@ struct PackageSection: View {
                 .offset(configurationOffset)
         }
         .frame(height: presentedHeight, alignment: .top)
-        .onPreferenceChange(PackageSectionIdealHeightPreferenceKey.self) { idealHeight in
-            updatePresentedHeight(idealHeight)
-        }
         .onPreferenceChange(PackageSectionLayoutModePreferenceKey.self) { reportedMode in
             guard let reportedMode else { return }
             layoutMode = reportedMode
