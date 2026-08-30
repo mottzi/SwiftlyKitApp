@@ -8,44 +8,6 @@ struct PagingHStackTests {
 
     @MainActor
     @Test
-    func selectedPackageSectionRecoversFromNarrowInitialLayout() async throws {
-        let packageURL = FileManager.default.temporaryDirectory
-            .appending(path: UUID().uuidString, directoryHint: .isDirectory)
-        try FileManager.default.createDirectory(
-            at: packageURL,
-            withIntermediateDirectories: true
-        )
-        try Data().write(to: packageURL.appending(path: "Package.swift"))
-        defer { try? FileManager.default.removeItem(at: packageURL) }
-
-        let stableHeight = await packageSectionHeightAfterSelection(
-            initialWidth: 500,
-            finalWidth: 500,
-            height: 473,
-            packageURL: packageURL
-        )
-        let transientHeight = await packageSectionHeightAfterSelection(
-            initialWidth: 300,
-            finalWidth: 500,
-            height: 473,
-            packageURL: packageURL
-        )
-
-        #expect(abs(transientHeight - stableHeight) < 0.5)
-    }
-
-    @MainActor
-    @Test
-    func usesReferencePageForIntrinsicHeight() {
-        let tallestPage = pagerFittingHeight(heightReferencePage: nil)
-        let referencePage = pagerFittingHeight(heightReferencePage: 1)
-
-        #expect(abs(tallestPage - 120) < 0.5)
-        #expect(abs(referencePage - 80) < 0.5)
-    }
-
-    @MainActor
-    @Test
     func usesProductionRevealGeometryAtBothRestingPages() async {
         let firstPageFrames = await pagerFrames(progress: 0)
         expectHorizontalFrame(firstPageFrames[0], minX: 12, width: 178)
@@ -94,91 +56,12 @@ struct PagingHStackTests {
         #expect(abs(frame.width - width) < 0.5)
     }
 
-    @MainActor
-    private func pagerFittingHeight(heightReferencePage: Int?) -> CGFloat {
-        let rootView = PagingHStack(
-            spacing: 10,
-            heightReferencePage: heightReferencePage,
-            selection: 0
-        ) {
-            Color.clear.frame(width: 100, height: 120)
-            Color.clear.frame(width: 100, height: 80)
-        }
-        .fixedSize()
-
-        return NSHostingView(rootView: rootView).fittingSize.height
-    }
-
-    @MainActor
-    private func packageSectionHeightAfterSelection(
-        initialWidth: CGFloat,
-        finalWidth: CGFloat,
-        height: CGFloat,
-        packageURL: URL
-    ) async -> CGFloat {
-
-        let packageModel = PackageModel()
-        let capture = SectionHeightCapture()
-
-        let rootView = VStack(alignment: .leading, spacing: 10) {
-            PackageSection()
-                .padding(.horizontal, 12)
-                .clipped()
-                .fixedSize(horizontal: false, vertical: true)
-                .onGeometryChange(for: CGFloat.self) { geometry in
-                    geometry.size.height
-                } action: { height in
-                    capture.height = height
-                }
-
-            Color.clear
-                .frame(minHeight: 176, idealHeight: 176, maxHeight: .infinity)
-                .padding(.horizontal, 12)
-        }
-        .frame(minWidth: 300)
-        .environment(packageModel)
-        .environment(BuildOptions())
-
-        let hostingView = NSHostingView(rootView: rootView)
-        hostingView.frame = CGRect(x: 0, y: 0, width: initialWidth, height: height)
-
-        for _ in 0..<20 {
-            hostingView.layoutSubtreeIfNeeded()
-            await Task.yield()
-        }
-
-        hostingView.frame.size.width = finalWidth
-
-        for _ in 0..<20 {
-            hostingView.layoutSubtreeIfNeeded()
-            await Task.yield()
-        }
-
-        withAnimation(.default) {
-            packageModel.selectPackage(at: packageURL)
-        }
-
-        for _ in 0..<30 {
-            hostingView.layoutSubtreeIfNeeded()
-            try? await Task.sleep(for: .milliseconds(20))
-        }
-
-        return capture.height
-    }
-
 }
 
 @MainActor
 private final class PageFrameCapture {
 
     var frames: [Int: CGRect] = [:]
-
-}
-
-@MainActor
-private final class SectionHeightCapture {
-
-    var height: CGFloat = 0
 
 }
 

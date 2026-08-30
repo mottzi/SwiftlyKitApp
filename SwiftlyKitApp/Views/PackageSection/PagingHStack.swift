@@ -10,34 +10,27 @@ struct PagingHStack {
     /// Amount by which each nonfinal page is narrower than the pager viewport.
     private let pageTrailingInset: CGFloat
 
-    /// Page whose ideal height defines the pager's intrinsic height.
-    private let heightReferencePage: Int?
-
     /// Page index. 0 is the first page. A fraction is a position between pages.
     private var progress: CGFloat
 
     init(
         spacing: CGFloat,
         pageTrailingInset: CGFloat = 0,
-        heightReferencePage: Int? = nil,
         selection: Int
     ) {
         self.spacing = spacing
         self.pageTrailingInset = pageTrailingInset
-        self.heightReferencePage = heightReferencePage
         self.progress = CGFloat(selection)
     }
 
     init(
         spacing: CGFloat,
         pageTrailingInset: CGFloat = 0,
-        heightReferencePage: Int? = nil,
         selection: some RawRepresentable<Int>
     ) {
         self.init(
             spacing: spacing,
             pageTrailingInset: pageTrailingInset,
-            heightReferencePage: heightReferencePage,
             selection: selection.rawValue
         )
     }
@@ -62,7 +55,7 @@ nonisolated extension PagingHStack: Layout {
             viewportWidth: viewportWidth,
             pageSizes: pageSizes
         )
-        let idealHeight = idealHeight(from: pageSizes)
+        let idealHeight = pageSizes.map(\.height).max() ?? 0
         let height = resolvedPagerHeight(
             for: proposal.height,
             idealHeight: idealHeight
@@ -97,17 +90,6 @@ nonisolated extension PagingHStack: Layout {
 }
 
 nonisolated extension PagingHStack {
-
-    private func idealHeight(from pageSizes: [CGSize]) -> CGFloat {
-        guard
-            let heightReferencePage,
-            pageSizes.indices.contains(heightReferencePage)
-        else {
-            return pageSizes.map(\.height).max() ?? 0
-        }
-
-        return pageSizes[heightReferencePage].height
-    }
 
     private func concreteViewportWidth(from proposedWidth: CGFloat?) -> CGFloat? {
         guard let proposedWidth, proposedWidth.isFinite, proposedWidth > 0 else {

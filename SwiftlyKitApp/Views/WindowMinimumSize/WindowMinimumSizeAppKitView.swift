@@ -29,12 +29,6 @@ final class WindowMinimumSizeAppKitView: NSView {
     /// Coalesces window updates until the active AppKit layout pass has returned.
     private var minimumUpdateTask: Task<Void, Never>?
 
-    /// Whether this bridge belongs to a new window that should start at its computed minimum.
-    private var shouldFitInitialWindow = false
-
-    /// Whether this bridge has already matched itself to a placement request.
-    private var didResolveInitialSizing = false
-
     /// Schedules a minimum-size update after the window association changes.
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
@@ -83,14 +77,6 @@ extension WindowMinimumSizeAppKitView {
     /// Applies independent width and height minimums to the containing window.
     private func updateMinimum() {
         guard let window else { return }
-
-        if !didResolveInitialSizing, !window.frameAutosaveName.isEmpty {
-            shouldFitInitialWindow = InitialWindowSizing.shouldFitWindow(
-                named: window.frameAutosaveName
-            )
-            didResolveInitialSizing = true
-        }
-
         guard visibleMinHeight.isFinite, visibleMinHeight > 0 else { return }
 
         guard let hostingView = hostingView() else { return }
@@ -147,16 +133,6 @@ extension WindowMinimumSizeAppKitView {
 
         if minSize != window.contentMinSize {
             window.contentMinSize = minSize
-        }
-
-        if shouldFitInitialWindow {
-            shouldFitInitialWindow = false
-
-            var size = contentView.bounds.size
-            size.width = max(size.width, minContentWidth)
-            size.height = minContentHeight
-            window.setContentSize(size)
-            return
         }
 
         guard contentView.bounds.width < minContentWidth

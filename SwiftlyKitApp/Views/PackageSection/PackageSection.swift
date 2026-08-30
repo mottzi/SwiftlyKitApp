@@ -11,7 +11,6 @@ struct PackageSection: View {
         PagingHStack(
             spacing: Self.pageSpacing,
             pageTrailingInset: Self.pageTrailingInset,
-            heightReferencePage: PackageModel.Page.configuration.rawValue,
             selection: packageModel.packagePage
         ) {
             PackagePickerPage(layoutMode: layoutMode)
@@ -43,7 +42,7 @@ extension PackageSection {
         if presentedHeight == nil {
             presentedHeight = idealHeight
         } else {
-            withAnimation(.bouncy.speed(Self.layoutTransitionSpeed)) {
+            withAnimation(.bouncy.speed(1.25)) {
                 presentedHeight = idealHeight
             }
         }
@@ -102,7 +101,6 @@ extension PackageSection {
 
     private static let pageSpacing: CGFloat = 10
     private static let pageTrailingInset: CGFloat = 38
-    private static let layoutTransitionSpeed = 1.25
     private static let inactiveConfigurationScale: CGFloat = 0.9
     private static let inactiveConfigurationRotation = Angle.degrees(0.8)
     private static let inactiveConfigurationOffset = CGSize(width: 2, height: -2)

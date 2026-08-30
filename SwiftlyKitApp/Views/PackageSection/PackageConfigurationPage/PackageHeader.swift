@@ -5,22 +5,22 @@ struct PackageHeader: View {
     @Environment(PackageModel.self) private var packageModel
 
     var body: some View {
-        HStack(alignment: .center, spacing: SectionHeaderMetrics.contentSpacing) {
+        HStack(alignment: .center, spacing: Self.spacing) {
             Image(systemName: "swift")
                 .resizable()
                 .scaledToFit()
                 .frame(
-                    width: SectionHeaderMetrics.iconSlotLength,
-                    height: SectionHeaderMetrics.iconSlotLength
+                    width: Self.iconLength,
+                    height: Self.iconLength
                 )
                 .foregroundStyle(.orange)
                 .symbolRenderingMode(.monochrome)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: SectionHeaderMetrics.textSpacing) {
+            VStack(alignment: .leading, spacing: Self.textSpacing) {
                 HStack(alignment: .firstTextBaseline, spacing: Self.titleSpacing) {
                     Text(packageModel.packageName)
-                        .font(.system(size: Self.titleFontSize, weight: .semibold))
+                        .font(.headline)
                         .foregroundStyle(Color.primary)
                         .lineLimit(Self.lineLimit)
 
@@ -28,7 +28,7 @@ struct PackageHeader: View {
                 }
 
                 Text(packageModel.displayPath)
-                    .font(.system(size: SectionHeaderMetrics.subtitleFontSize))
+                    .font(.system(size: Self.pathFontSize))
                     .foregroundStyle(.secondary)
                     .lineLimit(Self.lineLimit)
                     .truncationMode(.middle)
@@ -42,18 +42,22 @@ struct PackageHeader: View {
             )
             .layoutPriority(Self.textPriority)
 
+            Spacer(minLength: 0)
+
             BuildButton()
+                .offset(x: 8, y: -2)
         }
-        .padding(.horizontal, SectionHeaderMetrics.horizontalPadding)
-        .frame(height: SectionHeaderMetrics.height)
     }
 
 }
 
 extension PackageHeader {
 
+    private static let spacing: CGFloat = 12
+    private static let iconLength: CGFloat = 26
+    private static let textSpacing: CGFloat = 2
     private static let titleSpacing: CGFloat = 4
-    private static let titleFontSize: CGFloat = 13
+    private static let pathFontSize: CGFloat = 11
     private static let lineLimit = 1
     private static let textPriority = -1.0
 
