@@ -94,11 +94,12 @@ extension BuildConsole {
 
                     Color.clear
                         .frame(height: 1)
-                        .id(Self.bottomID)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(Self.outputPadding)
+                .id(Self.contentID)
             }
+            .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
             .defaultScrollAnchor(.topLeading, for: .alignment)
             .overlay {
                 if entries.isEmpty {
@@ -146,7 +147,7 @@ extension BuildConsole {
     private func scrollToBottom(using proxy: ScrollViewProxy) {
         guard followsOutput else { return }
         proxy.scrollTo(
-            Self.bottomID,
+            Self.contentID,
             anchor: wrapsLines ? .bottom : .bottomLeading
         )
     }
@@ -189,7 +190,7 @@ extension BuildLogEntry.Kind {
 
 extension BuildConsole {
 
-    private static let bottomID = "build-console-bottom"
+    private static let contentID = "build-console-content"
     private static let minimumHeight: CGFloat = 112
     private static let toolbarHeight: CGFloat = 27
     private static let toolbarPadding: CGFloat = 8
