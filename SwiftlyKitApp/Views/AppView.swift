@@ -30,14 +30,6 @@ struct AppView: View {
 
 }
 
-#Preview {
-    AppView()
-        .frame(
-            width: SwiftlyKitApp.defaultWindowSize.width,
-            height: SwiftlyKitApp.defaultWindowSize.height
-        )
-}
-
 extension AppView {
 
     private static let spacing: CGFloat = 10

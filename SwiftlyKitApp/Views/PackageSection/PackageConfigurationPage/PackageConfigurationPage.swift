@@ -63,16 +63,6 @@ private struct ConfigurationBackgroundTopPreferenceKey: PreferenceKey {
 
 }
 
-#Preview {
-    PackageConfigurationPage(onIdealHeightChange: { _ in })
-        .environment(PackageModel())
-        .environment(BuildOptions())
-        .frame(
-            width: SwiftlyKitApp.defaultWindowSize.width,
-            height: SwiftlyKitApp.defaultWindowSize.height
-        )
-}
-
 extension PackageConfigurationPage {
 
     private static let spacing: CGFloat = 14
