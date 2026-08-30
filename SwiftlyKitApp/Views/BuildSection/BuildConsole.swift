@@ -27,7 +27,10 @@ struct BuildConsole: View {
         .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
         .overlay {
             RoundedRectangle(cornerRadius: Self.cornerRadius)
-                .strokeBorder(Color.primary.opacity(Self.borderOpacity))
+                .strokeBorder(
+                    Color.primary.opacity(Self.borderOpacity),
+                    lineWidth: Self.borderWidth
+                )
         }
     }
 
@@ -91,15 +94,14 @@ extension BuildConsole {
                             alignment: .leading
                         )
                         .textSelection(.enabled)
-
-                    Color.clear
-                        .frame(height: 1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(Self.outputPadding)
                 .id(Self.contentID)
             }
-            .padding(Self.outputPadding)
-            .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+            .padding(.horizontal, Self.borderWidth)
+            .padding(.bottom, Self.borderWidth)
+            .scrollBounceBehavior(.basedOnSize, axes: [.horizontal, .vertical])
             .defaultScrollAnchor(.topLeading, for: .alignment)
             .overlay {
                 if entries.isEmpty {
@@ -198,6 +200,7 @@ extension BuildConsole {
     private static let actionSpacing: CGFloat = 3
     private static let lineSpacing: CGFloat = 1
     private static let cornerRadius: CGFloat = 7
+    private static let borderWidth: CGFloat = 1
     private static let dividerOpacity = 0.45
     private static let backgroundOpacity = 0.5
     private static let borderOpacity = 0.07
