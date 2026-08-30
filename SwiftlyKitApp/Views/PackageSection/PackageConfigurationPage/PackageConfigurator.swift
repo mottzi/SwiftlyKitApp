@@ -9,7 +9,7 @@ struct PackageConfigurator: View {
     var body: some View {
         @Bindable var buildOptions = buildOptions
 
-        LabelControlGrid {
+        AdaptiveGrid {
             buildOptionField("Product", layoutReference: .firstField) {
                 ProductControl(
                     infoPopoverPresented: isPopoverPresented(.info(.product)),
@@ -90,7 +90,7 @@ extension PackageConfigurator {
         )
     }
 
-    /// Emits exactly two direct children for `LabelControlGrid`: a label followed by its control.
+    /// Emits exactly two direct children for `AdaptiveGrid`: a label followed by its control.
     @ViewBuilder
     private func buildOptionField<Control: View>(
         _ title: LocalizedStringKey,
@@ -141,7 +141,7 @@ private enum BuildOptionLayoutReference: Hashable {
 
 }
 
-/// Collects field-label bounds after `LabelControlGrid` places them.
+/// Collects field-label bounds after `AdaptiveGrid` places them.
 private struct BuildOptionLabelBoundsPreferenceKey: PreferenceKey {
 
     static let defaultValue: [BuildOptionLayoutReference: Anchor<CGRect>] = [:]

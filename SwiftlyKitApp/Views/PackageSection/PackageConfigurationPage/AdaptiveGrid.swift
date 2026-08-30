@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Grid layout for alternating label and control subviews.
 /// Uses two columns if the fields' ideal widths fit the proposed width.
-struct LabelControlGrid: Layout {
+struct AdaptiveGrid: Layout {
 
     /// Gap between a label and its control.
     private let labelSpacing: CGFloat
@@ -96,7 +96,7 @@ struct LabelControlGrid: Layout {
 
 }
 
-extension LabelControlGrid {
+extension AdaptiveGrid {
 
     /// Returns ideal label and control widths for each field.
     private func idealFieldWidths(for subviews: Subviews) -> [LabelControlWidths] {
@@ -328,7 +328,7 @@ extension LabelControlGrid {
 
 }
 
-extension LabelControlGrid {
+extension AdaptiveGrid {
 
     private static let defaultLabelSpacing: CGFloat = 12
     private static let defaultColumnSpacing: CGFloat = 24
