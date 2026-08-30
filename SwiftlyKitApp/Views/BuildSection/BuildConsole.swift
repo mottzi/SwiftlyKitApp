@@ -96,9 +96,9 @@ extension BuildConsole {
                         .frame(height: 1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(Self.outputPadding)
                 .id(Self.contentID)
             }
+            .padding(Self.outputPadding)
             .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
             .defaultScrollAnchor(.topLeading, for: .alignment)
             .overlay {
