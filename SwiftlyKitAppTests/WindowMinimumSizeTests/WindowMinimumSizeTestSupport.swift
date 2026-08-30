@@ -65,11 +65,11 @@ struct WindowMinimumSizeTestBridge: NSViewRepresentable {
 
     let visibleMinHeight: CGFloat
 
-    func makeNSView(context: Context) -> WindowMinimumSizeView {
-        WindowMinimumSizeView()
+    func makeNSView(context: Context) -> WindowMinimumSizeAppKitView {
+        WindowMinimumSizeAppKitView()
     }
 
-    func updateNSView(_ nsView: WindowMinimumSizeView, context: Context) {
+    func updateNSView(_ nsView: WindowMinimumSizeAppKitView, context: Context) {
         nsView.visibleMinHeight = visibleMinHeight
     }
 

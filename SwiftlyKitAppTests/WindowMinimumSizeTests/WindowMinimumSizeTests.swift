@@ -94,7 +94,7 @@ struct WindowMinimumSizeTests {
         hostingView.layoutSubtreeIfNeeded()
 
         guard let bridgeView = descendantViews(of: hostingView)
-            .compactMap({ $0 as? WindowMinimumSizeView })
+            .compactMap({ $0 as? WindowMinimumSizeAppKitView })
             .first else {
             #expect(Bool(false), "The window minimum bridge was not installed")
             await close(window, hostingView: hostingView)

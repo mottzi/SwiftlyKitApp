@@ -9,13 +9,13 @@ extension View {
     /// Sets an independent window minimum size while allowing height to follow this view's measured height.
     /// The supplied height reserves space for required content outside this view.
     func windowMinimumSize(addingHeight extraHeight: CGFloat = 0) -> some View {
-        modifier(WindowMinimumSize(extraHeight: extraHeight))
+        modifier(WindowMinimumSizeModifier(extraHeight: extraHeight))
     }
 
 }
 
 /// View modifier that derives independent window minimum dimensions from the measured content.
-private struct WindowMinimumSize: ViewModifier {
+private struct WindowMinimumSizeModifier: ViewModifier {
 
     /// Latest positive finite height measured for the modified view.
     @State private var viewHeight: CGFloat?
@@ -51,12 +51,12 @@ private struct WindowMinimumSizeBridge: NSViewRepresentable {
     let visibleMinHeight: CGFloat
 
     /// Creates the AppKit view that controls the containing window's minimum size.
-    func makeNSView(context: Context) -> WindowMinimumSizeView {
-        WindowMinimumSizeView()
+    func makeNSView(context: Context) -> WindowMinimumSizeAppKitView {
+        WindowMinimumSizeAppKitView()
     }
 
     /// Passes the latest visible-content minimum height to the AppKit view.
-    func updateNSView(_ nsView: WindowMinimumSizeView, context: Context) {
+    func updateNSView(_ nsView: WindowMinimumSizeAppKitView, context: Context) {
         nsView.visibleMinHeight = visibleMinHeight
     }
 

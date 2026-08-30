@@ -1,17 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// Type-erased access to a hosting view's automatic sizing options.
-private protocol HostingViewSizingOptionsAccess: AnyObject {
-
-    var sizingOptions: NSHostingSizingOptions { get set }
-
-}
-
-extension NSHostingView: HostingViewSizingOptionsAccess {}
-
 /// AppKit view that separates SwiftUI's coupled minimum size into independent window limits.
-final class WindowMinimumSizeView: NSView {
+final class WindowMinimumSizeAppKitView: NSView {
 
     /// Minimum height for visible SwiftUI content, excluding window chrome.
     var visibleMinHeight = CGFloat.zero {
@@ -68,7 +59,7 @@ final class WindowMinimumSizeView: NSView {
 
 }
 
-extension WindowMinimumSizeView {
+extension WindowMinimumSizeAppKitView {
 
     /// Defers window mutations because resizing a window from `layout()` re-enters AppKit layout.
     private func scheduleMinimumUpdate() {
@@ -237,3 +228,13 @@ extension WindowMinimumSizeView {
     }
 
 }
+
+/// Type-erased access to a hosting view's automatic sizing options.
+private protocol HostingViewSizingOptionsAccess: AnyObject {
+
+    var sizingOptions: NSHostingSizingOptions { get set }
+
+}
+
+///
+extension NSHostingView: HostingViewSizingOptionsAccess {}
