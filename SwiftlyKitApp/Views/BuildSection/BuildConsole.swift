@@ -99,6 +99,7 @@ extension BuildConsole {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(Self.outputPadding)
             }
+            .defaultScrollAnchor(.topLeading, for: .alignment)
             .overlay {
                 if entries.isEmpty {
                     Text("Build output appears here.")

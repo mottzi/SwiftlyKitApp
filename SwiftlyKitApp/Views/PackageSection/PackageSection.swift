@@ -5,6 +5,7 @@ struct PackageSection: View {
     @Environment(PackageModel.self) private var packageModel
 
     @State private var layoutMode = PackageSectionLayoutMode.twoColumns
+    @State private var presentedHeight: CGFloat?
 
     var body: some View {
         PagingHStack(
@@ -24,6 +25,10 @@ struct PackageSection: View {
                 .rotationEffect(configurationRotation, anchor: .bottomLeading)
                 .offset(configurationOffset)
         }
+        .frame(height: presentedHeight, alignment: .top)
+        .onPreferenceChange(PackageSectionIdealHeightPreferenceKey.self) { idealHeight in
+            updatePresentedHeight(idealHeight)
+        }
         .onPreferenceChange(PackageSectionLayoutModePreferenceKey.self) { reportedMode in
             guard let reportedMode else { return }
             layoutMode = reportedMode
@@ -32,6 +37,19 @@ struct PackageSection: View {
 }
 
 extension PackageSection {
+
+    private func updatePresentedHeight(_ idealHeight: CGFloat) {
+        guard idealHeight.isFinite, idealHeight > 0 else { return }
+        guard presentedHeight != idealHeight else { return }
+
+        if presentedHeight == nil {
+            presentedHeight = idealHeight
+        } else {
+            withAnimation(.bouncy.speed(1.25)) {
+                presentedHeight = idealHeight
+            }
+        }
+    }
 
     private var configurationScale: CGFloat {
         packageModel.isPackageSelected

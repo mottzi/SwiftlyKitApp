@@ -45,7 +45,7 @@ nonisolated extension PagingHStack: Layout {
         set { progress = newValue }
     }
 
-    /// Returns the pager's size for a parent proposal, with variable page widths and enough height for every page.
+    /// Returns the pager's size for a parent proposal, with variable page widths and enough intrinsic height by default.
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
 
         let viewportWidth = concreteViewportWidth(from: proposal.width)
@@ -55,7 +55,11 @@ nonisolated extension PagingHStack: Layout {
             viewportWidth: viewportWidth,
             pageSizes: pageSizes
         )
-        let height = pageSizes.map(\.height).max() ?? 0
+        let idealHeight = pageSizes.map(\.height).max() ?? 0
+        let height = resolvedPagerHeight(
+            for: proposal.height,
+            idealHeight: idealHeight
+        )
 
         return CGSize(width: width, height: height)
     }
@@ -128,6 +132,18 @@ nonisolated extension PagingHStack {
         }
 
         return requiredViewportWidths.max() ?? 0
+    }
+
+    private func resolvedPagerHeight(
+        for proposedHeight: CGFloat?,
+        idealHeight: CGFloat
+    ) -> CGFloat {
+
+        guard let proposedHeight, proposedHeight.isFinite else {
+            return idealHeight
+        }
+
+        return max(proposedHeight, 0)
     }
 
     /// Returns a nonfinal page's width after clamping its trailing inset to the viewport.

@@ -13,6 +13,14 @@ struct PackageConfigurationPage: View {
                 .padding(.trailing, ConfigurationAccessoryMetrics.spacing)
         }
         .padding(.vertical, Self.verticalPadding)
+        .background {
+            GeometryReader { geometry in
+                Color.clear.preference(
+                    key: PackageSectionIdealHeightPreferenceKey.self,
+                    value: geometry.size.height
+                )
+            }
+        }
         .frame(maxHeight: .infinity, alignment: .top)
         .background {
             SectionSurface()
