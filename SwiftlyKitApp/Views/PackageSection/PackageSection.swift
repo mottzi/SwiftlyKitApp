@@ -4,13 +4,15 @@ struct PackageSection: View {
 
     @Environment(PackageModel.self) private var packageModel
 
+    @State private var layoutMode = PackageSectionLayoutMode.twoColumns
+
     var body: some View {
         PagingHStack(
             spacing: Self.pageSpacing,
             pageTrailingInset: Self.pageTrailingInset,
             selection: packageModel.packagePage
         ) {
-            PackagePickerPage()
+            PackagePickerPage(layoutMode: layoutMode)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .geometryGroup()
 
@@ -21,6 +23,10 @@ struct PackageSection: View {
                 .scaleEffect(configurationScale, anchor: .bottomLeading)
                 .rotationEffect(configurationRotation, anchor: .bottomLeading)
                 .offset(configurationOffset)
+        }
+        .onPreferenceChange(PackageSectionLayoutModePreferenceKey.self) { reportedMode in
+            guard let reportedMode else { return }
+            layoutMode = reportedMode
         }
     }
 }

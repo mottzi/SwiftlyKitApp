@@ -4,9 +4,10 @@ struct PackagePickerLabel: View {
 
     let showsHover: Bool
     let isDropTargeted: Bool
+    let layoutMode: PackageSectionLayoutMode
 
     var body: some View {
-        HStack(spacing: Self.labelSpacing) {
+        labelLayout {
             icon
             title
         }
@@ -17,6 +18,15 @@ struct PackagePickerLabel: View {
 }
 
 extension PackagePickerLabel {
+
+    private var labelLayout: AnyLayout {
+        switch layoutMode {
+            case .oneColumn:
+                AnyLayout(VStackLayout(spacing: Self.verticalSpacing))
+            case .twoColumns:
+                AnyLayout(HStackLayout(spacing: Self.horizontalSpacing))
+        }
+    }
 
     private var icon: some View {
         Image(systemName: "swift")
@@ -45,7 +55,8 @@ extension PackagePickerLabel {
 
 extension PackagePickerLabel {
 
-    private static let labelSpacing: CGFloat = 16
+    private static let horizontalSpacing: CGFloat = 16
+    private static let verticalSpacing: CGFloat = 12
     private static let iconLength: CGFloat = 80
     private static let titleLineLimit = 1
     private static let hoverRotation = Angle.degrees(4)

@@ -9,6 +9,8 @@ struct PackagePickerPage: View {
     @State private var isDropTargeted = false
     @State private var isHovering = false
 
+    let layoutMode: PackageSectionLayoutMode
+
     private var canSelect: Bool {
         !packageModel.isPackageSelected
     }
@@ -27,7 +29,8 @@ struct PackagePickerPage: View {
         } label: {
             PackagePickerLabel(
                 showsHover: showsHover,
-                isDropTargeted: isDropTargetedForPresentation
+                isDropTargeted: isDropTargetedForPresentation,
+                layoutMode: layoutMode
             )
         }
         .buttonStyle(
