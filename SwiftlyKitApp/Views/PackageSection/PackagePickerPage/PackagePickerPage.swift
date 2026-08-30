@@ -9,7 +9,7 @@ struct PackagePickerPage: View {
     @State private var isDropTargeted = false
     @State private var isHovering = false
 
-    let layoutMode: PackageSectionLayoutMode
+    let layoutMode: PackageSection.LayoutMode
 
     private var canSelect: Bool {
         !packageModel.isPackageSelected

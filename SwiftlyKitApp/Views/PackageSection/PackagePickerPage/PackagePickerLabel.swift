@@ -4,7 +4,7 @@ struct PackagePickerLabel: View {
 
     let showsHover: Bool
     let isDropTargeted: Bool
-    let layoutMode: PackageSectionLayoutMode
+    let layoutMode: PackageSection.LayoutMode
 
     var body: some View {
         labelLayout {

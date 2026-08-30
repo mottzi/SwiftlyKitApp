@@ -53,7 +53,7 @@ struct PackageConfigurator: View {
             GeometryReader { proxy in
                 Color.clear
                     .preference(
-                        key: PackageSectionLayoutModePreferenceKey.self,
+                        key: PackageSection.LayoutMode.PreferenceKey.self,
                         value: layoutMode(for: bounds, in: proxy)
                     )
             }
@@ -116,7 +116,7 @@ extension PackageConfigurator {
     private func layoutMode(
         for bounds: [BuildOptionLayoutReference: Anchor<CGRect>],
         in proxy: GeometryProxy
-    ) -> PackageSectionLayoutMode? {
+    ) -> PackageSection.LayoutMode? {
 
         guard
             let firstField = bounds[.firstField],

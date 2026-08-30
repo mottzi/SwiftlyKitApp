@@ -4,7 +4,7 @@ struct PackageSection: View {
 
     @Environment(PackageModel.self) private var packageModel
 
-    @State private var layoutMode = PackageSectionLayoutMode.twoColumns
+    @State private var layoutMode = LayoutMode.twoColumns
     @State private var presentedHeight: CGFloat?
 
     var body: some View {
@@ -26,7 +26,7 @@ struct PackageSection: View {
                 .offset(configurationOffset)
         }
         .frame(height: presentedHeight, alignment: .top)
-        .onPreferenceChange(PackageSectionLayoutModePreferenceKey.self) { reportedMode in
+        .onPreferenceChange(LayoutMode.PreferenceKey.self) { reportedMode in
             guard let reportedMode else { return }
             layoutMode = reportedMode
         }
@@ -66,6 +66,35 @@ extension PackageSection {
             : Self.inactiveConfigurationOffset
     }
 
+}
+
+extension PackageSection {
+
+    /// Form arrangement shared by the package configuration and package picker label.
+    enum LayoutMode {
+
+        case oneColumn
+        case twoColumns
+
+    }
+
+}
+
+extension PackageSection.LayoutMode {
+
+    /// Carries the configuration form's selected arrangement to `PackageSection`.
+    struct PreferenceKey: SwiftUI.PreferenceKey {
+
+        static let defaultValue: PackageSection.LayoutMode? = nil
+
+        static func reduce(
+            value: inout PackageSection.LayoutMode?,
+            nextValue: () -> PackageSection.LayoutMode?
+        ) {
+            value = nextValue() ?? value
+        }
+
+    }
 }
 
 extension PackageSection {
