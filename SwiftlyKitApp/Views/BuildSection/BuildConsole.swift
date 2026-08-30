@@ -20,18 +20,7 @@ struct BuildConsole: View {
             consoleScrollView
         }
         .frame(minHeight: Self.minimumHeight)
-        .background {
-            RoundedRectangle(cornerRadius: Self.cornerRadius)
-                .fill(Color(nsColor: .textBackgroundColor).opacity(Self.backgroundOpacity))
-        }
-        .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius))
-        .overlay {
-            RoundedRectangle(cornerRadius: Self.cornerRadius)
-                .strokeBorder(
-                    Color.primary.opacity(Self.borderOpacity),
-                    lineWidth: Self.borderWidth
-                )
-        }
+        .background(Color(nsColor: .textBackgroundColor).opacity(Self.backgroundOpacity))
     }
 
 }
@@ -99,8 +88,6 @@ extension BuildConsole {
                 .padding(Self.outputPadding)
                 .id(Self.contentID)
             }
-            .padding(.horizontal, Self.borderWidth)
-            .padding(.bottom, Self.borderWidth)
             .scrollBounceBehavior(.basedOnSize, axes: [.horizontal, .vertical])
             .defaultScrollAnchor(.topLeading, for: .alignment)
             .overlay {
@@ -199,10 +186,7 @@ extension BuildConsole {
     private static let outputPadding: CGFloat = 8
     private static let actionSpacing: CGFloat = 3
     private static let lineSpacing: CGFloat = 1
-    private static let cornerRadius: CGFloat = 7
-    private static let borderWidth: CGFloat = 1
     private static let dividerOpacity = 0.45
     private static let backgroundOpacity = 0.5
-    private static let borderOpacity = 0.07
 
 }

@@ -16,14 +16,15 @@ struct BuildSection: View {
                 onCancel: buildOptions.buildWorkflow.cancel
             )
 
+            Divider()
+                .opacity(Self.dividerOpacity)
+
             BuildConsole(
                 entries: buildOptions.buildWorkflow.log.entries,
                 logRevision: buildOptions.buildWorkflow.log.revision,
                 logText: buildOptions.buildWorkflow.log.text,
                 onClear: buildOptions.buildWorkflow.log.clear
             )
-            .padding(.horizontal, Self.consoleInset)
-            .padding(.bottom, Self.consoleInset)
         }
         .frame(
             minWidth: 0,
@@ -35,9 +36,7 @@ struct BuildSection: View {
             idealHeight: Self.minimumHeight,
             maxHeight: .infinity
         )
-        .background {
-            SectionSurface()
-        }
+        .sectionSurface()
         .deemphasiseContent(when: isWaitingForConfiguration)
     }
 
@@ -66,6 +65,6 @@ extension BuildSection {
 extension BuildSection {
 
     static let minimumHeight: CGFloat = 176
-    private static let consoleInset: CGFloat = 8
+    private static let dividerOpacity = 0.55
 
 }
