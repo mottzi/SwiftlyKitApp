@@ -10,6 +10,12 @@ final class BuildOptions {
     let toolchainDiscovery: ToolchainDiscovery
     let productDiscovery: ProductDiscovery
     let buildWorkflow: BuildWorkflow
+    let buildStorageMaintenance: BuildStorageMaintenance
+
+    /// Whether a build or build-storage operation currently owns the package environment.
+    var isOperationRunning: Bool {
+        buildWorkflow.isRunning || buildStorageMaintenance.isRunning
+    }
 
     /// Selected cross-compilation target.
     var target: BuildTarget = .linux(.x86_64)
@@ -28,6 +34,7 @@ final class BuildOptions {
         toolchainDiscovery = ToolchainDiscovery(swiftlyKit: swiftlyKit)
         productDiscovery = ProductDiscovery(swiftlyKit: swiftlyKit)
         buildWorkflow = BuildWorkflow(swiftlyKit: swiftlyKit)
+        buildStorageMaintenance = BuildStorageMaintenance(swiftlyKit: swiftlyKit)
     }
 
     /// Returns a prepared package only if it matches every current discovery choice.
@@ -41,12 +48,25 @@ final class BuildOptions {
 
     /// Starts a build from the prepared package and a snapshot of the current build choices.
     func startBuild(in packageRoot: URL) {
+        guard !buildStorageMaintenance.isRunning else { return }
         guard let preparedPackage = preparedPackage(in: packageRoot) else { return }
 
         buildWorkflow.start(
             preparedPackage,
             configuration: configuration,
             stripBinary: stripBinary
+        )
+    }
+
+    /// Performs cleanup for the selected package's prepared environment.
+    func performCleanup(_ cleanup: BuildStorageCleanup, in packageRoot: URL) async throws {
+        guard !buildWorkflow.isRunning else { return }
+        guard let preparedPackage = preparedPackage(in: packageRoot) else { return }
+
+        buildWorkflow.discardSession()
+        try await buildStorageMaintenance.perform(
+            cleanup,
+            using: preparedPackage.environment
         )
     }
 
@@ -102,9 +122,12 @@ final class BuildOptions {
         self.toolchain = toolchain
     }
 
-    /// Clears discoveries that belong to a package or target that is no longer selected.
-    func clearDiscoveries() {
+    /// Discards state owned by the selected package while preserving build preferences.
+    func clearPackageSession() {
+        guard !buildStorageMaintenance.isRunning else { return }
+
         buildWorkflow.cancel()
+        buildWorkflow.discardSession()
         hostDiscovery.clear()
         clearEnvironmentDiscoveries()
     }

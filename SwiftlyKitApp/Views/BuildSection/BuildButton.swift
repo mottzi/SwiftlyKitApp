@@ -11,7 +11,7 @@ struct BuildButton: View {
                 .padding(4)
         }
         .labelStyle(.iconOnly)
-        .disabled(!canBuild || buildOptions.buildWorkflow.isRunning)
+        .disabled(!canBuild || buildOptions.isOperationRunning)
         .buttonStyle(.glass)
         .buttonBorderShape(.circle)
         .keyboardShortcut("b", modifiers: .command)

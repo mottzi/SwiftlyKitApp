@@ -71,6 +71,15 @@ final class BuildWorkflow {
         task?.cancel()
     }
 
+    /// Discards the completed package session's build result and console output.
+    func discardSession() {
+        guard !state.isRunning else { return }
+
+        result = nil
+        log.clear()
+        state = .idle
+    }
+
 }
 
 extension BuildWorkflow {

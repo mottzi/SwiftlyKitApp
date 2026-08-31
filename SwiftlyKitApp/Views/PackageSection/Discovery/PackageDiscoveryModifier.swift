@@ -31,7 +31,7 @@ private struct PackageDiscoveryModifier: ViewModifier {
         content
             .task(id: hostDiscoveryKey) {
                 guard hostDiscoveryKey != nil else {
-                    buildOptions.clearDiscoveries()
+                    buildOptions.clearPackageSession()
                     return
                 }
 

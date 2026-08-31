@@ -49,7 +49,7 @@ struct PackageConfigurator: View {
         }
         .reportsHeightReservation()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .disabled(buildOptions.buildWorkflow.isRunning)
+        .disabled(buildOptions.isOperationRunning)
         .overlayPreferenceValue(BuildOptionLabelBoundsPreferenceKey.self) { bounds in
             GeometryReader { proxy in
                 Color.clear
