@@ -11,7 +11,7 @@ struct AppView: View {
                 .padding(.horizontal, Self.horizontalPadding)
                 .clipped()
                 .fixedSize(horizontal: false, vertical: true)
-                .windowMinimumSize(addingHeight: Self.windowHeightAllowance)
+                .windowMinimumSize(addingHeight: Self.minimumHeightOutsidePackageSection)
 
             BuildSection()
                 .padding(.horizontal, Self.horizontalPadding)
@@ -37,6 +37,7 @@ extension AppView {
     private static let topPadding: CGFloat = 4
     private static let bottomPadding: CGFloat = 12
     private static let minWindowWidth: CGFloat = 300
-    private static let windowHeightAllowance = topPadding + spacing + BuildSection.minimumHeight + bottomPadding
+    private static let minimumHeightOutsidePackageSection =
+        topPadding + spacing + BuildSection.minimumHeight + bottomPadding
 
 }

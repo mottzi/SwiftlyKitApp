@@ -8,6 +8,65 @@ struct PagingHStackTests {
 
     @MainActor
     @Test
+    func usesTallestIntrinsicPageHeightWithoutAFiniteProposal() {
+        let hostingView = NSHostingView(
+            rootView: PagingHStack(spacing: 10, selection: 0) {
+                Color.red.frame(width: 100, height: 40)
+                Color.blue.frame(width: 120, height: 70)
+            }
+        )
+
+        #expect(abs(hostingView.fittingSize.height - 70) < 0.5)
+    }
+
+    @MainActor
+    @Test
+    func remeasuresIntrinsicPageHeightWhenViewportWidthChanges() {
+        let wideHeight = pagerFittingHeight(width: 240)
+        let narrowHeight = pagerFittingHeight(width: 140)
+
+        #expect(narrowHeight > wideHeight + 30)
+    }
+
+    @MainActor
+    private func pagerFittingHeight(width: CGFloat) -> CGFloat {
+        let hostingView = NSHostingView(
+            rootView: PagingHStack(spacing: 10, selection: 0) {
+                WidthResponsivePage() {
+                    Color.clear
+                }
+                Color.clear.frame(height: 40)
+            }
+            .frame(width: width)
+            .fixedSize(horizontal: false, vertical: true)
+        )
+
+        return hostingView.fittingSize.height
+    }
+
+    @MainActor
+    @Test
+    func honorsFiniteHeightProposal() async throws {
+        let capture = PageSizeCapture()
+        let hostingView = NSHostingView(
+            rootView: PagingHStack(spacing: 10, selection: 0) {
+                Color.red.frame(height: 100)
+                Color.blue.frame(height: 140)
+            }
+            .onGeometryChange(for: CGSize.self) { $0.size } action: {
+                capture.size = $0
+            }
+            .frame(width: 240, height: 60)
+        )
+        hostingView.frame = CGRect(x: 0, y: 0, width: 240, height: 60)
+
+        let size = try await reportedSize(capture, in: hostingView)
+
+        #expect(abs(size.height - 60) < 0.5)
+    }
+
+    @MainActor
+    @Test
     func usesProductionRevealGeometryAtBothRestingPages() async {
         let firstPageFrames = await pagerFrames(progress: 0)
         expectHorizontalFrame(firstPageFrames[0], minX: 12, width: 178)
@@ -56,12 +115,52 @@ struct PagingHStackTests {
         #expect(abs(frame.width - width) < 0.5)
     }
 
+    @MainActor
+    private func reportedSize(
+        _ capture: PageSizeCapture,
+        in hostingView: NSHostingView<some View>
+    ) async throws -> CGSize {
+        for _ in 0..<10 where capture.size == nil {
+            hostingView.layoutSubtreeIfNeeded()
+            await Task.yield()
+        }
+
+        return try #require(capture.size)
+    }
+
 }
 
 @MainActor
 private final class PageFrameCapture {
 
     var frames: [Int: CGRect] = [:]
+
+}
+
+@MainActor
+private final class PageSizeCapture {
+
+    var size: CGSize?
+
+}
+
+private struct WidthResponsivePage: Layout {
+
+    func sizeThatFits(
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) -> CGSize {
+        let width = proposal.width ?? 100
+        return CGSize(width: width, height: width < 180 ? 100 : 50)
+    }
+
+    func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) {}
 
 }
 

@@ -4,7 +4,7 @@ struct PackageSection: View {
 
     @Environment(PackageModel.self) private var packageModel
 
-    @State private var layoutMode = LayoutMode.twoColumns
+    @State private var arrangement = AdaptiveGridArrangement.twoColumns
     @State private var sectionHeight: CGFloat?
 
     var body: some View {
@@ -13,7 +13,7 @@ struct PackageSection: View {
             pageTrailingInset: Self.pageTrailingInset,
             selection: packageModel.packagePage
         ) {
-            PackagePickerPage(layoutMode: layoutMode)
+            PackagePickerPage(arrangement: arrangement)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .geometryGroup()
 
@@ -26,9 +26,9 @@ struct PackageSection: View {
                 .offset(configurationOffset)
         }
         .frame(height: sectionHeight, alignment: .top)
-        .onPreferenceChange(LayoutMode.PreferenceKey.self) { reportedMode in
-            guard let reportedMode else { return }
-            layoutMode = reportedMode
+        .onAdaptiveGridArrangementChange { reportedArrangement in
+            guard reportedArrangement != arrangement else { return }
+            arrangement = reportedArrangement
         }
     }
 }
@@ -42,7 +42,7 @@ extension PackageSection {
         if sectionHeight == nil {
             sectionHeight = contentHeight
         } else {
-            withAnimation(.bouncy.speed(1.25)) {
+            withAnimation(PackageLayoutAnimation.adaptiveChange) {
                 sectionHeight = contentHeight
             }
         }
@@ -66,35 +66,6 @@ extension PackageSection {
             : Self.inactiveConfigurationOffset
     }
 
-}
-
-extension PackageSection {
-
-    /// Form arrangement shared by the package configuration and package picker label.
-    enum LayoutMode {
-
-        case oneColumn
-        case twoColumns
-
-    }
-
-}
-
-extension PackageSection.LayoutMode {
-
-    /// Carries the configuration form's selected arrangement to `PackageSection`.
-    struct PreferenceKey: SwiftUI.PreferenceKey {
-
-        static let defaultValue: PackageSection.LayoutMode? = nil
-
-        static func reduce(
-            value: inout PackageSection.LayoutMode?,
-            nextValue: () -> PackageSection.LayoutMode?
-        ) {
-            value = nextValue() ?? value
-        }
-
-    }
 }
 
 extension PackageSection {

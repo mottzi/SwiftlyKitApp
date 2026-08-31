@@ -4,7 +4,7 @@ struct PackagePickerLabel: View {
 
     let showsHover: Bool
     let isDropTargeted: Bool
-    let layoutMode: PackageSection.LayoutMode
+    let arrangement: AdaptiveGridArrangement
 
     var body: some View {
         labelLayout {
@@ -13,7 +13,7 @@ struct PackagePickerLabel: View {
         }
         .fixedSize(horizontal: true, vertical: false)
         .padding()
-        .animation(.bouncy.speed(Self.layoutTransitionSpeed), value: layoutMode)
+        .animation(PackageLayoutAnimation.adaptiveChange, value: arrangement)
     }
 
 }
@@ -21,7 +21,7 @@ struct PackagePickerLabel: View {
 extension PackagePickerLabel {
 
     private var labelLayout: AnyLayout {
-        switch layoutMode {
+        switch arrangement {
             case .oneColumn: AnyLayout(VStackLayout(spacing: Self.verticalSpacing))
             case .twoColumns: AnyLayout(HStackLayout(spacing: Self.horizontalSpacing))
         }
@@ -56,7 +56,6 @@ extension PackagePickerLabel {
 
     private static let horizontalSpacing: CGFloat = 16
     private static let verticalSpacing: CGFloat = 12
-    private static let layoutTransitionSpeed = 1.25
     private static let iconLength: CGFloat = 80
     private static let titleLineLimit = 1
     private static let hoverRotation = Angle.degrees(4)

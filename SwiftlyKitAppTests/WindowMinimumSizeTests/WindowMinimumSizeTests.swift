@@ -267,6 +267,232 @@ struct WindowMinimumSizeTests {
     }
 
     @MainActor
+    @Test
+    func keepsIndependentMinimumsForTwoWindows() async {
+        let firstHeight = CGFloat(220)
+        let secondHeight = CGFloat(310)
+        let firstHostingView = bridgeHostingView(visibleMinHeight: firstHeight)
+        let secondHostingView = bridgeHostingView(visibleMinHeight: secondHeight)
+        let firstWindow = minimumSizeWindow(
+            contentWidth: 500,
+            contentHeight: 500,
+            hostingView: firstHostingView,
+            toolbarIdentifier: "FirstIndependentWindowMinimumTests"
+        )
+        let secondWindow = minimumSizeWindow(
+            contentWidth: 500,
+            contentHeight: 500,
+            hostingView: secondHostingView,
+            toolbarIdentifier: "SecondIndependentWindowMinimumTests"
+        )
+        firstWindow.orderFront(nil)
+        secondWindow.orderFront(nil)
+
+        await settleBridge(
+            in: firstHostingView,
+            window: firstWindow,
+            expectedMinimumHeight: expectedMinimumHeight(
+                in: firstWindow,
+                reservedContentHeight: firstHeight,
+                additionalContentHeight: 0
+            )
+        )
+        await settleBridge(
+            in: secondHostingView,
+            window: secondWindow,
+            expectedMinimumHeight: expectedMinimumHeight(
+                in: secondWindow,
+                reservedContentHeight: secondHeight,
+                additionalContentHeight: 0
+            )
+        )
+
+        #expect(
+            abs(
+                firstWindow.contentMinSize.height
+                    - expectedMinimumHeight(
+                        in: firstWindow,
+                        reservedContentHeight: firstHeight,
+                        additionalContentHeight: 0
+                    )
+            ) < 0.5
+        )
+        #expect(
+            abs(
+                secondWindow.contentMinSize.height
+                    - expectedMinimumHeight(
+                        in: secondWindow,
+                        reservedContentHeight: secondHeight,
+                        additionalContentHeight: 0
+                    )
+            ) < 0.5
+        )
+
+        await close(firstWindow, hostingView: firstHostingView)
+        await close(secondWindow, hostingView: secondHostingView)
+    }
+
+    @MainActor
+    @Test
+    func restoresHostingSizingOptionsAfterDetachment() async throws {
+        let hostingView = bridgeHostingView(visibleMinHeight: 240)
+        let originalOptions: NSHostingSizingOptions = [.minSize, .maxSize]
+        hostingView.sizingOptions = originalOptions
+        let window = minimumSizeWindow(
+            contentWidth: 500,
+            contentHeight: 500,
+            hostingView: hostingView,
+            toolbarIdentifier: "WindowMinimumDetachTests"
+        )
+
+        await settleBridge(
+            in: hostingView,
+            window: window,
+            expectedMinimumHeight: expectedMinimumHeight(
+                in: window,
+                reservedContentHeight: 240,
+                additionalContentHeight: 0
+            )
+        )
+        await waitForManagedHostingOptions(hostingView)
+        #expect(!hostingView.sizingOptions.contains(.minSize))
+        #expect(hostingView.sizingOptions.contains(.intrinsicContentSize))
+
+        let bridge = try #require(windowMinimumBridge(in: hostingView))
+        bridge.removeFromSuperview()
+
+        #expect(hostingView.sizingOptions == originalOptions)
+        window.close()
+    }
+
+    @MainActor
+    @Test
+    func restoresAndManagesHostingOptionsAcrossReattachment() async throws {
+        let hostingView = bridgeHostingView(visibleMinHeight: 240)
+        let originalOptions: NSHostingSizingOptions = [.minSize, .maxSize]
+        hostingView.sizingOptions = originalOptions
+        let firstWindow = minimumSizeWindow(
+            contentWidth: 500,
+            contentHeight: 500,
+            hostingView: hostingView,
+            toolbarIdentifier: "FirstWindowMinimumReattachTests"
+        )
+
+        await settleBridge(
+            in: hostingView,
+            window: firstWindow,
+            expectedMinimumHeight: expectedMinimumHeight(
+                in: firstWindow,
+                reservedContentHeight: 240,
+                additionalContentHeight: 0
+            )
+        )
+        await waitForManagedHostingOptions(hostingView)
+        let secondWindow = minimumSizeWindow(
+            contentWidth: 500,
+            contentHeight: 500,
+            hostingView: hostingView,
+            toolbarIdentifier: "SecondWindowMinimumReattachTests"
+        )
+        await settleBridge(
+            in: hostingView,
+            window: secondWindow,
+            expectedMinimumHeight: expectedMinimumHeight(
+                in: secondWindow,
+                reservedContentHeight: 240,
+                additionalContentHeight: 0
+            )
+        )
+        await waitForManagedHostingOptions(hostingView)
+        #expect(!hostingView.sizingOptions.contains(.minSize))
+        #expect(hostingView.sizingOptions.contains(.intrinsicContentSize))
+
+        let bridge = try #require(windowMinimumBridge(in: hostingView))
+        bridge.removeFromSuperview()
+        #expect(hostingView.sizingOptions == originalOptions)
+
+        firstWindow.close()
+        secondWindow.close()
+    }
+
+    @MainActor
+    @Test
+    func cancelsPendingMinimumUpdateWhenDetached() async throws {
+        let hostingView = bridgeHostingView(visibleMinHeight: 220)
+        let window = minimumSizeWindow(
+            contentWidth: 500,
+            contentHeight: 500,
+            hostingView: hostingView,
+            toolbarIdentifier: "WindowMinimumPendingDetachTests"
+        )
+        await settleBridge(
+            in: hostingView,
+            window: window,
+            expectedMinimumHeight: expectedMinimumHeight(
+                in: window,
+                reservedContentHeight: 220,
+                additionalContentHeight: 0
+            )
+        )
+        let originalMinimum = window.contentMinSize
+        let bridge = try #require(windowMinimumBridge(in: hostingView))
+
+        bridge.visibleMinHeight = 400
+        bridge.layout()
+        bridge.removeFromSuperview()
+        let detachedMinimum = window.contentMinSize
+
+        for _ in 0..<3 {
+            await Task.yield()
+        }
+
+        #expect(window.contentMinSize == detachedMinimum)
+        #expect(window.contentMinSize.height <= originalMinimum.height)
+        window.close()
+    }
+
+    @MainActor
+    @Test
+    func recalculatesMinimumAfterToolbarVisibilityChanges() async {
+        let visibleHeight = CGFloat(281)
+        let hostingView = bridgeHostingView(visibleMinHeight: visibleHeight)
+        let window = minimumSizeWindow(
+            contentWidth: 500,
+            contentHeight: 500,
+            hostingView: hostingView,
+            toolbarIdentifier: "WindowMinimumToolbarChangeTests"
+        )
+        window.orderFront(nil)
+        await settleBridge(
+            in: hostingView,
+            window: window,
+            expectedMinimumHeight: expectedMinimumHeight(
+                in: window,
+                reservedContentHeight: visibleHeight,
+                additionalContentHeight: 0
+            )
+        )
+        let visibleToolbarMinimum = window.contentMinSize.height
+
+        window.toolbar?.isVisible = false
+        window.displayIfNeeded()
+        let expectedHeight = expectedMinimumHeight(
+            in: window,
+            reservedContentHeight: visibleHeight,
+            additionalContentHeight: 0
+        )
+        await settleBridge(
+            in: hostingView,
+            window: window,
+            expectedMinimumHeight: expectedHeight
+        )
+        #expect(abs(window.contentMinSize.height - expectedHeight) < 0.5)
+        #expect(window.contentMinSize.height <= visibleToolbarMinimum)
+
+        await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
     private func settledMinimumSize(of window: NSWindow, contentWidth: CGFloat) async -> CGSize {
         var currentWidth = window.contentView?.bounds.width ?? contentWidth
 
@@ -417,6 +643,68 @@ struct WindowMinimumSizeTests {
         window.orderFront(nil)
 
         return (window, hostingView)
+    }
+
+    @MainActor
+    private func bridgeHostingView(
+        visibleMinHeight: CGFloat
+    ) -> NSHostingView<AnyView> {
+        NSHostingView(
+            rootView: AnyView(
+                Color.clear
+                    .frame(width: 500, height: visibleMinHeight)
+                    .background {
+                        WindowMinimumSizeTestBridge(
+                            visibleMinHeight: visibleMinHeight
+                        )
+                    }
+            )
+        )
+    }
+
+    @MainActor
+    private func settleBridge(
+        in hostingView: NSHostingView<AnyView>,
+        window: NSWindow,
+        expectedMinimumHeight: CGFloat
+    ) async {
+        for _ in 0..<100 {
+            hostingView.layoutSubtreeIfNeeded()
+            window.displayIfNeeded()
+            await Task.yield()
+
+            if abs(window.contentMinSize.height - expectedMinimumHeight) < 0.5 {
+                return
+            }
+
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+    }
+
+    @MainActor
+    private func waitForManagedHostingOptions(
+        _ hostingView: NSHostingView<AnyView>
+    ) async {
+        for _ in 0..<100 {
+            hostingView.layoutSubtreeIfNeeded()
+            await Task.yield()
+
+            if !hostingView.sizingOptions.contains(.minSize)
+                    && hostingView.sizingOptions.contains(.intrinsicContentSize) {
+                return
+            }
+
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+    }
+
+    @MainActor
+    private func windowMinimumBridge(
+        in hostingView: NSHostingView<AnyView>
+    ) -> WindowMinimumSizeAppKitView? {
+        descendantViews(of: hostingView)
+            .compactMap { $0 as? WindowMinimumSizeAppKitView }
+            .first
     }
 
     @MainActor

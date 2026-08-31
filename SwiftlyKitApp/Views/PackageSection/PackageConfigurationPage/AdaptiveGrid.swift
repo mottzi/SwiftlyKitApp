@@ -26,73 +26,35 @@ struct AdaptiveGrid: Layout {
     /// Returns the form's size for a parent proposal.
     /// Uses two columns if the fields' ideal widths fit the proposed width.
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-
-        guard !subviews.isEmpty else { return .zero }
-
-        // Measure each field at its ideal width and choose the number of columns.
-        let idealWidths = idealFieldWidths(for: subviews)
-        let columnCount = columnCount(for: proposal.width, idealWidths: idealWidths)
-
-        let idealWidth = idealFormWidth(for: columnCount, idealWidths: idealWidths)
-        let formWidth = resolvedFormWidth(idealWidth: idealWidth, proposedWidth: proposal.width, columnCount: columnCount)
-
-        let columnMetrics = columnMetrics(for: columnCount, idealWidths: idealWidths)
-        let columnWidths = columnWidths(formWidth: formWidth, columnCount: columnCount, columnMetrics: columnMetrics)
-        let rowHeights = rowHeights(
-            fieldCount: idealWidths.count,
-            columnCount: columnCount,
-            columnWidths: columnWidths,
-            columnMetrics: columnMetrics,
-            subviews: subviews
-        )
-
-        let contentHeight = rowHeights.reduce(0, +)
-        let rowSpacingHeight = rowSpacing * CGFloat(max(rowHeights.count - 1, 0))
-
-        return CGSize(width: formWidth, height: contentHeight + rowSpacingHeight)
+        layoutPlan(proposedWidth: proposal.width, subviews: subviews)?.size ?? .zero
     }
 
     /// Places label-control fields in one or two columns based on the assigned width.
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
 
-        guard !subviews.isEmpty else { return }
         guard bounds.width.isFinite, bounds.width > 0 else { return }
-
-        // Measure each field at its ideal width and choose the number of columns.
-        let idealWidths = idealFieldWidths(for: subviews)
-        let columnCount = columnCount(for: bounds.width, idealWidths: idealWidths)
-        let columnMetrics = columnMetrics(for: columnCount, idealWidths: idealWidths)
-        let columnWidths = columnWidths(formWidth: bounds.width, columnCount: columnCount, columnMetrics: columnMetrics)
-        let rowHeights = rowHeights(
-            fieldCount: idealWidths.count,
-            columnCount: columnCount,
-            columnWidths: columnWidths,
-            columnMetrics: columnMetrics,
+        guard let plan = layoutPlan(
+            proposedWidth: bounds.width,
+            exactFormWidth: bounds.width,
             subviews: subviews
-        )
+        ) else { return }
 
         // Place the fields from left to right, advancing the row after each column.
-        var rowOriginY = bounds.minY
-        for fieldIndex in 0..<idealWidths.count {
-            let rowIndex = fieldIndex / columnCount
-            let columnIndex = fieldIndex % columnCount
+        for fieldIndex in 0..<plan.fieldCount {
+            let rowIndex = fieldIndex / plan.columnCount
+            let columnIndex = fieldIndex % plan.columnCount
             placeField(
                 fieldIndex,
                 columnIndex: columnIndex,
-                rowOriginY: rowOriginY,
-                rowHeight: rowHeights[rowIndex],
+                rowOriginY: bounds.minY + plan.rowOriginY(forFieldAt: fieldIndex),
+                rowHeight: plan.rowHeights[rowIndex],
                 in: bounds,
-                columnCount: columnCount,
-                columnWidths: columnWidths,
-                columnMetrics: columnMetrics,
+                columnCount: plan.columnCount,
+                columnWidths: plan.columnWidths,
+                columnMetrics: plan.columnMetrics,
                 subviews: subviews
             )
-
-            if columnIndex == columnCount - 1 || fieldIndex == idealWidths.count - 1 {
-                rowOriginY += rowHeights[rowIndex] + rowSpacing
-            }
         }
-
     }
 
     /// Exposes the one-column height without changing the grid's current arrangement or size.
@@ -104,20 +66,81 @@ struct AdaptiveGrid: Layout {
         cache: inout ()
     ) -> CGFloat? {
 
-        guard guide == .adaptiveGridOneColumnHeight else { return nil }
+        if guide == .adaptiveGridOneColumnBottom {
+            let oneColumnPlan = layoutPlan(
+                proposedWidth: nil,
+                subviews: subviews
+            )
+            return oneColumnPlan.map { bounds.minY + $0.height }
+        }
 
-        let oneColumnHeight = sizeThatFits(
-            proposal: .unspecified,
-            subviews: subviews,
-            cache: &cache
-        ).height
+        guard guide == .adaptiveGridFirstFieldRow
+                || guide == .adaptiveGridSecondFieldRow else { return nil }
+        guard let currentPlan = layoutPlan(
+            proposedWidth: bounds.width,
+            exactFormWidth: bounds.width,
+            subviews: subviews
+        ) else { return nil }
 
-        return bounds.minY + oneColumnHeight
+        let fieldIndex = guide == .adaptiveGridFirstFieldRow ? 0 : 1
+        guard fieldIndex < currentPlan.fieldCount else { return nil }
+
+        return bounds.minY + currentPlan.rowOriginY(forFieldAt: fieldIndex)
     }
 
 }
 
 extension AdaptiveGrid {
+
+    /// Builds one proposal-specific plan shared by measurement, placement, and metric reporting.
+    private func layoutPlan(
+        proposedWidth: CGFloat?,
+        exactFormWidth: CGFloat? = nil,
+        subviews: Subviews
+    ) -> LayoutPlan? {
+        guard !subviews.isEmpty else { return nil }
+
+        let idealWidths = idealFieldWidths(for: subviews)
+        let columnCount = columnCount(
+            for: proposedWidth,
+            idealWidths: idealWidths
+        )
+        let idealWidth = idealFormWidth(
+            for: columnCount,
+            idealWidths: idealWidths
+        )
+        let formWidth = exactFormWidth ?? resolvedFormWidth(
+            idealWidth: idealWidth,
+            proposedWidth: proposedWidth,
+            columnCount: columnCount
+        )
+        let columnMetrics = columnMetrics(
+            for: columnCount,
+            idealWidths: idealWidths
+        )
+        let columnWidths = columnWidths(
+            formWidth: formWidth,
+            columnCount: columnCount,
+            columnMetrics: columnMetrics
+        )
+        let rowHeights = rowHeights(
+            fieldCount: idealWidths.count,
+            columnCount: columnCount,
+            columnWidths: columnWidths,
+            columnMetrics: columnMetrics,
+            subviews: subviews
+        )
+
+        return LayoutPlan(
+            fieldCount: idealWidths.count,
+            columnCount: columnCount,
+            formWidth: formWidth,
+            columnMetrics: columnMetrics,
+            columnWidths: columnWidths,
+            rowHeights: rowHeights,
+            rowSpacing: rowSpacing
+        )
+    }
 
     /// Returns ideal label and control widths for each field.
     private func idealFieldWidths(for subviews: Subviews) -> [LabelControlWidths] {
@@ -347,77 +370,32 @@ extension AdaptiveGrid {
         let control: CGFloat
     }
 
-}
+    /// Proposal-specific values used by every layout path.
+    private nonisolated struct LayoutPlan {
 
-/// Alignment used to read the grid's one-column height without affecting its layout.
-private nonisolated struct AdaptiveGridOneColumnHeightAlignment: AlignmentID {
+        let fieldCount: Int
+        let columnCount: Int
+        let formWidth: CGFloat
+        let columnMetrics: [LabelControlWidths]
+        let columnWidths: [CGFloat]
+        let rowHeights: [CGFloat]
+        let rowSpacing: CGFloat
 
-    static func defaultValue(in context: ViewDimensions) -> CGFloat {
-        context[VerticalAlignment.bottom]
-    }
-
-}
-
-extension VerticalAlignment {
-
-    fileprivate nonisolated static let adaptiveGridOneColumnHeight = VerticalAlignment(
-        AdaptiveGridOneColumnHeightAlignment.self
-    )
-
-}
-
-extension Alignment {
-
-    fileprivate nonisolated static let adaptiveGridOneColumnHeight = Alignment(
-        horizontal: .leading,
-        vertical: .adaptiveGridOneColumnHeight
-    )
-
-}
-
-extension View {
-
-    /// Publishes an `AdaptiveGrid`'s one-column height without changing its visible layout.
-    func reportsHeightReservation() -> some View {
-        overlay(alignment: .adaptiveGridOneColumnHeight) {
-            Color.clear
-                .frame(width: 0, height: 0)
-                .anchorPreference(
-                    key: AdaptiveGridOneColumnHeightAnchorPreferenceKey.self,
-                    value: .bounds
-                ) { $0 }
+        var size: CGSize {
+            CGSize(width: formWidth, height: height)
         }
-    }
 
-    /// Converts the reported one-column bottom edge into a window minimum-height reservation.
-    func reservesWindowHeight(
-        addingHeight additionalHeight: CGFloat
-    ) -> some View {
-        overlayPreferenceValue(
-            AdaptiveGridOneColumnHeightAnchorPreferenceKey.self
-        ) { oneColumnHeightAnchor in
-            GeometryReader { proxy in
-                if let oneColumnHeightAnchor {
-                    Color.clear.windowMinimumHeightReservation(
-                        proxy[oneColumnHeightAnchor].maxY + additionalHeight
-                    )
-                }
-            }
+        var height: CGFloat {
+            rowHeights.reduce(0, +)
+                + rowSpacing * CGFloat(max(rowHeights.count - 1, 0))
         }
-    }
 
-}
+        func rowOriginY(forFieldAt fieldIndex: Int) -> CGFloat {
+            let rowIndex = fieldIndex / columnCount
+            return rowHeights.prefix(rowIndex).reduce(0, +)
+                + rowSpacing * CGFloat(rowIndex)
+        }
 
-/// Carries the marker that represents an `AdaptiveGrid`'s one-column height.
-private struct AdaptiveGridOneColumnHeightAnchorPreferenceKey: PreferenceKey {
-
-    static let defaultValue: Anchor<CGRect>? = nil
-
-    static func reduce(
-        value: inout Anchor<CGRect>?,
-        nextValue: () -> Anchor<CGRect>?
-    ) {
-        value = nextValue() ?? value
     }
 
 }

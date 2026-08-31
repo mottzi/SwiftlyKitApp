@@ -9,7 +9,7 @@ struct PackagePickerPage: View {
     @State private var isDropTargeted = false
     @State private var isHovering = false
 
-    let layoutMode: PackageSection.LayoutMode
+    let arrangement: AdaptiveGridArrangement
 
     private var canSelect: Bool {
         !packageModel.isPackageSelected
@@ -30,7 +30,7 @@ struct PackagePickerPage: View {
             PackagePickerLabel(
                 showsHover: showsHover,
                 isDropTargeted: isDropTargetedForPresentation,
-                layoutMode: layoutMode
+                arrangement: arrangement
             )
         }
         .buttonStyle(

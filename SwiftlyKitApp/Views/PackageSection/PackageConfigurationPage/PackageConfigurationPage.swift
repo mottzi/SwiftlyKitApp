@@ -34,8 +34,8 @@ struct PackageConfigurationPage: View {
                 )
         }
         .coordinateSpace(.named(Self.coordinateSpaceName))
-        .reservesWindowHeight(
-            addingHeight: Self.verticalPadding
+        .reservesAdaptiveGridHeightForWindow(
+            addingBottom: Self.verticalPadding
         )
         .frame(maxHeight: .infinity, alignment: .top)
         .sectionSurface()
