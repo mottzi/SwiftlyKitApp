@@ -1,4 +1,5 @@
 import AppKit
+import Observation
 import SwiftUI
 @testable import SwiftlyKitApp
 
@@ -11,6 +12,71 @@ struct ResponsiveMinimumContent: View {
             Color.clear
         }
         .frame(minWidth: 334)
+    }
+
+}
+
+@Observable
+final class DynamicMinimumWidthModel {
+
+    var idealWidth: CGFloat
+
+    init(idealWidth: CGFloat) {
+        self.idealWidth = idealWidth
+    }
+
+}
+
+struct DynamicMinimumWidthContent: View {
+
+    static let minimumWidth = CGFloat(300)
+    static let fixedHeight = CGFloat(240)
+
+    let model: DynamicMinimumWidthModel
+
+    var body: some View {
+        DynamicMinimumWidthLayout(idealWidth: model.idealWidth) {
+            Color.clear
+        }
+        .frame(minWidth: Self.minimumWidth)
+    }
+
+}
+
+private struct DynamicMinimumWidthLayout: Layout {
+
+    let idealWidth: CGFloat
+
+    func sizeThatFits(
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) -> CGSize {
+        let width = if let proposedWidth = proposal.width, proposedWidth.isFinite {
+            proposedWidth
+        } else {
+            idealWidth
+        }
+
+        return CGSize(width: width, height: 240)
+    }
+
+    func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) {
+        for subview in subviews {
+            subview.place(
+                at: bounds.origin,
+                anchor: .topLeading,
+                proposal: ProposedViewSize(
+                    width: bounds.width,
+                    height: bounds.height
+                )
+            )
+        }
     }
 
 }

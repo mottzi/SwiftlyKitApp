@@ -7,7 +7,6 @@ final class WindowMinimumSizeAppKitView: NSView {
     /// Minimum height for visible SwiftUI content, excluding window chrome.
     var visibleMinHeight = CGFloat.zero {
         didSet {
-            guard visibleMinHeight != oldValue else { return }
             needsLayout = true
         }
     }
@@ -27,11 +26,17 @@ final class WindowMinimumSizeAppKitView: NSView {
     /// Whether the hosting view's `.minSize` sizing option was removed.
     private var didDisableHostMinSize = false
 
+    /// Original SwiftUI minimum width for the managed hosting view and window.
+    private var swiftUIMinWidth: CGFloat?
+
     /// Hosting view whose sizing options are currently managed by this bridge.
     private weak var managedHostingView: NSView?
 
     /// Sizing options to restore when the managed hosting view detaches.
     private var originalHostingSizingOptions: NSHostingSizingOptions?
+
+    /// Reapplies independent limits if SwiftUI publishes a late coupled minimum update.
+    private var contentMinSizeObservation: NSKeyValueObservation?
 
     /// Coalesces window updates until the active AppKit layout pass has returned.
     private var minimumUpdateTask: Task<Void, Never>?
@@ -86,7 +91,19 @@ extension WindowMinimumSizeAppKitView {
         guard let hostingView = hostingView() else { return }
         guard let contentView = window.contentView else { return }
 
-        beginManaging(hostingView)
+        beginManaging(hostingView, in: window)
+
+        // capture SwiftUI's width floor before changing the hosting view's sizing policy
+        if !didDisableHostMinSize {
+            let width = window.contentMinSize.width
+
+            if width.isFinite, width > 0 {
+                swiftUIMinWidth = width
+            }
+        }
+
+        configureHostSizing(on: hostingView)
+        didDisableHostMinSize = true
 
         // add the unified toolbar region so visible content keeps the requested minimum height
         let layoutInsetHeight = max(
@@ -95,17 +112,36 @@ extension WindowMinimumSizeAppKitView {
         )
         let minContentHeight = visibleMinHeight + layoutInsetHeight
 
-        // retain ideal-size measurement after disabling SwiftUI's coupled minimum-size export
-        enableHostIntrinsicSize(on: hostingView)
+        let minLayoutWidth = max(
+            swiftUIMinWidth ?? 0,
+            reportedWidth(for: hostingView)
+        )
+        let layoutGuide = window.contentLayoutGuide as? NSLayoutGuide
+        let layoutWidth = layoutGuide?.frame.width ?? contentView.bounds.width
+        guard layoutWidth.isFinite, layoutWidth > 0 else { return }
 
-        // capture SwiftUI's initial width minimum before disabling its coupled minimum-size export
-        let existingMinWidth = didDisableHostMinSize ? 0 : window.contentMinSize.width
-        let minLayoutWidth = max(existingMinWidth, reportedWidth(for: hostingView))
-        disableHostMinSize(on: hostingView)
-        didDisableHostMinSize = true
+        let layoutInsetWidth = max(contentView.bounds.width - layoutWidth, 0)
+        let minContentWidth = minLayoutWidth + layoutInsetWidth
+
+        // prevent user resizing below either independent minimum
+        var minSize = window.contentMinSize
+        minSize.width = minContentWidth
+        minSize.height = minContentHeight
+
+        if minSize != window.contentMinSize {
+            window.contentMinSize = minSize
+        }
+
+        if contentView.bounds.width < minContentWidth
+                || contentView.bounds.height < minContentHeight {
+            // enlarge first so required layout constraints never conflict with the current frame
+            var size = contentView.bounds.size
+            size.width = max(size.width, minContentWidth)
+            size.height = max(size.height, minContentHeight)
+            window.setContentSize(size)
+        }
 
         // enforce independent dimensions because contentMinSize does not affect Auto Layout
-        let layoutGuide = window.contentLayoutGuide as? NSLayoutGuide
         setMinHeightConstraint(
             on: hostingView,
             anchor: hostingView.heightAnchor,
@@ -126,33 +162,10 @@ extension WindowMinimumSizeAppKitView {
             )
         }
 
-        let layoutWidth = layoutGuide?.frame.width ?? contentView.bounds.width
-        guard layoutWidth.isFinite, layoutWidth > 0 else { return }
-
-        let layoutInsetWidth = max(contentView.bounds.width - layoutWidth, 0)
-        let minContentWidth = minLayoutWidth + layoutInsetWidth
-
-        // prevent user resizing below either independent minimum
-        var minSize = window.contentMinSize
-        minSize.width = minContentWidth
-        minSize.height = minContentHeight
-
-        if minSize != window.contentMinSize {
-            window.contentMinSize = minSize
-        }
-
-        guard contentView.bounds.width < minContentWidth
-                || contentView.bounds.height < minContentHeight else { return }
-
-        // restore the minimum if a layout transition leaves the window too small
-        var size = contentView.bounds.size
-        size.width = max(size.width, minContentWidth)
-        size.height = max(size.height, minContentHeight)
-        window.setContentSize(size)
     }
 
     /// Records the host's original sizing policy before changing it.
-    private func beginManaging(_ hostingView: NSView) {
+    private func beginManaging(_ hostingView: NSView, in window: NSWindow) {
         guard managedHostingView !== hostingView else { return }
 
         releaseManagedWindowState()
@@ -160,6 +173,11 @@ extension WindowMinimumSizeAppKitView {
         originalHostingSizingOptions = (
             hostingView as? any HostingViewSizingOptionsAccess
         )?.sizingOptions
+        contentMinSizeObservation = window.observe(\.contentMinSize) { [weak self] _, _ in
+            Task { @MainActor [weak self] in
+                self?.needsLayout = true
+            }
+        }
     }
 
     /// Removes owned constraints and restores the hosting view's sizing policy.
@@ -170,6 +188,7 @@ extension WindowMinimumSizeAppKitView {
         minWidthConstraint?.isActive = false
         minWidthConstraint = nil
         widthItem = nil
+        contentMinSizeObservation = nil
 
         if
             let managedHostingView = managedHostingView as? any HostingViewSizingOptionsAccess,
@@ -181,6 +200,7 @@ extension WindowMinimumSizeAppKitView {
         managedHostingView = nil
         originalHostingSizingOptions = nil
         didDisableHostMinSize = false
+        swiftUIMinWidth = nil
     }
 
     /// Returns the nearest ancestor that exposes hosting-view sizing options.
@@ -198,32 +218,19 @@ extension WindowMinimumSizeAppKitView {
         return nil
     }
 
-    /// Stops the hosting view from exporting a coupled minimum size.
-    private func disableHostMinSize(on hostingView: NSView) {
-        guard let hostingView = hostingView as? any HostingViewSizingOptionsAccess else {
-            return
-        }
-
-        var sizingOptions = hostingView.sizingOptions
-        sizingOptions.remove(.minSize)
-
-        if sizingOptions != hostingView.sizingOptions {
-            hostingView.sizingOptions = sizingOptions
-        }
-    }
-
-    /// Keeps the hosting view's intrinsic size available for width measurement.
-    private func enableHostIntrinsicSize(on hostingView: NSView) {
+    /// Enables ideal-size reporting while removing the host's coupled minimum-size export.
+    private func configureHostSizing(on hostingView: NSView) {
         guard let hostingView = hostingView as? any HostingViewSizingOptionsAccess else {
             return
         }
 
         var sizingOptions = hostingView.sizingOptions
         sizingOptions.insert(.intrinsicContentSize)
+        sizingOptions.remove(.minSize)
 
-        if sizingOptions != hostingView.sizingOptions {
-            hostingView.sizingOptions = sizingOptions
-        }
+        guard sizingOptions != hostingView.sizingOptions else { return }
+
+        hostingView.sizingOptions = sizingOptions
     }
 
     /// Creates or updates the required minimum-height constraint for `item`.
@@ -257,7 +264,10 @@ extension WindowMinimumSizeAppKitView {
             minWidthConstraint = anchor.constraint(
                 greaterThanOrEqualToConstant: minimum
             )
-            minWidthConstraint?.priority = .required
+            // AppKit's required frame equality must win during a transient resize proposal.
+            minWidthConstraint?.priority = NSLayoutConstraint.Priority(
+                rawValue: NSLayoutConstraint.Priority.required.rawValue - 1
+            )
             minWidthConstraint?.isActive = true
             widthItem = item
         } else {

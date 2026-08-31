@@ -45,6 +45,187 @@ struct WindowMinimumSizeTests {
 
     @MainActor
     @Test
+    func updatesWidthFloorWhenSameHeightIdealWidthGrows() async throws {
+        let model = DynamicMinimumWidthModel(idealWidth: 260)
+        let (window, hostingView) = dynamicMinimumWidthWindow(
+            model: model,
+            toolbarIdentifier: "DynamicWidthGrowthTests"
+        )
+        try await settleBridge(
+            in: hostingView,
+            window: window,
+            expectedMinimumHeight: expectedMinimumHeight(
+                in: window,
+                reservedContentHeight: DynamicMinimumWidthContent.fixedHeight,
+                additionalContentHeight: 0
+            )
+        )
+        let initialSize = try #require(window.contentView?.bounds.size)
+        let initialMinimumWidth = window.contentMinSize.width
+        let initialFrameHeight = window.frame.height
+        let expectedMinimumWidth = 420 + contentLayoutInsetWidth(in: window)
+
+        #expect(initialMinimumWidth >= DynamicMinimumWidthContent.minimumWidth - 0.5)
+
+        model.idealWidth = 420
+        hostingView.layoutSubtreeIfNeeded()
+        await Task.yield()
+        hostingView.layoutSubtreeIfNeeded()
+        await Task.yield()
+        let updatedSize = try await settleDynamicMinimum(
+            in: hostingView,
+            window: window,
+            expectedMinimumWidth: expectedMinimumWidth,
+            expectedCurrentContentWidth: expectedMinimumWidth,
+            expectedContentHeight: initialSize.height,
+            expectedFrameHeight: initialFrameHeight
+        )
+
+        #expect(abs(window.contentMinSize.width - expectedMinimumWidth) < 0.5)
+        #expect(updatedSize.width >= expectedMinimumWidth - 0.5)
+        #expect(abs(updatedSize.height - initialSize.height) < 0.5)
+        #expect(abs(window.frame.height - initialFrameHeight) < 0.5)
+
+        try await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
+    @Test
+    func returnsWidthFloorToTheStableSwiftUIMinimum() async throws {
+        let model = DynamicMinimumWidthModel(idealWidth: 260)
+        let (window, hostingView) = dynamicMinimumWidthWindow(
+            model: model,
+            toolbarIdentifier: "DynamicWidthReturnTests"
+        )
+        try await settleBridge(
+            in: hostingView,
+            window: window,
+            expectedMinimumHeight: expectedMinimumHeight(
+                in: window,
+                reservedContentHeight: DynamicMinimumWidthContent.fixedHeight,
+                additionalContentHeight: 0
+            )
+        )
+        let initialSize = try #require(window.contentView?.bounds.size)
+        let initialMinimumWidth = window.contentMinSize.width
+        let initialFrameHeight = window.frame.height
+        let widerMinimumWidth = 420 + contentLayoutInsetWidth(in: window)
+
+        model.idealWidth = 420
+        hostingView.layoutSubtreeIfNeeded()
+        await Task.yield()
+        let widerSize = try await settleDynamicMinimum(
+            in: hostingView,
+            window: window,
+            expectedMinimumWidth: widerMinimumWidth,
+            expectedCurrentContentWidth: widerMinimumWidth,
+            expectedContentHeight: initialSize.height,
+            expectedFrameHeight: initialFrameHeight
+        )
+
+        model.idealWidth = 260
+        hostingView.layoutSubtreeIfNeeded()
+        await Task.yield()
+        let returnedSize = try await settleDynamicMinimum(
+            in: hostingView,
+            window: window,
+            expectedMinimumWidth: initialMinimumWidth,
+            expectedCurrentContentWidth: widerSize.width,
+            expectedContentHeight: initialSize.height,
+            expectedFrameHeight: initialFrameHeight
+        )
+
+        #expect(abs(window.contentMinSize.width - initialMinimumWidth) < 0.5)
+        #expect(window.contentMinSize.width < widerMinimumWidth - 0.5)
+        #expect(window.contentMinSize.width >= DynamicMinimumWidthContent.minimumWidth - 0.5)
+        #expect(returnedSize.width >= widerSize.width - 0.5)
+        #expect(abs(returnedSize.height - initialSize.height) < 0.5)
+        #expect(abs(window.frame.height - initialFrameHeight) < 0.5)
+
+        try await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
+    @Test
+    func repeatedSameHeightUpdatesPreserveTheSwiftUIMinimum() async throws {
+        let model = DynamicMinimumWidthModel(idealWidth: 260)
+        let (window, hostingView) = dynamicMinimumWidthWindow(
+            model: model,
+            toolbarIdentifier: "RepeatedUnderFloorResizeTests"
+        )
+        try await settleBridge(
+            in: hostingView,
+            window: window,
+            expectedMinimumHeight: expectedMinimumHeight(
+                in: window,
+                reservedContentHeight: DynamicMinimumWidthContent.fixedHeight,
+                additionalContentHeight: 0
+            )
+        )
+        let initialSize = try #require(window.contentView?.bounds.size)
+        let swiftUIMinimumWidth = window.contentMinSize.width
+        let initialFrameHeight = window.frame.height
+        let underFloorIdealWidths: [CGFloat] = [260, 280, 240, 290, 250, 270]
+
+        for idealWidth in underFloorIdealWidths {
+            model.idealWidth = idealWidth
+            hostingView.layoutSubtreeIfNeeded()
+            await Task.yield()
+
+            let size = try await settleDynamicMinimum(
+                in: hostingView,
+                window: window,
+                expectedMinimumWidth: swiftUIMinimumWidth,
+                expectedCurrentContentWidth: swiftUIMinimumWidth,
+                expectedContentHeight: initialSize.height,
+                expectedFrameHeight: initialFrameHeight
+            )
+
+            #expect(window.contentMinSize.width >= swiftUIMinimumWidth - 0.5)
+            #expect(size.width >= swiftUIMinimumWidth - 0.5)
+            #expect(abs(size.height - initialSize.height) < 0.5)
+            #expect(abs(window.frame.height - initialFrameHeight) < 0.5)
+        }
+
+        try await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
+    @Test
+    func transientUnderFloorResizeDoesNotInstallARequiredWidthConflict() async throws {
+        let (window, hostingView) = responsiveLayoutWindow(contentWidth: 700)
+        let initialSize = try await settledMinimumSize(of: window, contentWidth: 700)
+        let initialFrameHeight = window.frame.height
+
+        _ = try await settledSizeAfterHorizontalResize(
+            of: window,
+            contentWidth: 300,
+            preservingContentHeight: initialSize.height,
+            preservingFrameHeight: initialFrameHeight
+        )
+
+        let layoutGuide = try #require(window.contentLayoutGuide as? NSLayoutGuide)
+        let contentView = try #require(window.contentView)
+        let constraintOwner = try #require(layoutGuide.owningView)
+        let minimumWidthConstraint = try #require(
+            constraintOwner.constraints.first { constraint in
+                constraint.relation == .greaterThanOrEqual
+                    && constraint.firstItem as AnyObject? === layoutGuide
+                    && abs(constraint.constant - 334) < 0.5
+            }
+        )
+
+        #expect(minimumWidthConstraint.priority < .required)
+        #expect(window.contentMinSize.width >= 334 - 0.5)
+        #expect(contentView.bounds.width >= 334 - 0.5)
+        #expect(abs(contentView.bounds.height - initialSize.height) < 0.5)
+        #expect(abs(window.frame.height - initialFrameHeight) < 0.5)
+
+        try await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
+    @Test
     func reservesResponsiveHeightBeforeTheFirstNarrowLayout() async throws {
         let (window, hostingView) = responsiveLayoutWindow(contentWidth: 700)
 
@@ -674,6 +855,28 @@ struct WindowMinimumSizeTests {
     }
 
     @MainActor
+    private func dynamicMinimumWidthWindow(
+        model: DynamicMinimumWidthModel,
+        toolbarIdentifier: String
+    ) -> (NSWindow, NSHostingView<AnyView>) {
+        let hostingView = NSHostingView(
+            rootView: AnyView(
+                DynamicMinimumWidthContent(model: model)
+                    .windowMinimumSize()
+            )
+        )
+        let window = minimumSizeWindow(
+            contentWidth: DynamicMinimumWidthContent.minimumWidth,
+            contentHeight: 500,
+            hostingView: hostingView,
+            toolbarIdentifier: toolbarIdentifier
+        )
+        window.orderFront(nil)
+
+        return (window, hostingView)
+    }
+
+    @MainActor
     private func bridgeHostingView(
         visibleMinHeight: CGFloat
     ) -> NSHostingView<AnyView> {
@@ -720,6 +923,60 @@ struct WindowMinimumSizeTests {
                     hostingView: hostingView,
                     expectedMinimumHeight: expectedMinimumHeight,
                     expectedSizingOptions: "without .minSize and with .intrinsicContentSize"
+                )
+        )
+        forceClose(window, hostingView: hostingView)
+        throw error
+    }
+
+    @MainActor
+    private func settleDynamicMinimum(
+        in hostingView: NSHostingView<AnyView>,
+        window: NSWindow,
+        expectedMinimumWidth: CGFloat,
+        expectedCurrentContentWidth: CGFloat,
+        expectedContentHeight: CGFloat,
+        expectedFrameHeight: CGFloat
+    ) async throws -> CGSize {
+        var stableReadingCount = 0
+
+        for _ in 0..<100 {
+            hostingView.layoutSubtreeIfNeeded()
+            window.displayIfNeeded()
+            await Task.yield()
+
+            let currentSize = window.contentView?.bounds.size ?? .zero
+            let minimumSettled = abs(
+                window.contentMinSize.width - expectedMinimumWidth
+            ) < 0.5
+            let widthSettled = currentSize.width >= expectedCurrentContentWidth - 0.5
+            let heightSettled = abs(currentSize.height - expectedContentHeight) < 0.5
+            let frameHeightSettled = abs(window.frame.height - expectedFrameHeight) < 0.5
+
+            if minimumSettled && widthSettled && heightSettled && frameHeightSettled {
+                stableReadingCount += 1
+
+                if stableReadingCount == 5 {
+                    return currentSize
+                }
+            } else {
+                stableReadingCount = 0
+            }
+
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+
+        let error = TestWaitTimeout(
+            "Dynamic minimum did not settle. "
+                + windowDiagnostics(
+                    window,
+                    hostingView: hostingView,
+                    expectedMinimumHeight: expectedContentHeight,
+                    expectedSizingOptions: "without .minSize and with .intrinsicContentSize",
+                    expectedMinimumWidth: expectedMinimumWidth,
+                    expectedCurrentContentWidth: expectedCurrentContentWidth,
+                    expectedCurrentContentHeight: expectedContentHeight,
+                    expectedFrameHeight: expectedFrameHeight
                 )
         )
         forceClose(window, hostingView: hostingView)
@@ -795,6 +1052,18 @@ struct WindowMinimumSizeTests {
         descendantViews(of: hostingView)
             .compactMap { $0 as? WindowMinimumSizeAppKitView }
             .first
+    }
+
+    @MainActor
+    private func contentLayoutInsetWidth(in window: NSWindow) -> CGFloat {
+        guard
+            let contentView = window.contentView,
+            let layoutGuide = window.contentLayoutGuide as? NSLayoutGuide
+        else {
+            return 0
+        }
+
+        return max(contentView.bounds.width - layoutGuide.frame.width, 0)
     }
 
     @MainActor
@@ -888,16 +1157,38 @@ struct WindowMinimumSizeTests {
         _ window: NSWindow,
         hostingView: NSHostingView<AnyView>? = nil,
         expectedMinimumHeight: CGFloat?,
-        expectedSizingOptions: String = "not specified"
+        expectedSizingOptions: String = "not specified",
+        expectedMinimumWidth: CGFloat? = nil,
+        expectedCurrentContentWidth: CGFloat? = nil,
+        expectedCurrentContentHeight: CGFloat? = nil,
+        expectedFrameHeight: CGFloat? = nil
     ) -> String {
         let host = hostingView ?? window.contentView as? NSHostingView<AnyView>
         let bridgeExists = host.map { windowMinimumBridge(in: $0) != nil } ?? false
-        let expectedContentMinSize = expectedMinimumHeight.map {
-            "height approximately \($0)"
+        let expectedContentMinWidth = expectedMinimumWidth.map {
+            "approximately \($0)"
+        } ?? "not specified"
+        let expectedContentMinHeight = expectedMinimumHeight.map {
+            "approximately \($0)"
+        } ?? "not specified"
+        let expectedCurrentWidth = expectedCurrentContentWidth.map {
+            "at least \($0)"
+        } ?? "not specified"
+        let expectedCurrentHeight = expectedCurrentContentHeight.map {
+            "approximately \($0)"
+        } ?? "not specified"
+        let expectedOuterHeight = expectedFrameHeight.map {
+            "approximately \($0)"
         } ?? "not specified"
 
-        return "Expected contentMinSize: \(expectedContentMinSize); "
+        return "Expected contentMinSize width: \(expectedContentMinWidth), "
+            + "height: \(expectedContentMinHeight); "
             + "actual contentMinSize: \(window.contentMinSize); "
+            + "expected current content width: \(expectedCurrentWidth), "
+            + "height: \(expectedCurrentHeight); "
+            + "actual current content size: \(String(describing: window.contentView?.bounds.size)); "
+            + "expected frame height: \(expectedOuterHeight); "
+            + "actual frame height: \(window.frame.height); "
             + "expected sizingOptions: \(expectedSizingOptions); "
             + "actual sizingOptions: \(String(describing: host?.sizingOptions)); "
             + "bridge exists: \(bridgeExists); "
