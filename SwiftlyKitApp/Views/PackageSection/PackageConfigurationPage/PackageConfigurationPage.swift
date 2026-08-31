@@ -10,7 +10,7 @@ struct PackageConfigurationPage: View {
             PackageHeader()
                 .padding(.horizontal, Self.horizontalPadding)
                 .padding(.top, Self.verticalPadding)
-                .padding(.bottom, Self.spacing)
+                .padding(.bottom, Self.verticalPadding)
             Divider()
                 .opacity(Self.dividerOpacity)
             PackageConfigurator()
@@ -50,8 +50,7 @@ extension PackageConfigurationPage {
     private static let verticalPadding: CGFloat = 12
     private static let dividerOpacity = 0.55
     private static let configurationBackgroundOpacity = 0.5
-    // The geometry callback is `@Sendable`, so this immutable name must be
-    // available without hopping through the view's main-actor isolation.
+
     private nonisolated static let coordinateSpaceName = "PackageConfigurationPage"
 
 }

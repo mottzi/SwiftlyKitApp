@@ -12,7 +12,7 @@ struct BuildButton: View {
         }
         .labelStyle(.iconOnly)
         .disabled(!canBuild || buildOptions.isOperationRunning)
-        .buttonStyle(.glass)
+        .buttonStyle(.borderedProminent)
         .buttonBorderShape(.circle)
         .keyboardShortcut("b", modifiers: .command)
         .help("Build the selected product (⌘B)")
