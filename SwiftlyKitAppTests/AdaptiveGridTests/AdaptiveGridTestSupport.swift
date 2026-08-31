@@ -3,166 +3,10 @@ import SwiftUI
 import Testing
 @testable import SwiftlyKitApp
 
-@Suite(.serialized)
-struct AdaptiveGridTests {
+extension AdaptiveGridTests {
 
     @MainActor
-    @Test
-    func choosesColumnsFromRealIntrinsicFieldWidths() async throws {
-        let threshold = CGFloat(318)
-
-        let narrow = try await snapshot(width: threshold - 1)
-        let fitting = try await snapshot(width: threshold)
-
-        #expect(narrow.arrangement == .oneColumn)
-        #expect(fitting.arrangement == .twoColumns)
-        #expect(abs(narrow.labelFrame(for: 1).minY - narrow.labelFrame(for: 0).minY) > 1)
-        #expect(abs(fitting.labelFrame(for: 1).minY - fitting.labelFrame(for: 0).minY) < 0.5)
-    }
-
-    @MainActor
-    @Test
-    func intrinsicWidthChangesTheColumnThresholdNaturally() async throws {
-        let ordinary = try await snapshot(width: 318)
-        let widerControl = try await snapshot(width: 318, secondControlWidth: 101)
-
-        #expect(ordinary.arrangement == .twoColumns)
-        #expect(widerControl.arrangement == .oneColumn)
-    }
-
-    @MainActor
-    @Test
-    func rowHeightUsesTallerControl() async throws {
-        let snapshot = try await snapshot(
-            width: 318,
-            firstLabelHeight: 20,
-            firstControlHeight: 40
-        )
-
-        #expect(abs(snapshot.gridSize.height - 40) < 0.5)
-        #expect(
-            abs(
-                snapshot.frame(field: 0, part: .label).midY
-                    - snapshot.frame(field: 0, part: .control).midY
-            ) < 0.5
-        )
-    }
-
-    @MainActor
-    @Test
-    func rowHeightUsesTallerLabel() async throws {
-        let snapshot = try await snapshot(
-            width: 318,
-            firstLabelHeight: 40,
-            firstControlHeight: 20
-        )
-
-        #expect(abs(snapshot.gridSize.height - 40) < 0.5)
-        #expect(
-            abs(
-                snapshot.frame(field: 0, part: .label).midY
-                    - snapshot.frame(field: 0, part: .control).midY
-            ) < 0.5
-        )
-    }
-
-    @MainActor
-    @Test
-    func oneColumnRowsUsePrecedingRowHeightsAndSpacing() async throws {
-        let snapshot = try await snapshot(
-            width: 317,
-            firstLabelHeight: 20,
-            firstControlHeight: 40,
-            secondLabelHeight: 20,
-            secondControlHeight: 20
-        )
-
-        #expect(snapshot.arrangement == .oneColumn)
-        #expect(abs(snapshot.gridSize.height - 72) < 0.5)
-        #expect(abs(snapshot.frame(field: 1, part: .label).minY - 52) < 0.5)
-        #expect(abs(snapshot.frame(field: 1, part: .control).minY - 52) < 0.5)
-        #expect(
-            abs(
-                snapshot.frame(field: 0, part: .label).midY
-                    - snapshot.frame(field: 0, part: .control).midY
-            ) < 0.5
-        )
-        #expect(
-            abs(
-                snapshot.frame(field: 1, part: .label).midY
-                    - snapshot.frame(field: 1, part: .control).midY
-            ) < 0.5
-        )
-    }
-
-    @MainActor
-    @Test
-    func onePersistentGridRestoresWideGeometryAfterNarrowResize() async throws {
-        let (hostingView, capture) = persistentGrid()
-        let wide = try await resizeSnapshot(
-            hostingView,
-            capture: capture,
-            width: 318,
-            expectedArrangement: .twoColumns
-        )
-        _ = try await resizeSnapshot(
-            hostingView,
-            capture: capture,
-            width: 317,
-            expectedArrangement: .oneColumn
-        )
-        let restored = try await resizeSnapshot(
-            hostingView,
-            capture: capture,
-            width: 318,
-            expectedArrangement: .twoColumns
-        )
-
-        #expect(wide.frames == restored.frames)
-        #expect(wide.gridSize == restored.gridSize)
-        expectNoAdjacentDuplicateArrangements(capture.arrangementEvents)
-    }
-
-    @MainActor
-    @Test
-    func onePersistentGridRestoresNarrowGeometryAfterWideResize() async throws {
-        let (hostingView, capture) = persistentGrid()
-        let narrow = try await resizeSnapshot(
-            hostingView,
-            capture: capture,
-            width: 317,
-            expectedArrangement: .oneColumn
-        )
-        _ = try await resizeSnapshot(
-            hostingView,
-            capture: capture,
-            width: 318,
-            expectedArrangement: .twoColumns
-        )
-        let restored = try await resizeSnapshot(
-            hostingView,
-            capture: capture,
-            width: 317,
-            expectedArrangement: .oneColumn
-        )
-
-        #expect(narrow.frames == restored.frames)
-        #expect(narrow.gridSize == restored.gridSize)
-        expectNoAdjacentDuplicateArrangements(capture.arrangementEvents)
-    }
-
-    @MainActor
-    @Test
-    func packageConfiguratorReportsItsVisibleArrangement() async throws {
-        let wide = try await reportedPackageArrangement(width: 620)
-        let narrow = try await reportedPackageArrangement(width: 276)
-
-        #expect(wide == .twoColumns)
-        #expect(narrow == .oneColumn)
-    }
-
-    @MainActor
-    private func snapshot(
+    func snapshot(
         width: CGFloat,
         secondControlWidth: CGFloat = 100,
         firstLabelHeight: CGFloat = 20,
@@ -228,7 +72,7 @@ struct AdaptiveGridTests {
     }
 
     @MainActor
-    private func persistentGrid() -> (
+    func persistentGrid() -> (
         NSHostingView<AnyView>,
         AdaptiveGridCapture
     ) {
@@ -274,7 +118,7 @@ struct AdaptiveGridTests {
     }
 
     @MainActor
-    private func resizeSnapshot(
+    func resizeSnapshot(
         _ hostingView: NSHostingView<AnyView>,
         capture: AdaptiveGridCapture,
         width: CGFloat,
@@ -328,7 +172,7 @@ struct AdaptiveGridTests {
     }
 
     @MainActor
-    private func expectNoAdjacentDuplicateArrangements(
+    func expectNoAdjacentDuplicateArrangements(
         _ arrangements: [AdaptiveGridArrangement]
     ) {
         #expect(arrangements.count >= 3)
@@ -343,7 +187,7 @@ struct AdaptiveGridTests {
     }
 
     @MainActor
-    private func reportedPackageArrangement(
+    func reportedPackageArrangement(
         width: CGFloat
     ) async throws -> AdaptiveGridArrangement {
         let capture = PackageArrangementCapture()
@@ -368,7 +212,7 @@ struct AdaptiveGridTests {
 }
 
 @MainActor
-private final class AdaptiveGridCapture {
+final class AdaptiveGridCapture {
 
     var arrangement: AdaptiveGridArrangement?
     var arrangementEvents: [AdaptiveGridArrangement] = []
@@ -395,39 +239,29 @@ private final class AdaptiveGridCapture {
 }
 
 @MainActor
-private final class PackageArrangementCapture {
+final class PackageArrangementCapture {
 
     var arrangement: AdaptiveGridArrangement?
 
 }
 
-private struct AdaptiveGridSnapshot {
+struct AdaptiveGridSnapshot {
 
     let arrangement: AdaptiveGridArrangement
     let frames: [AdaptiveGridProbe.ID: CGRect]
     let gridSize: CGSize
 
-    func frame(field: Int, part: AdaptiveGridProbe.Part) -> CGRect {
-        frames[AdaptiveGridProbe.ID(field: field, part: part), default: .zero]
-    }
-
     func labelFrame(for field: Int) -> CGRect {
         frame(field: field, part: .label)
     }
 
+    func frame(field: Int, part: AdaptiveGridProbe.Part) -> CGRect {
+        frames[AdaptiveGridProbe.ID(field: field, part: part), default: .zero]
+    }
+
 }
 
-private struct AdaptiveGridProbe: View {
-
-    enum Part: Hashable {
-        case label
-        case control
-    }
-
-    struct ID: Hashable {
-        let field: Int
-        let part: Part
-    }
+struct AdaptiveGridProbe: View {
 
     let field: Int
     let part: Part
@@ -447,9 +281,19 @@ private struct AdaptiveGridProbe: View {
             }
     }
 
+    enum Part: Hashable {
+        case label
+        case control
+    }
+
+    struct ID: Hashable {
+        let field: Int
+        let part: Part
+    }
+
 }
 
-private struct AdaptiveGridWaitTimeout: Error, CustomStringConvertible {
+struct AdaptiveGridWaitTimeout: Error, CustomStringConvertible {
 
     let description: String
 
