@@ -58,7 +58,7 @@ private struct DynamicMinimumWidthLayout: Layout {
             idealWidth
         }
 
-        return CGSize(width: width, height: 240)
+        return CGSize(width: width, height: DynamicMinimumWidthContent.fixedHeight)
     }
 
     func placeSubviews(
