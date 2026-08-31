@@ -6,7 +6,15 @@ import SwiftUI
 
 extension View {
 
-    /// Sets an independent window minimum size while allowing height to follow this view's measured height.
+    /// Contributes a SwiftUI content-height reservation to the nearest window minimum-size modifier.
+    func windowMinimumHeightReservation(_ height: CGFloat) -> some View {
+        preference(
+            key: WindowMinimumHeightReservationPreferenceKey.self,
+            value: height
+        )
+    }
+
+    /// Sets an independent window minimum size from this view's measured and reserved content heights.
     /// The supplied height reserves space for required content outside this view.
     func windowMinimumSize(addingHeight extraHeight: CGFloat = 0) -> some View {
         modifier(WindowMinimumSizeModifier(extraHeight: extraHeight))
@@ -33,14 +41,32 @@ private struct WindowMinimumSizeModifier: ViewModifier {
                 guard viewHeight != height else { return }
                 viewHeight = height
             }
-            .background {
-                if let viewHeight {
-                    WindowMinimumSizeBridge(
-                        visibleMinHeight: viewHeight + extraHeight
-                    )
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
+            .backgroundPreferenceValue(
+                WindowMinimumHeightReservationPreferenceKey.self
+            ) { reservedHeight in
+                let measuredHeight = max(viewHeight ?? 0, reservedHeight)
+                let visibleMinHeight = measuredHeight > 0
+                    ? measuredHeight + extraHeight
+                    : 0
+
+                WindowMinimumSizeBridge(
+                    visibleMinHeight: visibleMinHeight
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+    }
+
+}
+
+/// Combines independent descendant reservations without coupling them to AppKit.
+private struct WindowMinimumHeightReservationPreferenceKey: PreferenceKey {
+
+    static let defaultValue = CGFloat.zero
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        let nextValue = nextValue()
+        guard nextValue.isFinite, nextValue > 0 else { return }
+        value = max(value, nextValue)
     }
 
 }

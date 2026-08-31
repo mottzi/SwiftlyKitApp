@@ -14,7 +14,7 @@ struct PackageConfigurationBackgroundTests {
             rootView: AnyView(
                 ZStack {
                     Color(nsColor: .windowBackgroundColor)
-                    PackageConfigurationPage(onIdealHeightChange: { _ in })
+                    PackageConfigurationPage(onContentHeightChange: { _ in })
                         .frame(width: size.width, height: size.height)
                         .geometryGroup()
                         .deemphasiseContent(when: true)
@@ -84,7 +84,7 @@ struct PackageConfigurationBackgroundTests {
             rootView: AnyView(
                 ZStack {
                     Color(nsColor: .windowBackgroundColor)
-                    PackageConfigurationPage(onIdealHeightChange: { _ in })
+                    PackageConfigurationPage(onContentHeightChange: { _ in })
                         .frame(width: size.width, height: size.height)
                 }
                 .preferredColorScheme(.dark)
@@ -118,10 +118,10 @@ struct PackageConfigurationBackgroundTests {
     @MainActor
     @Test
     func reportsContentHeightIndependentlyOfPresentedHeight() async throws {
-        let compactHeight = try await reportedHeight(
+        let compactHeight = try await reportedPackageConfigurationHeight(
             for: CGSize(width: 620, height: 220)
         )
-        let expandedHeight = try await reportedHeight(
+        let expandedHeight = try await reportedPackageConfigurationHeight(
             for: CGSize(width: 620, height: 280)
         )
 
@@ -132,26 +132,21 @@ struct PackageConfigurationBackgroundTests {
     }
 
     @MainActor
-    private func reportedHeight(for size: CGSize) async throws -> CGFloat {
-        let capture = HeightCapture()
-        let hostingView = NSHostingView(
-            rootView: AnyView(
-                PackageConfigurationPage { capture.height = $0 }
-                    .preferredColorScheme(.dark)
-                    .environment(PackageModel())
-                    .environment(BuildOptions())
-                    .frame(width: size.width, height: size.height)
-            )
+    @Test
+    func reportsResponsiveHeightWhenWidthChangesAndRestores() async throws {
+        let heights = try await reportedPackageConfigurationHeights(
+            for: [620, 360, 620],
+            presentedHeight: 280
         )
-        hostingView.frame = CGRect(origin: .zero, size: size)
+        let wideHeight = heights[0]
+        let narrowHeight = heights[1]
+        let restoredWideHeight = heights[2]
 
-        for _ in 0..<10 {
-            hostingView.layoutSubtreeIfNeeded()
-            hostingView.displayIfNeeded()
-            await Task.yield()
-        }
-
-        return try #require(capture.height)
+        #expect(
+            narrowHeight > wideHeight + 40,
+            "Wide height: \(wideHeight), narrow height: \(narrowHeight)"
+        )
+        #expect(abs(restoredWideHeight - wideHeight) < 0.5)
     }
 
     private func color(
@@ -181,6 +176,67 @@ struct PackageConfigurationBackgroundTests {
             + 0.0722 * color.blueComponent
     }
 
+}
+
+@MainActor
+func reportedPackageConfigurationHeight(
+    for size: CGSize
+) async throws -> CGFloat {
+    let capture = HeightCapture()
+    let hostingView = NSHostingView(
+        rootView: AnyView(
+            PackageConfigurationPage { capture.height = $0 }
+                .preferredColorScheme(.dark)
+                .environment(PackageModel())
+                .environment(BuildOptions())
+                .frame(width: size.width, height: size.height)
+        )
+    )
+    hostingView.frame = CGRect(origin: .zero, size: size)
+
+    for _ in 0..<10 {
+        hostingView.layoutSubtreeIfNeeded()
+        hostingView.displayIfNeeded()
+        await Task.yield()
+    }
+
+    return try #require(capture.height)
+}
+
+@MainActor
+private func reportedPackageConfigurationHeights(
+    for widths: [CGFloat],
+    presentedHeight: CGFloat
+) async throws -> [CGFloat] {
+    let capture = HeightCapture()
+    let hostingView = NSHostingView(
+        rootView: AnyView(
+            PackageConfigurationPage { capture.height = $0 }
+                .preferredColorScheme(.dark)
+                .environment(PackageModel())
+                .environment(BuildOptions())
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        )
+    )
+    var heights = [CGFloat]()
+
+    for width in widths {
+        capture.height = nil
+        hostingView.frame = CGRect(
+            origin: .zero,
+            size: CGSize(width: width, height: presentedHeight)
+        )
+
+        for _ in 0..<10 {
+            hostingView.layoutSubtreeIfNeeded()
+            hostingView.displayIfNeeded()
+            await Task.yield()
+        }
+
+        heights.append(try #require(capture.height))
+    }
+
+    return heights
 }
 
 @MainActor

@@ -45,24 +45,180 @@ struct WindowMinimumSizeTests {
 
     @MainActor
     @Test
-    func tracksResponsiveLayoutWithoutLosingWidthFloor() async {
-        let (window, hostingView) = responsiveLayoutWindow()
+    func reservesResponsiveHeightBeforeTheFirstNarrowLayout() async {
+        let (window, hostingView) = responsiveLayoutWindow(contentWidth: 700)
 
         let wideMinimum = await settledMinimumSize(of: window, contentWidth: 700)
-        let narrowMinimum = await settledMinimumSize(of: window, contentWidth: 360)
-        let restoredMinimum = await settledMinimumSize(of: window, contentWidth: 700)
-        let minimumWidth = await settledMinimumSize(of: window, contentWidth: 334).width
+        let expectedHeight = expectedMinimumHeight(
+            in: window,
+            reservedContentHeight: ResponsiveMinimumContent.reservedHeight,
+            additionalContentHeight: 104
+        )
 
         #expect(
-            abs(wideMinimum.height - 322) < 0.5,
+            abs(wideMinimum.height - expectedHeight) < 0.5,
             "Measured wide minimum: \(wideMinimum)"
         )
-        #expect(
-            abs(narrowMinimum.height - 394) < 0.5,
-            "Measured narrow minimum: \(narrowMinimum)"
-        )
-        #expect(abs(restoredMinimum.height - wideMinimum.height) < 0.5)
+
+        let minimumWidth = await settledMinimumSize(of: window, contentWidth: 334).width
         #expect(abs(minimumWidth - 334) < 0.5)
+
+        await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
+    @Test
+    func preservesHeightDuringWideNarrowWideResize() async {
+        await expectStableHeight(through: [700, 360, 700])
+    }
+
+    @MainActor
+    @Test
+    func preservesHeightDuringNarrowWideNarrowResize() async {
+        await expectStableHeight(through: [360, 700, 360])
+    }
+
+    @MainActor
+    @Test
+    func appViewPreservesHeightThroughBothColumnTransitions() async {
+        let hostingView = NSHostingView(rootView: AnyView(AppView()))
+        let window = minimumSizeWindow(
+            contentWidth: 700,
+            contentHeight: 700,
+            hostingView: hostingView,
+            toolbarIdentifier: "AppViewHorizontalResizeTests"
+        )
+        window.orderFront(nil)
+
+        let initialSize = await settledMinimumSize(
+            of: window,
+            contentWidth: 700
+        )
+        let initialFrameHeight = window.frame.height
+
+        for contentWidth in [300, 700, 300] as [CGFloat] {
+            let size = await settledSizeAfterHorizontalResize(
+                of: window,
+                contentWidth: contentWidth,
+                preservingContentHeight: initialSize.height,
+                preservingFrameHeight: initialFrameHeight
+            )
+
+            #expect(abs(size.height - initialSize.height) < 0.5)
+            #expect(abs(window.frame.height - initialFrameHeight) < 0.5)
+        }
+
+        await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
+    @Test
+    func reservationIsAFloorRatherThanAHeightCap() async {
+        let contentHeight = CGFloat(281)
+        let reservation = CGFloat(250)
+        let hostingView = NSHostingView(
+            rootView: AnyView(
+                Color.clear
+                    .frame(width: 500, height: contentHeight)
+                    .windowMinimumHeightReservation(reservation)
+                    .windowMinimumSize()
+            )
+        )
+        let window = minimumSizeWindow(
+            contentWidth: 500,
+            contentHeight: contentHeight,
+            hostingView: hostingView,
+            toolbarIdentifier: "WindowMinimumFloorTests"
+        )
+        let minimum = await settledMinimumSize(of: window, contentWidth: 500)
+        let expectedHeight = expectedMinimumHeight(
+            in: window,
+            reservedContentHeight: contentHeight,
+            additionalContentHeight: 0
+        )
+
+        #expect(contentHeight > reservation)
+        #expect(
+            abs(minimum.height - expectedHeight) < 0.5,
+            "Measured minimum: \(minimum)"
+        )
+
+        await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
+    @Test
+    func widthFloorCorrectionPreservesAUserHeightAboveTheFloor() async {
+        let (window, hostingView) = responsiveLayoutWindow(contentWidth: 700)
+        let minimum = await settledMinimumSize(of: window, contentWidth: 700)
+        let userContentHeight = minimum.height + 80
+        window.setContentSize(
+            CGSize(width: 700, height: userContentHeight)
+        )
+        let settledUserSize = await settledWindowSize(of: window)
+        let userFrameHeight = window.frame.height
+
+        let correctedSize = await settledSizeAfterHorizontalResize(
+            of: window,
+            contentWidth: 300,
+            preservingContentHeight: settledUserSize.height,
+            preservingFrameHeight: userFrameHeight
+        )
+
+        #expect(
+            abs(correctedSize.width - 334) < 0.5,
+            "Width-floor correction produced: \(correctedSize)"
+        )
+        #expect(
+            abs(correctedSize.height - settledUserSize.height) < 0.5,
+            "Wide size: \(settledUserSize), corrected size: \(correctedSize)"
+        )
+        #expect(abs(window.frame.height - userFrameHeight) < 0.5)
+
+        await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
+    @Test
+    func packageReservationMatchesNarrowContentBeforeNarrowLayout() async throws {
+        let wideWidth = CGFloat(620)
+        // AppView's 300-point floor minus its two 12-point horizontal paddings.
+        let minimumPageWidth = CGFloat(276)
+        let narrowContentHeight = try await reportedPackageConfigurationHeight(
+            for: CGSize(width: minimumPageWidth, height: 300)
+        )
+        let hostingView = NSHostingView(
+            rootView: AnyView(
+                PackageConfigurationPage(onContentHeightChange: { _ in })
+                    .preferredColorScheme(.dark)
+                    .environment(PackageModel())
+                    .environment(BuildOptions())
+                    .frame(width: wideWidth)
+                    .windowMinimumSize()
+            )
+        )
+        let window = minimumSizeWindow(
+            contentWidth: wideWidth,
+            contentHeight: 700,
+            hostingView: hostingView,
+            toolbarIdentifier: "PackageConfigurationReservationTests"
+        )
+        window.orderFront(nil)
+
+        let wideMinimum = await settledMinimumSize(
+            of: window,
+            contentWidth: wideWidth
+        )
+        let expectedHeight = expectedMinimumHeight(
+            in: window,
+            reservedContentHeight: narrowContentHeight,
+            additionalContentHeight: 0
+        )
+
+        #expect(
+            abs(wideMinimum.height - expectedHeight) < 0.5,
+            "Narrow content: \(narrowContentHeight), wide minimum: \(wideMinimum)"
+        )
 
         await close(window, hostingView: hostingView)
     }
@@ -151,26 +307,157 @@ struct WindowMinimumSizeTests {
     }
 
     @MainActor
-    private func responsiveLayoutWindow() -> (NSWindow, NSHostingView<AnyView>) {
+    private func expectStableHeight(through contentWidths: [CGFloat]) async {
+        guard let initialWidth = contentWidths.first else { return }
+
+        let (window, hostingView) = responsiveLayoutWindow(
+            contentWidth: initialWidth
+        )
+        let initialSize = await settledMinimumSize(
+            of: window,
+            contentWidth: initialWidth
+        )
+        let initialFrameHeight = window.frame.height
+        var measuredSizes = [initialSize]
+
+        for contentWidth in contentWidths.dropFirst() {
+            let size = await settledSizeAfterHorizontalResize(
+                of: window,
+                contentWidth: contentWidth,
+                preservingContentHeight: initialSize.height,
+                preservingFrameHeight: initialFrameHeight
+            )
+            measuredSizes.append(size)
+
+            #expect(
+                abs(size.height - initialSize.height) < 0.5,
+                "Widths: \(contentWidths), measured sizes: \(measuredSizes)"
+            )
+            #expect(abs(window.frame.height - initialFrameHeight) < 0.5)
+        }
+
+        await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
+    private func settledSizeAfterHorizontalResize(
+        of window: NSWindow,
+        contentWidth: CGFloat,
+        preservingContentHeight contentHeight: CGFloat,
+        preservingFrameHeight frameHeight: CGFloat
+    ) async -> CGSize {
+        var currentWidth = window.contentView?.bounds.width ?? contentWidth
+
+        while abs(currentWidth - contentWidth) > 0.5 {
+            let widthChange = min(max(contentWidth - currentWidth, -20), 20)
+            currentWidth += widthChange
+            window.setContentSize(
+                CGSize(width: currentWidth, height: contentHeight)
+            )
+            let measuredSize = await settledWindowSize(of: window)
+            #expect(
+                abs(measuredSize.height - contentHeight) < 0.5,
+                "Width: \(currentWidth), content size: \(measuredSize)"
+            )
+            #expect(
+                abs(window.frame.height - frameHeight) < 0.5,
+                "Width: \(currentWidth), frame: \(window.frame)"
+            )
+        }
+
+        return await settledWindowSize(of: window)
+    }
+
+    @MainActor
+    private func settledWindowSize(of window: NSWindow) async -> CGSize {
+        var previousSize = CGSize.zero
+        var stableReadingCount = 0
+
+        for _ in 0..<100 {
+            try? await Task.sleep(for: .milliseconds(10))
+            window.contentView?.layoutSubtreeIfNeeded()
+            window.displayIfNeeded()
+
+            let currentSize = window.contentView?.bounds.size ?? .zero
+            let unchanged = abs(currentSize.width - previousSize.width) < 0.5
+                && abs(currentSize.height - previousSize.height) < 0.5
+
+            if unchanged {
+                stableReadingCount += 1
+                if stableReadingCount == 3 { return currentSize }
+            } else {
+                stableReadingCount = 0
+            }
+
+            previousSize = currentSize
+        }
+
+        return window.contentView?.bounds.size ?? .zero
+    }
+
+    @MainActor
+    private func responsiveLayoutWindow(
+        contentWidth: CGFloat
+    ) -> (NSWindow, NSHostingView<AnyView>) {
         let hostingView = NSHostingView(
             rootView: AnyView(
                 ResponsiveMinimumContent()
+                    .windowMinimumHeightReservation(
+                        ResponsiveMinimumContent.reservedHeight
+                    )
                     .windowMinimumSize(addingHeight: 104)
             )
         )
+        let window = minimumSizeWindow(
+            contentWidth: contentWidth,
+            contentHeight: 700,
+            hostingView: hostingView,
+            toolbarIdentifier: "ResponsiveWindowMinimumTests"
+        )
+        window.orderFront(nil)
+
+        return (window, hostingView)
+    }
+
+    @MainActor
+    private func minimumSizeWindow(
+        contentWidth: CGFloat,
+        contentHeight: CGFloat,
+        hostingView: NSHostingView<AnyView>,
+        toolbarIdentifier: String
+    ) -> NSWindow {
         let window = NSWindow(
-            contentRect: CGRect(x: 0, y: 0, width: 700, height: 700),
+            contentRect: CGRect(
+                x: 0,
+                y: 0,
+                width: contentWidth,
+                height: contentHeight
+            ),
             styleMask: [.titled, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         window.isReleasedWhenClosed = false
-        window.toolbar = NSToolbar(identifier: "ResponsiveWindowMinimumTests")
+        window.toolbar = NSToolbar(identifier: toolbarIdentifier)
         window.toolbarStyle = .unifiedCompact
         window.contentView = hostingView
-        window.orderFront(nil)
 
-        return (window, hostingView)
+        return window
+    }
+
+    @MainActor
+    private func expectedMinimumHeight(
+        in window: NSWindow,
+        reservedContentHeight: CGFloat,
+        additionalContentHeight: CGFloat
+    ) -> CGFloat {
+        let obscuredContentHeight = max(
+            window.frame.height - window.contentLayoutRect.height,
+            0
+        )
+        return reservedContentHeight
+            + obscuredContentHeight
+            + additionalContentHeight
     }
 
     @MainActor

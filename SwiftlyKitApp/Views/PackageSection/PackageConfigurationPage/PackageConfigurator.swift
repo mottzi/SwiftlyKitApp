@@ -47,6 +47,7 @@ struct PackageConfigurator: View {
                 )
             }
         }
+        .reportsHeightReservation()
         .frame(maxWidth: .infinity, alignment: .leading)
         .disabled(buildOptions.buildWorkflow.isRunning)
         .overlayPreferenceValue(BuildOptionLabelBoundsPreferenceKey.self) { bounds in

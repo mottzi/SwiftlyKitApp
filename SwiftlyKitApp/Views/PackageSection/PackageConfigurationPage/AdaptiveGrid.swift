@@ -92,6 +92,27 @@ struct AdaptiveGrid: Layout {
                 rowOriginY += rowHeights[rowIndex] + rowSpacing
             }
         }
+
+    }
+
+    /// Exposes the one-column height without changing the grid's current arrangement or size.
+    func explicitAlignment(
+        of guide: VerticalAlignment,
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) -> CGFloat? {
+
+        guard guide == .adaptiveGridOneColumnHeight else { return nil }
+
+        let oneColumnHeight = sizeThatFits(
+            proposal: .unspecified,
+            subviews: subviews,
+            cache: &cache
+        ).height
+
+        return bounds.minY + oneColumnHeight
     }
 
 }
@@ -324,6 +345,79 @@ extension AdaptiveGrid {
     private struct LabelControlWidths {
         let label: CGFloat
         let control: CGFloat
+    }
+
+}
+
+/// Alignment used to read the grid's one-column height without affecting its layout.
+private nonisolated struct AdaptiveGridOneColumnHeightAlignment: AlignmentID {
+
+    static func defaultValue(in context: ViewDimensions) -> CGFloat {
+        context[VerticalAlignment.bottom]
+    }
+
+}
+
+extension VerticalAlignment {
+
+    fileprivate nonisolated static let adaptiveGridOneColumnHeight = VerticalAlignment(
+        AdaptiveGridOneColumnHeightAlignment.self
+    )
+
+}
+
+extension Alignment {
+
+    fileprivate nonisolated static let adaptiveGridOneColumnHeight = Alignment(
+        horizontal: .leading,
+        vertical: .adaptiveGridOneColumnHeight
+    )
+
+}
+
+extension View {
+
+    /// Publishes an `AdaptiveGrid`'s one-column height without changing its visible layout.
+    func reportsHeightReservation() -> some View {
+        overlay(alignment: .adaptiveGridOneColumnHeight) {
+            Color.clear
+                .frame(width: 0, height: 0)
+                .anchorPreference(
+                    key: AdaptiveGridOneColumnHeightAnchorPreferenceKey.self,
+                    value: .bounds
+                ) { $0 }
+        }
+    }
+
+    /// Converts the reported one-column bottom edge into a window minimum-height reservation.
+    func reservesWindowHeight(
+        addingHeight additionalHeight: CGFloat
+    ) -> some View {
+        overlayPreferenceValue(
+            AdaptiveGridOneColumnHeightAnchorPreferenceKey.self
+        ) { oneColumnHeightAnchor in
+            GeometryReader { proxy in
+                if let oneColumnHeightAnchor {
+                    Color.clear.windowMinimumHeightReservation(
+                        proxy[oneColumnHeightAnchor].maxY + additionalHeight
+                    )
+                }
+            }
+        }
+    }
+
+}
+
+/// Carries the marker that represents an `AdaptiveGrid`'s one-column height.
+private struct AdaptiveGridOneColumnHeightAnchorPreferenceKey: PreferenceKey {
+
+    static let defaultValue: Anchor<CGRect>? = nil
+
+    static func reduce(
+        value: inout Anchor<CGRect>?,
+        nextValue: () -> Anchor<CGRect>?
+    ) {
+        value = nextValue() ?? value
     }
 
 }

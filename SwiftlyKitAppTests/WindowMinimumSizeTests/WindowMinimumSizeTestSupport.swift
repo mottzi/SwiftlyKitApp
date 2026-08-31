@@ -4,6 +4,8 @@ import SwiftUI
 
 struct ResponsiveMinimumContent: View {
 
+    static let reservedHeight = CGFloat(250)
+
     var body: some View {
         WidthResponsiveLayout {
             Color.clear

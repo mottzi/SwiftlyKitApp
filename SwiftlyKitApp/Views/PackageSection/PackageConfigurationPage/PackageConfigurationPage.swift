@@ -3,7 +3,7 @@ import SwiftUI
 
 struct PackageConfigurationPage: View {
 
-    let onIdealHeightChange: (CGFloat) -> Void
+    let onContentHeightChange: (CGFloat) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -21,7 +21,7 @@ struct PackageConfigurationPage: View {
                 .onGeometryChange(for: CGFloat.self) { geometry in
                     geometry.frame(in: .named(Self.coordinateSpaceName)).maxY
                 } action: { height in
-                    onIdealHeightChange(height)
+                    onContentHeightChange(height)
                 }
                 .frame(
                     maxWidth: .infinity,
@@ -34,6 +34,9 @@ struct PackageConfigurationPage: View {
                 )
         }
         .coordinateSpace(.named(Self.coordinateSpaceName))
+        .reservesWindowHeight(
+            addingHeight: Self.verticalPadding
+        )
         .frame(maxHeight: .infinity, alignment: .top)
         .sectionSurface()
     }
@@ -47,6 +50,8 @@ extension PackageConfigurationPage {
     private static let verticalPadding: CGFloat = 12
     private static let dividerOpacity = 0.55
     private static let configurationBackgroundOpacity = 0.5
-    private static let coordinateSpaceName = "PackageConfigurationPage"
+    // The geometry callback is `@Sendable`, so this immutable name must be
+    // available without hopping through the view's main-actor isolation.
+    private nonisolated static let coordinateSpaceName = "PackageConfigurationPage"
 
 }

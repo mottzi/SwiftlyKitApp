@@ -141,7 +141,7 @@ extension WindowMinimumSizeAppKitView {
         // restore the minimum if a layout transition leaves the window too small
         var size = contentView.bounds.size
         size.width = max(size.width, minContentWidth)
-        size.height = minContentHeight
+        size.height = max(size.height, minContentHeight)
         window.setContentSize(size)
     }
 

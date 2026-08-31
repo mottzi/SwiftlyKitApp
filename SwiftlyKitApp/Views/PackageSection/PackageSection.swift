@@ -5,7 +5,7 @@ struct PackageSection: View {
     @Environment(PackageModel.self) private var packageModel
 
     @State private var layoutMode = LayoutMode.twoColumns
-    @State private var presentedHeight: CGFloat?
+    @State private var sectionHeight: CGFloat?
 
     var body: some View {
         PagingHStack(
@@ -17,7 +17,7 @@ struct PackageSection: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .geometryGroup()
 
-            PackageConfigurationPage(onIdealHeightChange: updatePresentedHeight)
+            PackageConfigurationPage(onContentHeightChange: updateSectionHeight)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .geometryGroup()
                 .deemphasiseContent(when: !packageModel.isPackageSelected)
@@ -25,7 +25,7 @@ struct PackageSection: View {
                 .rotationEffect(configurationRotation, anchor: .bottomLeading)
                 .offset(configurationOffset)
         }
-        .frame(height: presentedHeight, alignment: .top)
+        .frame(height: sectionHeight, alignment: .top)
         .onPreferenceChange(LayoutMode.PreferenceKey.self) { reportedMode in
             guard let reportedMode else { return }
             layoutMode = reportedMode
@@ -35,15 +35,15 @@ struct PackageSection: View {
 
 extension PackageSection {
 
-    private func updatePresentedHeight(_ idealHeight: CGFloat) {
-        guard idealHeight.isFinite, idealHeight > 0 else { return }
-        guard presentedHeight != idealHeight else { return }
+    private func updateSectionHeight(_ contentHeight: CGFloat) {
+        guard contentHeight.isFinite, contentHeight > 0 else { return }
+        guard sectionHeight != contentHeight else { return }
 
-        if presentedHeight == nil {
-            presentedHeight = idealHeight
+        if sectionHeight == nil {
+            sectionHeight = contentHeight
         } else {
             withAnimation(.bouncy.speed(1.25)) {
-                presentedHeight = idealHeight
+                sectionHeight = contentHeight
             }
         }
     }
