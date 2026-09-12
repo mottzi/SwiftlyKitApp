@@ -68,8 +68,7 @@ extension PackageModel {
 
     /// Shortens paths under the user's home directory to use `~`.
     private static func displayPath(for url: URL) -> String {
-        NSString(string: url.path(percentEncoded: false))
-            .abbreviatingWithTildeInPath
+        PathDisplay.path(for: url)
     }
 
 }

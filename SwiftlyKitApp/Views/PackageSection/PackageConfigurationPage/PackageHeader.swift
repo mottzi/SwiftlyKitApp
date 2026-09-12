@@ -45,7 +45,7 @@ struct PackageHeader: View {
             Spacer(minLength: 0)
 
             BuildButton()
-                .offset(x: 8, y: 0)
+                .offset(x: 4, y: 0)
         }
     }
 

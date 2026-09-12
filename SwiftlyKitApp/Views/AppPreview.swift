@@ -101,7 +101,7 @@ private struct BuildSectionHeaderPreview: View {
                 .foregroundStyle(.secondary)
 
             PackageHeader()
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 12)
                 .padding(.top, 12)
                 .padding(.bottom, 14)
                 .sectionSurface()

@@ -7,7 +7,7 @@ struct BuildButton: View {
 
     var body: some View {
         Button(action: startBuild) {
-            Label("Build", systemImage: "hammer.fill")
+            Label("Build", systemImage: "play.fill")
                 .padding(4)
         }
         .labelStyle(.iconOnly)

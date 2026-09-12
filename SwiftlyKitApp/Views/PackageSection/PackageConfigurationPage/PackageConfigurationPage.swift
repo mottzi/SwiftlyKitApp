@@ -8,9 +8,8 @@ struct PackageConfigurationPage: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             PackageHeader()
-                .padding(.horizontal, Self.horizontalPadding)
-                .padding(.top, Self.verticalPadding)
-                .padding(.bottom, Self.verticalPadding)
+                .padding(.horizontal, 12)
+                .padding(.vertical, Self.verticalPadding)
             Divider()
                 .opacity(Self.dividerOpacity)
             PackageConfigurator()

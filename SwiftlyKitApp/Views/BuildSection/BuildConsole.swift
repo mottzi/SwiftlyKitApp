@@ -124,7 +124,7 @@ extension BuildConsole {
 
             let entry = entries[index]
             var line = AttributedString(
-                entry.kind.visiblePrefix + (entry.text.isEmpty ? " " : entry.text)
+                entry.kind.visiblePrefix + (entry.displayText.isEmpty ? " " : entry.displayText)
             )
             line.foregroundColor = entry.kind.foregroundStyle
             text.append(line)

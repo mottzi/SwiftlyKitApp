@@ -11,6 +11,11 @@ struct BuildLogEntry: Identifiable, Equatable {
         kind.plainTextPrefix + text
     }
 
+    /// Text rendered for this line with the home directory abbreviated.
+    var displayText: String {
+        PathDisplay.abbreviatingHomeDirectory(in: text)
+    }
+
     /// Semantic source and severity of one console line.
     enum Kind: Equatable {
         case status
