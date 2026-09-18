@@ -6,15 +6,21 @@ extension AdaptiveGrid {
     func layoutPlan(
         proposedWidth: CGFloat?,
         exactFormWidth: CGFloat? = nil,
+        measuresAutomaticArrangement: Bool = false,
         subviews: Subviews
     ) -> LayoutPlan? {
         guard !subviews.isEmpty else { return nil }
 
         let idealWidths = idealFieldWidths(for: subviews)
-        let columnCount = columnCount(
-            for: proposedWidth,
-            idealWidths: idealWidths
-        )
+        let columnCount: Int
+        if !measuresAutomaticArrangement, let arrangement {
+            switch arrangement {
+            case .oneColumn: columnCount = min(idealWidths.count, 1)
+            case .twoColumns: columnCount = min(idealWidths.count, 2)
+            }
+        } else {
+            columnCount = self.columnCount(for: proposedWidth, idealWidths: idealWidths)
+        }
         let idealWidth = idealFormWidth(
             for: columnCount,
             idealWidths: idealWidths

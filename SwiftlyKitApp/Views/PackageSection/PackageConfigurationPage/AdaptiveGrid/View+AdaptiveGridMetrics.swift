@@ -2,7 +2,7 @@ import SwiftUI
 
 extension View {
 
-    /// Publishes an `AdaptiveGrid`'s current arrangement and alternate one-column height.
+    /// Publishes an `AdaptiveGrid`'s width-recommended arrangement and alternate one-column height.
     func publishesAdaptiveGridMetrics() -> some View {
         overlay(alignment: .adaptiveGridFirstFieldRow) {
             adaptiveGridMetricMarker(.firstFieldRow)
@@ -15,7 +15,7 @@ extension View {
         }
     }
 
-    /// Calls `action` when a descendant `AdaptiveGrid` selects a different arrangement.
+    /// Calls `action` when the width-recommended arrangement of a descendant `AdaptiveGrid` changes.
     func onAdaptiveGridArrangementChange(
         _ action: @escaping (AdaptiveGridArrangement) -> Void
     ) -> some View {

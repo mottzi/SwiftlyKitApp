@@ -1,8 +1,11 @@
 import SwiftUI
 
 /// Grid layout for alternating label and control subviews.
-/// Uses two columns if the fields' ideal widths fit the proposed width.
+/// Uses the supplied arrangement, or fits columns automatically when none is supplied.
 struct AdaptiveGrid: Layout {
+
+    /// Optional displayed arrangement, allowing a parent to animate a measured column change.
+    let arrangement: AdaptiveGridArrangement?
 
     /// Gap between a label and its control.
     let labelSpacing: CGFloat
@@ -14,19 +17,28 @@ struct AdaptiveGrid: Layout {
     let rowSpacing: CGFloat
 
     init(
+        arrangement: AdaptiveGridArrangement? = nil,
         labelSpacing: CGFloat = Self.defaultLabelSpacing,
         columnSpacing: CGFloat = Self.defaultColumnSpacing,
         rowSpacing: CGFloat = Self.defaultRowSpacing
     ) {
+        self.arrangement = arrangement
         self.labelSpacing = labelSpacing
         self.columnSpacing = columnSpacing
         self.rowSpacing = rowSpacing
     }
 
     /// Returns the form's size for a parent proposal.
-    /// Uses two columns if the fields' ideal widths fit the proposed width.
+    /// Uses the supplied arrangement, or fits columns automatically when none is supplied.
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        layoutPlan(proposedWidth: proposal.width, subviews: subviews)?.size ?? .zero
+        // Intrinsic/minimum-size probes must stay independent of the animated arrangement.
+        // Otherwise a displayed two-column grid raises the window floor above its breakpoint.
+        let isSizingProbe = proposal.width == nil || proposal.width == 0 || proposal.width == .infinity
+        return layoutPlan(
+            proposedWidth: proposal.width,
+            measuresAutomaticArrangement: isSizingProbe,
+            subviews: subviews
+        )?.size ?? .zero
     }
 
     /// Places label-control fields in one or two columns based on the assigned width.

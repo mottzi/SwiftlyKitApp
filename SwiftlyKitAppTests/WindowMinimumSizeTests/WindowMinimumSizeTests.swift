@@ -8,6 +8,45 @@ struct WindowMinimumSizeTests {
 
     @MainActor
     @Test
+    func selectedPackageCanShrinkFromTwoColumnsToOne() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try "// swift-tools-version: 6.0".write(to: directory.appendingPathComponent("Package.swift"), atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let package = PackageModel()
+        package.selectPackage(at: directory)
+        let hostingView = NSHostingView(rootView: AnyView(
+            VStack {
+                PackageSection()
+                    .padding(.horizontal, 12)
+                    .clipped()
+                    .fixedSize(horizontal: false, vertical: true)
+                    .windowMinimumSize(addingHeight: 200)
+                Color.clear
+            }
+            .frame(minWidth: 300)
+            .environment(package)
+            .environment(BuildOptions())
+        ))
+        let window = minimumSizeWindow(
+            contentWidth: 850, contentHeight: 700, hostingView: hostingView,
+            toolbarIdentifier: "AnimatedGridMinimumWidthTests"
+        )
+        window.orderFront(nil)
+        for width in [850, 360, 850, 360] as [CGFloat] {
+            _ = try await settledMinimumSize(of: window, contentWidth: width)
+            // Allow the explicit arrangement and its animation to settle before checking AppKit's floor.
+            try await Task.sleep(for: .milliseconds(400))
+            hostingView.layoutSubtreeIfNeeded()
+            #expect(window.contentMinSize.width <= 360)
+            #expect(abs((window.contentView?.bounds.width ?? 0) - width) < 0.5)
+        }
+        try await close(window, hostingView: hostingView)
+    }
+
+
+    @MainActor
+    @Test
     func includesContentObscuredByTheUnifiedToolbar() async throws {
         let minimumContentHeight = CGFloat(281)
         let hostingView = NSHostingView(

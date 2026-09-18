@@ -4,12 +4,14 @@ struct PackageConfigurator: View {
 
     @Environment(BuildOptions.self) private var buildOptions
 
+    @State private var arrangement: AdaptiveGridArrangement?
+
     @State private var presentedPopover: PresentedBuildOptionPopover?
 
     var body: some View {
         @Bindable var buildOptions = buildOptions
 
-        AdaptiveGrid {
+        AdaptiveGrid(arrangement: arrangement) {
             buildOptionField("Product") {
                 ProductControl(
                     infoPopoverPresented: isPopoverPresented(.info(.product)),
@@ -48,6 +50,8 @@ struct PackageConfigurator: View {
             }
         }
         .publishesAdaptiveGridMetrics()
+        .onAdaptiveGridArrangementChange { arrangement = $0 }
+        .animation(PackageLayoutAnimation.adaptiveChange, value: arrangement)
         .frame(maxWidth: .infinity, alignment: .leading)
         .disabled(buildOptions.isOperationRunning)
     }

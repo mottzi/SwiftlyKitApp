@@ -8,6 +8,7 @@ extension AdaptiveGridTests {
     @MainActor
     func snapshot(
         width: CGFloat,
+        arrangement: AdaptiveGridArrangement? = nil,
         secondControlWidth: CGFloat = 100,
         firstLabelHeight: CGFloat = 20,
         firstControlHeight: CGFloat = 20,
@@ -15,7 +16,7 @@ extension AdaptiveGridTests {
         secondControlHeight: CGFloat = 20
     ) async throws -> AdaptiveGridSnapshot {
         let capture = AdaptiveGridCapture()
-        let rootView = AdaptiveGrid {
+        let rootView = AdaptiveGrid(arrangement: arrangement) {
             AdaptiveGridProbe(
                 field: 0,
                 part: .label,

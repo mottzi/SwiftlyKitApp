@@ -13,16 +13,19 @@ extension AdaptiveGrid {
         if guide == .adaptiveGridOneColumnBottom {
             let oneColumnPlan = layoutPlan(
                 proposedWidth: nil,
+                measuresAutomaticArrangement: true,
                 subviews: subviews
             )
             return oneColumnPlan.map { bounds.minY + $0.height }
         }
 
+        // Report the width-driven destination, even while the displayed arrangement is transitioning.
         guard guide == .adaptiveGridFirstFieldRow
                 || guide == .adaptiveGridSecondFieldRow else { return nil }
         guard let currentPlan = layoutPlan(
             proposedWidth: bounds.width,
             exactFormWidth: bounds.width,
+            measuresAutomaticArrangement: true,
             subviews: subviews
         ) else { return nil }
 

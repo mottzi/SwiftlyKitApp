@@ -7,6 +7,19 @@ extension AdaptiveGridTests {
 
     @MainActor
     @Test
+    func displayedArrangementDoesNotOverrideWidthRecommendation() async throws {
+        let wide = try await snapshot(width: 318, arrangement: .oneColumn)
+        #expect(wide.arrangement == .twoColumns)
+        #expect(wide.labelFrame(for: 1).minY > wide.labelFrame(for: 0).minY)
+
+        let narrow = try await snapshot(width: 317, arrangement: .twoColumns)
+        #expect(narrow.arrangement == .oneColumn)
+        #expect(abs(narrow.labelFrame(for: 1).minY - narrow.labelFrame(for: 0).minY) < 0.5)
+    }
+
+
+    @MainActor
+    @Test
     func onePersistentGridRestoresWideGeometryAfterNarrowResize() async throws {
         let (hostingView, capture) = persistentGrid()
         let wide = try await resizeSnapshot(
