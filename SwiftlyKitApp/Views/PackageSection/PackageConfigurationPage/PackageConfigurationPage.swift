@@ -22,8 +22,10 @@ struct PackageConfigurationPage: View {
                 } action: { height in
                     onContentHeightChange(height)
                 }
+                // Allow the body to fit intermediate heights during the section animation.
                 .frame(
                     maxWidth: .infinity,
+                    minHeight: 0,
                     maxHeight: .infinity,
                     alignment: .topLeading
                 )

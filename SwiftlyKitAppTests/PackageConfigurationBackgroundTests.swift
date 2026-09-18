@@ -149,6 +149,36 @@ struct PackageConfigurationBackgroundTests {
         #expect(abs(restoredWideHeight - wideHeight) < 0.5)
     }
 
+    @MainActor
+    @Test
+    func acceptsIntermediateHeightWithoutLosingContentMeasurement() async throws {
+        let contentHeight = HeightCapture()
+        let surfaceHeight = HeightCapture()
+        let allocatedHeight: CGFloat = 180
+        let size = CGSize(width: 360, height: allocatedHeight)
+        let hostingView = NSHostingView(
+            rootView: PackageConfigurationPage { contentHeight.height = $0 }
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                    surfaceHeight.height = $0
+                }
+                .frame(width: size.width, height: size.height, alignment: .top)
+                .clipped()
+                .environment(PackageModel())
+                .environment(BuildOptions())
+        )
+        hostingView.frame = CGRect(origin: .zero, size: size)
+
+        for _ in 0..<10 {
+            hostingView.layoutSubtreeIfNeeded()
+            await Task.yield()
+        }
+
+        let measuredSurfaceHeight = try #require(surfaceHeight.height)
+        let measuredContentHeight = try #require(contentHeight.height)
+        #expect(abs(measuredSurfaceHeight - allocatedHeight) < 0.5)
+        #expect(measuredContentHeight > allocatedHeight + 40)
+    }
+
     private func color(
         at point: CGPoint,
         in representation: NSBitmapImageRep,
