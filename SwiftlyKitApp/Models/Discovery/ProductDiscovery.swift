@@ -213,10 +213,10 @@ final class ProductDiscovery {
         resetContext()
     }
 
-    /// Replaces the available products after discovery completes.
+    /// Replaces discovered products and keeps the selected product if its name remains available.
     func replaceProducts(with products: [ExecutableProduct]) {
         availableProducts = products
-        selectedProduct = products.first
+        selectedProduct = products.first { $0.name == selectedProduct?.name } ?? products.first
         state = products.isEmpty ? .empty : .ready
     }
 

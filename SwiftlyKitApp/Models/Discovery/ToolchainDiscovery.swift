@@ -121,10 +121,12 @@ final class ToolchainDiscovery {
         _ current: ToolchainSelection,
         available: [ToolchainSelection]
     ) -> ToolchainSelection {
-        guard current != .automatic, available.contains(current) else {
-            return .automatic
+
+        if current == .automatic || !available.contains(current) {
+            .automatic
+        } else {
+            current
         }
-        return current
     }
 
 }

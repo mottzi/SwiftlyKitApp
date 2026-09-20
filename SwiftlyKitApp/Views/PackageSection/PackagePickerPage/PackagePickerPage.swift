@@ -6,6 +6,7 @@ struct PackagePickerPage: View {
 
     @Environment(PackageModel.self) private var packageModel
 
+    @State private var invalidPackageName: String?
     @State private var isFileImporterPresented = false
     @State private var isDropTargeted = false
     @State private var isHovering = false
@@ -52,6 +53,18 @@ struct PackagePickerPage: View {
             guard case .success(let url) = result else { return }
             selectPackage(at: url)
         }
+        .alert(
+            "Package.swift Not Found",
+            isPresented: invalidPackageAlertPresented,
+            presenting: invalidPackageName
+        ) { _ in
+            Button("Choose Again…") {
+                isFileImporterPresented = true
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: { packageName in
+            Text("No Package.swift was found in “\(packageName)”.")
+        }
         .dropDestination(for: URL.self, isEnabled: canSelect) { items, _ in
             guard let url = items.first else { return }
             selectPackage(at: url)
@@ -69,12 +82,28 @@ struct PackagePickerPage: View {
 
 extension PackagePickerPage {
 
+    private var invalidPackageAlertPresented: Binding<Bool> {
+        Binding(
+            get: { invalidPackageName != nil },
+            set: { isPresented in
+                if !isPresented {
+                    invalidPackageName = nil
+                }
+            }
+        )
+    }
+
     private func selectPackage(at url: URL) {
 
         withAnimation(.default, completionCriteria: .removed) {
             packageModel.selectPackage(at: url)
         } completion: {
             packageModel.finishConfigurationTransition()
+        }
+
+        guard packageModel.isPackageSelected else {
+            invalidPackageName = url.lastPathComponent
+            return
         }
     }
 

@@ -93,6 +93,46 @@ struct DiscoveryTests {
 
     @MainActor
     @Test
+    func productRediscoveryPreservesTheSelectedProductByName() {
+
+        let discovery = BuildOptions().productDiscovery
+        let firstProduct = ExecutableProduct(name: "FirstProduct")
+        let selectedProduct = ExecutableProduct(name: "SelectedProduct")
+        discovery.replaceProducts(with: [firstProduct, selectedProduct])
+        discovery.selectedProduct = selectedProduct
+        discovery.invalidate()
+
+        let replacement = ExecutableProduct(name: "SelectedProduct")
+        discovery.replaceProducts(with: [firstProduct, replacement])
+
+        #expect(discovery.selectedProduct == replacement)
+        #expect(discovery.availableProducts == [firstProduct, replacement])
+        #expect(discovery.state == .ready)
+    }
+
+    @MainActor
+    @Test
+    func clearingProductsResetsTheSelectionBeforeTheNextDiscovery() {
+
+        let discovery = BuildOptions().productDiscovery
+        let firstProduct = ExecutableProduct(name: "FirstProduct")
+        let selectedProduct = ExecutableProduct(name: "SelectedProduct")
+        discovery.replaceProducts(with: [firstProduct, selectedProduct])
+        discovery.selectedProduct = selectedProduct
+
+        discovery.clear()
+
+        #expect(discovery.selectedProduct == nil)
+        #expect(discovery.availableProducts.isEmpty)
+        #expect(discovery.state == .idle)
+
+        discovery.replaceProducts(with: [firstProduct, selectedProduct])
+
+        #expect(discovery.selectedProduct == firstProduct)
+    }
+
+    @MainActor
+    @Test
     func productRediscoveryKeepsTheOldSelectionUntilReplacementArrives() {
         let discovery = BuildOptions().productDiscovery
         let oldProduct = ExecutableProduct(name: "OldProduct")
