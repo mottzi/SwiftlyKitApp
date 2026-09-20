@@ -5,6 +5,8 @@ struct DiscoveryAccessory<StatusContent: View>: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    @State private var progressVisible = false
+
     @Binding private var infoPopoverPresented: Bool
     @Binding private var statusPopoverPresented: Bool
 
@@ -36,6 +38,14 @@ struct DiscoveryAccessory<StatusContent: View>: View {
             height: ConfigurationAccessoryMetrics.length
         )
         .geometryGroup()
+        .task(id: isProgress) {
+            progressVisible = false
+            guard isProgress else { return }
+            do {
+                try await Task.sleep(for: .milliseconds(300))
+                progressVisible = true
+            } catch { }
+        }
         .onChange(of: phase) {
             reconcilePopovers()
         }
@@ -43,7 +53,7 @@ struct DiscoveryAccessory<StatusContent: View>: View {
 
     @ViewBuilder
     private var content: some View {
-        switch presentation {
+        switch displayedPresentation {
             case .information:
                 BuildOptionInfoButton(
                     isPresented: $infoPopoverPresented,
@@ -61,8 +71,17 @@ struct DiscoveryAccessory<StatusContent: View>: View {
         }
     }
 
+    private var isProgress: Bool {
+        if case .progress = presentation { return true }
+        return false
+    }
+
+    private var displayedPresentation: DiscoveryAccessoryPresentation {
+        isProgress && !progressVisible ? .information : presentation
+    }
+
     private var phase: Phase {
-        switch presentation {
+        switch displayedPresentation {
             case .information: .information
             case .progress: .progress
             case .status: .status

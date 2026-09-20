@@ -7,6 +7,8 @@ struct BuildStatus: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var failureDetailsPresented = false
+    @State private var settledPresentation: Presentation?
+    @State private var checkingVisible = false
 
     let state: BuildWorkflowState
     let result: BuildResult?
@@ -42,6 +44,19 @@ struct BuildStatus: View {
         .padding(.horizontal, Self.horizontalPadding)
         .frame(height: Self.height)
         .accessibilityElement(children: .contain)
+        .onChange(of: currentPresentation, initial: true) {
+            if !isChecking {
+                settledPresentation = state == .idle && readyDetail == nil ? nil : currentPresentation
+            }
+        }
+        .task(id: isChecking) {
+            checkingVisible = false
+            guard isChecking else { return }
+            do {
+                try await Task.sleep(for: .milliseconds(300))
+                checkingVisible = true
+            } catch { }
+        }
     }
 
 }
@@ -191,7 +206,23 @@ extension BuildStatus {
         PathDisplay.abbreviatingHomeDirectory(in: presentation.detail)
     }
 
+    private var isChecking: Bool {
+        setupStatus?.showsProgress == true && !state.isRunning
+    }
+
     private var presentation: Presentation {
+        guard isChecking else { return currentPresentation }
+        if !checkingVisible, let settledPresentation { return settledPresentation }
+        return Presentation(
+            title: "Checking build configuration",
+            detail: "Validating the selected package and Swift environment.",
+            symbolName: "hammer",
+            symbolColor: .secondary,
+            showsProgress: checkingVisible
+        )
+    }
+
+    private var currentPresentation: Presentation {
         if let setupStatus, !state.isRunning {
             return Presentation(
                 title: setupStatus.title,
@@ -265,7 +296,7 @@ extension BuildStatus {
         }
     }
 
-    private struct Presentation {
+    private struct Presentation: Equatable {
         let title: String
         let detail: String
         let symbolName: String

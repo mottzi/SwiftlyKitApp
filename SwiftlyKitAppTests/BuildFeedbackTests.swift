@@ -60,4 +60,23 @@ struct BuildFeedbackTests {
         #expect(host.showsProgress && toolchain.showsProgress && product.showsProgress)
     }
 
+    @Test
+    func setupFailuresAndInstallationRequestsDoNotUseProgressPresentation() {
+        let failure = BuildSetupStatus.current(
+            host: .ready,
+            toolchain: .failed("Unable to inspect package"),
+            product: .idle
+        )
+        let installation = BuildSetupStatus.current(
+            host: .commandLineToolsRequired,
+            toolchain: .idle,
+            product: .idle
+        )
+
+        #expect(!failure.showsProgress)
+        #expect(failure.action == .swiftDetails)
+        #expect(!installation.showsProgress)
+        #expect(installation.action == .swiftDetails)
+    }
+
 }
