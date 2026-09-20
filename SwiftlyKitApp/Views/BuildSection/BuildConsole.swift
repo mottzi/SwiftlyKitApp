@@ -6,6 +6,11 @@ struct BuildConsole: View {
 
     @State private var followsOutput = true
     @State private var wrapsLines = true
+    @State private var scrollPhase = ScrollPhase.idle
+
+    private var isUserScrolling: Bool {
+        scrollPhase == .tracking || scrollPhase == .interacting || scrollPhase == .decelerating
+    }
 
     let entries: [BuildLogEntry]
     let logRevision: Int
@@ -102,6 +107,7 @@ extension BuildConsole {
                 scrollToBottom(using: proxy)
             }
             .onChange(of: logRevision) { _, _ in
+                guard !isUserScrolling else { return }
                 scrollToBottom(using: proxy)
             }
             .onChange(of: followsOutput) { _, isFollowing in
@@ -111,6 +117,40 @@ extension BuildConsole {
             .onChange(of: wrapsLines) {
                 scrollToBottomAfterLayout(using: proxy)
             }
+            .onScrollGeometryChange(for: ScrollGeometry.self) { geometry in
+                geometry
+            } action: { oldGeometry, geometry in
+                updateFollowing(from: oldGeometry, to: geometry)
+            }
+            .onScrollPhaseChange { _, phase, _ in
+                scrollPhase = phase
+
+                if phase == .idle {
+                    scrollToBottom(using: proxy)
+                }
+            }
+        }
+    }
+
+    private func updateFollowing(from oldGeometry: ScrollGeometry, to geometry: ScrollGeometry) {
+
+        guard scrollPhase == .interacting || scrollPhase == .decelerating
+            || (scrollPhase == .idle && geometry.contentOffset.y < oldGeometry.contentOffset.y)
+        else { return }
+        guard oldGeometry.contentOffset.y != geometry.contentOffset.y else { return }
+        guard oldGeometry.containerSize == geometry.containerSize else { return }
+        guard oldGeometry.contentInsets == geometry.contentInsets else { return }
+        guard oldGeometry.contentSize.width == geometry.contentSize.width else { return }
+        guard geometry.contentSize.height >= oldGeometry.contentSize.height else { return }
+
+        if geometry.contentOffset.y + geometry.containerSize.height
+            >= geometry.contentSize.height + geometry.contentInsets.bottom - Self.bottomTolerance {
+            guard scrollPhase != .idle else { return }
+            if !followsOutput {
+                followsOutput = true
+            }
+        } else if followsOutput {
+            followsOutput = false
         }
     }
 
@@ -146,6 +186,7 @@ extension BuildConsole {
 
         Task { @MainActor in
             await Task.yield()
+            guard !isUserScrolling else { return }
             scrollToBottom(using: proxy)
         }
     }
@@ -180,6 +221,7 @@ extension BuildLogEntry.Kind {
 extension BuildConsole {
 
     private static let contentID = "build-console-content"
+    private static let bottomTolerance: CGFloat = 2
     private static let minimumHeight: CGFloat = 112
     private static let toolbarHeight: CGFloat = 27
     private static let toolbarPadding: CGFloat = 8
