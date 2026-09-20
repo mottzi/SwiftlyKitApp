@@ -73,6 +73,7 @@ extension BuildStatus {
                     .transition(.opacity)
             } else {
                 Image(systemName: presentation.symbolName)
+                    .font(.system(size: presentation.symbolSize))
                     .foregroundStyle(presentation.symbolColor)
                     .symbolRenderingMode(.hierarchical)
                     .contentTransition(.symbolEffect(.replace))
@@ -242,14 +243,16 @@ extension BuildStatus {
                         title: "Ready to build",
                         detail: readyDetail,
                         symbolName: "hammer.fill",
-                        symbolColor: .accentColor
+                        symbolColor: .accentColor,
+                        symbolSize: Self.hammerSymbolSize
                     )
                 } else {
                     Presentation(
                         title: "Build",
                         detail: "Choose a Swift package to start.",
                         symbolName: "hammer",
-                        symbolColor: .secondary
+                        symbolColor: .secondary,
+                        symbolSize: Self.hammerSymbolSize
                     )
                 }
 
@@ -303,6 +306,7 @@ extension BuildStatus {
         let detail: String
         let symbolName: String
         let symbolColor: Color
+        var symbolSize = BuildStatus.defaultSymbolSize
         var showsProgress = false
     }
 
@@ -340,6 +344,8 @@ extension BuildStatus {
     private static let textSpacing: CGFloat = 1
     private static let horizontalPadding: CGFloat = 12
     private static let iconLength: CGFloat = 17
+    private static let defaultSymbolSize: CGFloat = 20
+    private static let hammerSymbolSize: CGFloat = 17
     private static let actionLength: CGFloat = 24
     private static let transitionDuration = 0.25
     private static let transitionScale = 0.8
