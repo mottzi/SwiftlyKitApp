@@ -28,11 +28,13 @@ struct ProductDiscoveryStatus: View {
                 }
 
             case .empty:
-                EmptyDiscoveryStatus(
-                    title: "No executable products",
-                    message: "SwiftPM inspected this package but found no executable products.",
-                    onRetry: onRetry
-                )
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("No executable products")
+                        .font(.headline)
+
+                    Text("Add an executable product to this package's manifest to build it.")
+                        .fixedSize(horizontal: false, vertical: true)
+                }
 
             case .failed(let error):
                 FailedDiscoveryStatus(

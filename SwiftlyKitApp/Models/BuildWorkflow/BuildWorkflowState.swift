@@ -1,3 +1,4 @@
+import Foundation
 import SwiftlyKit
 
 /// Current execution state of the latest build workflow.
@@ -24,6 +25,22 @@ enum BuildWorkflowState: Equatable {
 }
 
 extension BuildWorkflowState {
+
+    /// First source-located compiler error, or the retained failure if no such error exists.
+    var failureSummary: String? {
+        guard case .failed(let detail) = self else { return nil }
+
+        for line in detail.split(whereSeparator: \.isNewline) {
+            guard let range = line.range(of: #":\d+:\d+: (?:fatal )?error: "#, options: .regularExpression)
+            else { continue }
+
+            let message = line[range.upperBound...].trimmingCharacters(in: .whitespaces)
+            guard !message.isEmpty else { continue }
+            return message.prefix(1).uppercased() + message.dropFirst()
+        }
+
+        return detail
+    }
 
     /// Whether a build task still owns the workflow.
     var isRunning: Bool {

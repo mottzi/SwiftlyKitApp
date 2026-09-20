@@ -1,6 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+/// Selects a Swift package with the system folder importer or drag and drop.
 struct PackagePickerPage: View {
 
     @Environment(PackageModel.self) private var packageModel
@@ -69,6 +70,7 @@ struct PackagePickerPage: View {
 extension PackagePickerPage {
 
     private func selectPackage(at url: URL) {
+
         withAnimation(.default, completionCriteria: .removed) {
             packageModel.selectPackage(at: url)
         } completion: {

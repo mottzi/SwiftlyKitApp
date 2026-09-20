@@ -32,9 +32,11 @@ final class PackageModel {
         return Self.displayPath(for: url)
     }
 
-    /// Selects the package root if `url` names an existing package directory or its `Package.swift` manifest.
+    /// Selects a different package root if `url` names an existing package directory or its `Package.swift` manifest.
     func selectPackage(at url: URL) {
         guard let packageURL = Self.swiftPackageRoot(for: url) else { return }
+        guard packageURL != self.packageURL else { return }
+
         isConfigurationReady = false
         self.packageURL = packageURL
     }

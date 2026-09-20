@@ -1,15 +1,19 @@
 import SwiftUI
 import SwiftlyKit
 
-/// Current build state with one contextual workflow action.
+/// Current setup or build state with one contextual workflow action.
 struct BuildStatus: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    @State private var failureDetailsPresented = false
 
     let state: BuildWorkflowState
     let result: BuildResult?
     let isPublishing: Bool
     let readyDetail: String?
+    var setupStatus: BuildSetupStatus? = nil
+    var onSetupAction: () -> Void = {}
     let onCancel: () -> Void
     let onExport: (URL) async throws -> BuildResult?
 
@@ -82,6 +86,27 @@ extension BuildStatus {
                             .transition(statusTransition)
                     }
 
+                case .setup:
+                    if let action = setupStatus?.action {
+                        Button(action.label, systemImage: action.symbol, action: onSetupAction)
+                            .labelStyle(.iconOnly)
+                            .help(action.label)
+                            .transition(statusTransition)
+                    }
+
+                case .failureDetails:
+                    Button("Show Build Failure Details", systemImage: "info.circle") {
+                        failureDetailsPresented = true
+                    }
+                    .labelStyle(.iconOnly)
+                    .help("Show build failure details")
+                    .popover(isPresented: $failureDetailsPresented, arrowEdge: .trailing) {
+                        if case .failed(let detail) = state {
+                            failureDetails(detail)
+                        }
+                    }
+                    .transition(statusTransition)
+
                 case .none:
                     EmptyView()
             }
@@ -90,6 +115,30 @@ extension BuildStatus {
         .controlSize(.small)
         .frame(width: Self.actionLength, height: Self.actionLength)
         .animation(transitionAnimation, value: actionPhase)
+    }
+
+    private func failureDetails(_ detail: String) -> some View {
+
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Build failed")
+                .font(.headline)
+
+            ScrollView {
+                Text(detail)
+                    .font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 300)
+
+            Button("Copy Details", systemImage: "doc.on.doc") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(detail, forType: .string)
+            }
+        }
+        .padding()
+        .frame(width: 420, alignment: .leading)
     }
 
     private var cancelButton: some View {
@@ -116,10 +165,15 @@ extension BuildStatus {
     }
 
     private var actionPhase: ActionPhase {
-        switch state {
+        if let setupStatus, !state.isRunning {
+            return setupStatus.action == nil ? .none : .setup
+        }
+
+        return switch state {
             case .active: .cancel
             case .succeeded where result != nil: .showResult
-            case .idle, .cancelling, .succeeded, .failed, .cancelled: .none
+            case .failed: .failureDetails
+            case .idle, .cancelling, .succeeded, .cancelled: .none
         }
     }
 
@@ -138,7 +192,17 @@ extension BuildStatus {
     }
 
     private var presentation: Presentation {
-        switch state {
+        if let setupStatus, !state.isRunning {
+            return Presentation(
+                title: setupStatus.title,
+                detail: setupStatus.detail,
+                symbolName: "exclamationmark.circle",
+                symbolColor: .secondary,
+                showsProgress: setupStatus.showsProgress
+            )
+        }
+
+        return switch state {
             case .idle:
                 if let readyDetail {
                     Presentation(
@@ -150,7 +214,7 @@ extension BuildStatus {
                 } else {
                     Presentation(
                         title: "Build",
-                        detail: "Complete package discovery to enable building.",
+                        detail: "Choose a Swift package to start.",
                         symbolName: "hammer",
                         symbolColor: .secondary
                     )
@@ -186,7 +250,7 @@ extension BuildStatus {
             case .failed(let detail):
                 Presentation(
                     title: "Build failed",
-                    detail: detail,
+                    detail: state.failureSummary ?? detail,
                     symbolName: "exclamationmark.triangle.fill",
                     symbolColor: .red
                 )
@@ -218,6 +282,8 @@ extension BuildStatus {
         case none
         case cancel
         case showResult
+        case setup
+        case failureDetails
     }
 
 }
