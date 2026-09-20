@@ -8,6 +8,35 @@ import Testing
 struct DiscoveryTests {
 
     @MainActor
+    @Test("Installation failures use the existing product retry action")
+    func installationFailureStatus() {
+
+        let status = BuildSetupStatus.current(
+            host: .ready,
+            toolchain: .ready([.automatic]),
+            product: .failed(.swiftlyInstallationFailed("Installing Swift 6.4.0 failed.\nLock held by process 52499"))
+        )
+        #expect(status.title == "Tool installation failed")
+        #expect(status.detail == "Installing Swift 6.4.0 failed.\nLock held by process 52499")
+        #expect(status.action == .productDetails)
+    }
+
+    @MainActor
+    @Test("Installation approval discloses conditional updates to existing Swiftly")
+    func approvalIncludesSwiftlyUpdate() {
+
+        let request = InstallationApprovalRequest(
+            swiftVersion: SwiftVersion(major: 6, minor: 4, patch: 0),
+            staticLinuxSDKVersion: "0.1.0",
+            requiredComponents: [.swiftlyUpdate, .toolchain, .staticLinuxSDK]
+        )
+        #expect(
+            request.message == "Update your existing Swiftly installation if needed, then install "
+                + "Swift 6.4.0 and Static Linux SDK 0.1.0?"
+        )
+    }
+
+    @MainActor
     @Test
     func discoverySpinnerDoesNotHostAnAppKitProgressIndicator() async {
         let hostingView = NSHostingView(

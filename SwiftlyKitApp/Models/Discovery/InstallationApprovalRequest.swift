@@ -10,15 +10,21 @@ struct InstallationApprovalRequest: Equatable {
         staticLinuxSDKVersion: String,
         requiredComponents: [PreparationComponent]
     ) {
-        let componentNames = requiredComponents.map { component in
+        let componentNames = requiredComponents.compactMap { component -> String? in
             switch component {
+                case .swiftlyUpdate: nil
                 case .swiftly: "Swiftly"
                 case .toolchain: "Swift \(swiftVersion)"
                 case .staticLinuxSDK: "Static Linux SDK \(staticLinuxSDKVersion)"
             }
         }
 
-        message = "Do you want to install \(Self.formattedList(componentNames))?"
+        if requiredComponents.contains(.swiftlyUpdate) {
+            message = "Update your existing Swiftly installation if needed, then install "
+                + "\(Self.formattedList(componentNames))?"
+        } else {
+            message = "Do you want to install \(Self.formattedList(componentNames))?"
+        }
     }
 
     private static func formattedList(_ names: [String]) -> String {

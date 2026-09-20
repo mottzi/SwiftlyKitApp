@@ -18,10 +18,13 @@ struct FailedDiscoveryStatus: View {
                 .keyboardShortcut(.defaultAction)
 
             DisclosureGroup("Details", isExpanded: $detailsExpanded) {
-                Text(detail)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .textSelection(.enabled)
-                    .padding(.top, 4)
+                ScrollView {
+                    Text(detail)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .textSelection(.enabled)
+                }
+                .frame(maxHeight: 240)
+                .padding(.top, 4)
             }
         }
     }

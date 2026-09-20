@@ -1,3 +1,4 @@
+import SwiftlyKit
 import Foundation
 
 /// Current setup task or blocker shown before a package is ready to build.
@@ -86,6 +87,8 @@ struct BuildSetupStatus: Equatable {
                     title: "No executable products",
                     detail: "This package has no executable product to build."
                 )
+            case .failed(.swiftlyInstallationFailed(let detail)):
+                return Self(title: "Tool installation failed", detail: detail, action: .productDetails)
             case .failed(let error):
                 return Self(title: "Package inspection failed", detail: error.localizedDescription, action: .productDetails)
             case .ready:

@@ -1,3 +1,4 @@
+import SwiftlyKit
 import SwiftUI
 
 /// Contextual explanation for a product discovery status.
@@ -35,6 +36,13 @@ struct ProductDiscoveryStatus: View {
                     Text("Add an executable product to this package's manifest to build it.")
                         .fixedSize(horizontal: false, vertical: true)
                 }
+
+            case .failed(.swiftlyInstallationFailed(let detail)):
+                FailedDiscoveryStatus(
+                    title: "Tool installation failed",
+                    detail: detail,
+                    onRetry: onRetry
+                )
 
             case .failed(let error):
                 FailedDiscoveryStatus(
