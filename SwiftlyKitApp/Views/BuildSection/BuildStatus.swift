@@ -15,6 +15,7 @@ struct BuildStatus: View {
     let isPublishing: Bool
     let readyDetail: String?
     var setupStatus: BuildSetupStatus? = nil
+    var identity: BuildIdentity? = nil
     var onSetupAction: () -> Void = {}
     let onCancel: () -> Void
     let onExport: (URL) async throws -> BuildResult?
@@ -96,6 +97,7 @@ extension BuildStatus {
                         BuildResultButton(
                             result: result,
                             isPublishing: isPublishing,
+                            identity: identity,
                             onExport: onExport
                         )
                             .transition(statusTransition)
@@ -271,8 +273,8 @@ extension BuildStatus {
 
             case .succeeded:
                 Presentation(
-                    title: "Build succeeded",
-                    detail: result.map { PathDisplay.path(for: $0.executable) }
+                    title: "Last build succeeded",
+                    detail: identity?.summary ?? result.map { PathDisplay.path(for: $0.executable) }
                         ?? "The executable is ready.",
                     symbolName: "checkmark.circle.fill",
                     symbolColor: .green

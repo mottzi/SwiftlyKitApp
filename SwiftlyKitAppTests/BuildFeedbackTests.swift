@@ -61,6 +61,25 @@ struct BuildFeedbackTests {
     }
 
     @Test
+    func completedBuildIdentityDoesNotFollowCurrentChoices() {
+        let options = BuildOptions()
+        let identity = BuildIdentity(
+            product: "Example",
+            target: options.target,
+            configuration: options.configuration,
+            swiftVersion: SwiftVersion(major: 6, minor: 3, patch: 3),
+            stripBinary: options.stripBinary
+        )
+
+        options.target = .linux(.arm64)
+        options.configuration = .debug
+        options.stripBinary = true
+
+        #expect(identity.summary == "Example · x86_64 Linux · Release · Swift 6.3.3")
+        #expect(!identity.stripBinary)
+    }
+
+    @Test
     func setupFailuresAndInstallationRequestsDoNotUseProgressPresentation() {
         let failure = BuildSetupStatus.current(
             host: .ready,

@@ -10,6 +10,7 @@ struct BuildResultButton: View {
 
     let result: BuildResult
     let isPublishing: Bool
+    var identity: BuildIdentity? = nil
     let onExport: (URL) async throws -> BuildResult?
 
     var body: some View {
@@ -34,6 +35,7 @@ struct BuildResultButton: View {
                 .popover(isPresented: $isPopoverPresented, arrowEdge: .trailing) {
                     BuildResultPopover(
                         result: result,
+                        identity: identity,
                         onExport: export,
                         onReveal: revealSourceFiles
                     )
@@ -104,6 +106,7 @@ extension BuildResultButton {
 private struct BuildResultPopover: View {
 
     let result: BuildResult
+    let identity: BuildIdentity?
     let onExport: () -> Void
     let onReveal: () -> Void
 
@@ -111,6 +114,15 @@ private struct BuildResultPopover: View {
         VStack(alignment: .leading, spacing: Self.spacing) {
             Text("Build files")
                 .font(.headline)
+
+            if let identity {
+                Text(identity.summary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(identity.stripBinary ? "Stripped executable" : "Unstripped executable")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
             VStack(alignment: .leading, spacing: Self.fileSpacing) {
                 BuildResultFileRow(
@@ -125,6 +137,12 @@ private struct BuildResultPopover: View {
                     )
                 }
             }
+
+            Text(PathDisplay.path(for: result.executable))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
 
             Divider()
 

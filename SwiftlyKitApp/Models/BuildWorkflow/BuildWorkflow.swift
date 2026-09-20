@@ -12,6 +12,8 @@ final class BuildWorkflow {
     /// Verified runnable result of the latest successful build.
     private(set) var result: BuildResult?
 
+    private(set) var identity: BuildIdentity?
+
     private(set) var isPublishing = false
 
     /// Live transcript of the latest build.
@@ -28,6 +30,7 @@ final class BuildWorkflow {
     /// Starts a build from the prepared environment and a snapshot of the selected options.
     func start(
         _ preparedPackage: PreparedPackage,
+        target: BuildTarget,
         configuration: BuildConfiguration,
         stripBinary: Bool
     ) {
@@ -41,6 +44,13 @@ final class BuildWorkflow {
             strip: stripBinary
         )
 
+        identity = BuildIdentity(
+            product: preparedPackage.selectedProduct.name,
+            target: target,
+            configuration: configuration,
+            swiftVersion: preparedPackage.environment.swiftVersion,
+            stripBinary: stripBinary
+        )
         result = nil
         log.clear()
         state = .active(
@@ -89,6 +99,7 @@ final class BuildWorkflow {
         guard !isRunning else { return }
 
         result = nil
+        identity = nil
         log.clear()
         state = .idle
     }
@@ -169,6 +180,7 @@ extension BuildWorkflow {
 
     private func completeCancellation() {
         result = nil
+        identity = nil
         state = .cancelled
         log.append("Build cancelled.", kind: .status)
     }
@@ -177,6 +189,7 @@ extension BuildWorkflow {
         let description = error.localizedDescription
 
         result = nil
+        identity = nil
         state = .failed(description)
         log.append("Build failed.", kind: .failure)
     }

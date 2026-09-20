@@ -53,6 +53,7 @@ final class BuildOptions {
 
         buildWorkflow.start(
             preparedPackage,
+            target: target,
             configuration: configuration,
             stripBinary: stripBinary
         )
