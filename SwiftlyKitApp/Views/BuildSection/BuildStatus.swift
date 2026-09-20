@@ -70,7 +70,7 @@ extension BuildStatus {
             if presentation.showsProgress {
                 ProgressView()
                     .controlSize(.small)
-                    .transition(statusTransition)
+                    .transition(.opacity)
             } else {
                 Image(systemName: presentation.symbolName)
                     .foregroundStyle(presentation.symbolColor)
