@@ -10,9 +10,9 @@ struct ProductDiscoveryStatus: View {
 
     var body: some View {
         switch state {
-            case .discovering(let detail):
+            case .discovering(let detail, let installationTitle):
                 DiscoveryProgressStatus(
-                    title: "Discovering executable products",
+                    title: installationTitle ?? "Discovering executable products",
                     detail: detail
                 )
 

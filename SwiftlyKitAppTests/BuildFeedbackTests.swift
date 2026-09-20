@@ -61,6 +61,31 @@ struct BuildFeedbackTests {
     }
 
     @Test
+    func installationStatusReturnsToCheckingAfterPreparation() {
+
+        let installation = BuildSetupStatus.current(
+            host: .ready,
+            toolchain: .ready([]),
+            product: .discovering(
+                detail: "Downloading and installing the toolchain.",
+                installationTitle: "Installing Swift 6.4.0"
+            )
+        )
+        let inspection = BuildSetupStatus.current(
+            host: .ready,
+            toolchain: .ready([]),
+            product: .discovering(detail: "Inspecting executable package products.")
+        )
+
+        #expect(installation.isInstalling)
+        #expect(installation.title == "Installing Swift 6.4.0")
+        #expect(installation.showsProgress)
+        #expect(!inspection.isInstalling)
+        #expect(inspection.showsProgress)
+        #expect(installation.action == nil)
+    }
+
+    @Test
     func completedBuildIdentityDoesNotFollowCurrentChoices() {
         let options = BuildOptions()
         let identity = BuildIdentity(

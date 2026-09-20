@@ -7,6 +7,7 @@ struct BuildSetupStatus: Equatable {
     let title: String
     let detail: String
     var showsProgress = false
+    var isInstalling = false
     var action: Action?
 
     /// Selects the first incomplete stage of package setup.
@@ -74,8 +75,13 @@ struct BuildSetupStatus: Equatable {
                     detail: "Preparing to inspect executable products.",
                     showsProgress: true
                 )
-            case .discovering(let detail):
-                return Self(title: "Preparing build environment", detail: detail, showsProgress: true)
+            case .discovering(let detail, let installationTitle):
+                return Self(
+                    title: installationTitle ?? "Preparing build environment",
+                    detail: detail,
+                    showsProgress: true,
+                    isInstalling: installationTitle != nil
+                )
             case .installationRequired:
                 return Self(
                     title: "Swift components required",

@@ -9,7 +9,7 @@ enum ProductDiscoveryState: Equatable {
     case idle
 
     /// SwiftlyKit is preparing an environment or inspecting the package.
-    case discovering(detail: String)
+    case discovering(detail: String, installationTitle: String? = nil)
 
     /// Product discovery is paused until the user approves required installations.
     case installationRequired(InstallationApprovalRequest)
@@ -102,7 +102,7 @@ final class ProductDiscovery {
                 assessment,
                 onEvent: { [weak self] event in
                     guard case .progress(let progress) = event else { return }
-                    await self?.report(progress)
+                    await self?.report(progress, swiftVersion: assessment.swiftVersion)
                 }
             )
 
@@ -224,9 +224,32 @@ final class ProductDiscovery {
 
 extension ProductDiscovery {
 
-    private func report(_ progress: OperationProgress) {
+    private func report(_ progress: OperationProgress, swiftVersion: SwiftVersion) {
         guard case .discovering = state else { return }
-        state = .discovering(detail: progress.detail)
+        guard case .preparingEnvironment(let component, _) = progress.operation else { return }
+
+        switch component {
+            case .swiftly:
+                state = .discovering(
+                    detail: "Setting up the Swift toolchain manager.",
+                    installationTitle: "Installing Swiftly"
+                )
+            case .swiftlyUpdate:
+                state = .discovering(
+                    detail: "Checking for and applying an available update.",
+                    installationTitle: "Updating Swiftly"
+                )
+            case .toolchain:
+                state = .discovering(
+                    detail: "Downloading and installing the toolchain. This may take a few minutes.",
+                    installationTitle: "Installing Swift \(swiftVersion)"
+                )
+            case .staticLinuxSDK:
+                state = .discovering(
+                    detail: "Downloading and installing the SDK for Swift \(swiftVersion).",
+                    installationTitle: "Installing Linux SDK"
+                )
+        }
     }
 
     private func cancellationSnapshot() -> Snapshot? {

@@ -42,7 +42,7 @@ struct ProductControl: View {
         switch state {
             case .idle, .ready:
                 return .information
-            case .discovering(let detail):
+            case .discovering(let detail, _):
                 return .progress(accessibilityLabel: detail)
             case .installationRequired:
                 return .status(

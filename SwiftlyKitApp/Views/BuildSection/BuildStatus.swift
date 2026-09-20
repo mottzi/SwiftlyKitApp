@@ -7,8 +7,8 @@ struct BuildStatus: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var failureDetailsPresented = false
-    @State private var settledPresentation: Presentation?
-    @State private var checkingVisible = false
+    @State private var visiblePresentation: Presentation?
+    @State private var progressVisibleUntil: ContinuousClock.Instant?
 
     let state: BuildWorkflowState
     let result: BuildResult?
@@ -45,18 +45,8 @@ struct BuildStatus: View {
         .padding(.horizontal, Self.horizontalPadding)
         .frame(height: Self.height)
         .accessibilityElement(children: .contain)
-        .onChange(of: currentPresentation, initial: true) {
-            if !isChecking {
-                settledPresentation = state == .idle && readyDetail == nil ? nil : currentPresentation
-            }
-        }
-        .task(id: isChecking) {
-            checkingVisible = false
-            guard isChecking else { return }
-            do {
-                try await Task.sleep(for: .milliseconds(300))
-                checkingVisible = true
-            } catch { }
+        .task(id: requestedPresentation) {
+            await updatePresentation()
         }
     }
 
@@ -214,14 +204,57 @@ extension BuildStatus {
     }
 
     private var presentation: Presentation {
-        guard isChecking else { return currentPresentation }
-        if !checkingVisible, let settledPresentation { return settledPresentation }
+        if presentsImmediately { return requestedPresentation }
+        return visiblePresentation ?? Presentation(
+            title: "Checking build configuration",
+            detail: "Validating the selected package and Swift environment.",
+            symbolName: "hammer",
+            symbolColor: .secondary
+        )
+    }
+
+    private var requestedPresentation: Presentation {
+        checkingPresentation ?? currentPresentation
+    }
+
+    private var presentsImmediately: Bool {
+        if state.isRunning { return true }
+        if case .failed = state { return true }
+        if setupStatus?.action != nil { return true }
+        return state == .idle && readyDetail == nil && setupStatus == nil
+    }
+
+    private func updatePresentation() async {
+
+        if presentsImmediately {
+            visiblePresentation = requestedPresentation
+            progressVisibleUntil = nil
+            return
+        }
+        guard visiblePresentation != requestedPresentation else { return }
+
+        let clock = ContinuousClock()
+        var deadline = clock.now
+        if isChecking { deadline += .milliseconds(300) }
+        if let progressVisibleUntil { deadline = max(deadline, progressVisibleUntil) }
+
+        do {
+            try await clock.sleep(until: deadline)
+            try Task.checkCancellation()
+            visiblePresentation = requestedPresentation
+            progressVisibleUntil = isChecking ? clock.now + .milliseconds(500) : nil
+        } catch { }
+    }
+
+    private var checkingPresentation: Presentation? {
+        guard isChecking else { return nil }
+        if setupStatus?.isInstalling == true { return currentPresentation }
         return Presentation(
             title: "Checking build configuration",
             detail: "Validating the selected package and Swift environment.",
             symbolName: "hammer",
             symbolColor: .secondary,
-            showsProgress: checkingVisible
+            showsProgress: true
         )
     }
 
