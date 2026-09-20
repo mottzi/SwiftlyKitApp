@@ -12,8 +12,10 @@ struct BuildSection: View {
             BuildStatus(
                 state: buildOptions.buildWorkflow.state,
                 result: buildOptions.buildWorkflow.result,
+                isPublishing: buildOptions.buildWorkflow.isPublishing,
                 readyDetail: readyDetail,
-                onCancel: buildOptions.buildWorkflow.cancel
+                onCancel: buildOptions.buildWorkflow.cancel,
+                onExport: buildOptions.buildWorkflow.publishResult
             )
 
             Divider()

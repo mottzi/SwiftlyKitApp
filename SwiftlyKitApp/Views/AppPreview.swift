@@ -114,8 +114,10 @@ private struct BuildSectionHeaderPreview: View {
         BuildStatus(
             state: state.workflowState,
             result: nil,
+            isPublishing: false,
             readyDetail: state.readyDetail,
-            onCancel: {}
+            onCancel: {},
+            onExport: { _ in nil }
         )
             .frame(
                 minWidth: 0,

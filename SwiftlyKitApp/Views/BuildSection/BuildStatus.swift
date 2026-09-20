@@ -8,8 +8,10 @@ struct BuildStatus: View {
 
     let state: BuildWorkflowState
     let result: BuildResult?
+    let isPublishing: Bool
     let readyDetail: String?
     let onCancel: () -> Void
+    let onExport: (URL) async throws -> BuildResult?
 
     var body: some View {
         HStack(spacing: Self.spacing) {
@@ -71,8 +73,14 @@ extension BuildStatus {
                         .transition(statusTransition)
 
                 case .showResult:
-                    showResultButton
-                        .transition(statusTransition)
+                    if let result {
+                        BuildResultButton(
+                            result: result,
+                            isPublishing: isPublishing,
+                            onExport: onExport
+                        )
+                            .transition(statusTransition)
+                    }
 
                 case .none:
                     EmptyView()
@@ -95,23 +103,6 @@ extension BuildStatus {
         .keyboardShortcut(".", modifiers: .command)
         .help("Cancel build (⌘.)")
         .offset(x: 2, y: 0)
-    }
-
-    private var showResultButton: some View {
-        Button(action: showResult) {
-            Label("Show Build in Finder", systemImage: "folder.fill")
-                .padding(4)
-        }
-        .labelStyle(.iconOnly)
-        .buttonStyle(.bordered)
-        .buttonBorderShape(.circle)
-        .help("Show build in Finder")
-        .offset(x: 2, y: 0)
-    }
-
-    private func showResult() {
-        guard let result else { return }
-        NSWorkspace.shared.activateFileViewerSelecting([result.executable])
     }
 
 }

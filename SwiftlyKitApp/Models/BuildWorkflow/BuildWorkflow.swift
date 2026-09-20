@@ -3,7 +3,7 @@ import Observation
 import SwiftlyKit
 
 @Observable
-/// Runs one prepared package build and records its live console output.
+/// Prepared package build, result publication, and live console workflow.
 final class BuildWorkflow {
 
     /// Current execution state of the latest build.
@@ -11,6 +11,8 @@ final class BuildWorkflow {
 
     /// Verified runnable result of the latest successful build.
     private(set) var result: BuildResult?
+
+    private(set) var isPublishing = false
 
     /// Live transcript of the latest build.
     let log: BuildLog
@@ -30,7 +32,7 @@ final class BuildWorkflow {
         stripBinary: Bool
     ) {
 
-        guard !state.isRunning else { return }
+        guard !isRunning else { return }
 
         let request = BuildRequest(
             preparedPackage.selectedProduct,
@@ -57,9 +59,20 @@ final class BuildWorkflow {
         }
     }
 
-    /// Whether a build task still owns the workflow.
+    /// Whether a build or publication task still owns the workflow.
     var isRunning: Bool {
-        state.isRunning
+        state.isRunning || isPublishing
+    }
+
+    /// Publishes the successful result into an existing empty directory.
+    func publishResult(into destination: URL) async throws -> BuildResult? {
+
+        guard !isRunning else { return nil }
+        guard let result else { return nil }
+
+        isPublishing = true
+        defer { isPublishing = false }
+        return try await result.publish(into: destination)
     }
 
     /// Requests cancellation of the active build and its delegated command.
@@ -73,7 +86,7 @@ final class BuildWorkflow {
 
     /// Discards the completed package session's build result and console output.
     func discardSession() {
-        guard !state.isRunning else { return }
+        guard !isRunning else { return }
 
         result = nil
         log.clear()
