@@ -17,6 +17,7 @@ struct BuildSection: View {
                 isPublishing: buildOptions.buildWorkflow.isPublishing,
                 readyDetail: readyDetail,
                 setupStatus: setupStatus,
+                cleanup: buildOptions.buildStorageMaintenance.activeCleanup,
                 identity: buildOptions.buildWorkflow.identity,
                 onSetupAction: performSetupAction,
                 onCancel: buildOptions.buildWorkflow.cancel,

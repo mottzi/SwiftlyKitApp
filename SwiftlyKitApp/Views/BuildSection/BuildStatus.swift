@@ -15,6 +15,7 @@ struct BuildStatus: View {
     let isPublishing: Bool
     let readyDetail: String?
     var setupStatus: BuildSetupStatus? = nil
+    var cleanup: BuildStorageCleanup? = nil
     var identity: BuildIdentity? = nil
     var onSetupAction: () -> Void = {}
     let onCancel: () -> Void
@@ -173,6 +174,7 @@ extension BuildStatus {
     }
 
     private var actionPhase: ActionPhase {
+        if cleanup != nil { return .none }
         if let setupStatus, !state.isRunning {
             return setupStatus.action == nil ? .none : .setup
         }
@@ -199,8 +201,8 @@ extension BuildStatus {
         PathDisplay.abbreviatingHomeDirectory(in: presentation.detail)
     }
 
-    private var isChecking: Bool {
-        setupStatus?.showsProgress == true && !state.isRunning
+    private var isWorking: Bool {
+        (cleanup != nil || setupStatus?.showsProgress == true) && !state.isRunning
     }
 
     private var presentation: Presentation {
@@ -221,7 +223,7 @@ extension BuildStatus {
         if state.isRunning { return true }
         if case .failed = state { return true }
         if setupStatus?.action != nil { return true }
-        return state == .idle && readyDetail == nil && setupStatus == nil
+        return state == .idle && readyDetail == nil && setupStatus == nil && cleanup == nil
     }
 
     private func updatePresentation() async {
@@ -235,19 +237,20 @@ extension BuildStatus {
 
         let clock = ContinuousClock()
         var deadline = clock.now
-        if isChecking { deadline += .milliseconds(300) }
+        if isWorking { deadline += .milliseconds(300) }
         if let progressVisibleUntil { deadline = max(deadline, progressVisibleUntil) }
 
         do {
             try await clock.sleep(until: deadline)
             try Task.checkCancellation()
             visiblePresentation = requestedPresentation
-            progressVisibleUntil = isChecking ? clock.now + .milliseconds(500) : nil
+            progressVisibleUntil = isWorking ? clock.now + .milliseconds(500) : nil
         } catch { }
     }
 
     private var checkingPresentation: Presentation? {
-        guard isChecking else { return nil }
+        guard isWorking else { return nil }
+        if cleanup != nil { return currentPresentation }
         if setupStatus?.isInstalling == true { return currentPresentation }
         return Presentation(
             title: "Checking build configuration",
@@ -259,6 +262,17 @@ extension BuildStatus {
     }
 
     private var currentPresentation: Presentation {
+        if let cleanup {
+            return Presentation(
+                title: cleanup == .cleanArtifacts ? "Cleaning build artifacts" : "Resetting build storage",
+                detail: cleanup == .cleanArtifacts
+                    ? "Removing compiled products and intermediates."
+                    : "Removing build files and package dependency state.",
+                symbolName: "circle",
+                symbolColor: .secondary,
+                showsProgress: true
+            )
+        }
         if let setupStatus, !state.isRunning {
             return Presentation(
                 title: setupStatus.title,

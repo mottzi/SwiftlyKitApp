@@ -11,7 +11,7 @@ enum BuildStorageCleanup: Equatable {
 /// Performs build-storage cleanup independently of the build workflow.
 final class BuildStorageMaintenance {
 
-    private(set) var isRunning = false
+    private(set) var activeCleanup: BuildStorageCleanup?
 
     private let swiftlyKit: SwiftlyKit
 
@@ -26,8 +26,8 @@ final class BuildStorageMaintenance {
     ) async throws {
         guard !isRunning else { return }
 
-        isRunning = true
-        defer { isRunning = false }
+        activeCleanup = cleanup
+        defer { activeCleanup = nil }
 
         switch cleanup {
             case .cleanArtifacts:
@@ -35,6 +35,11 @@ final class BuildStorageMaintenance {
             case .resetStorage:
                 try await swiftlyKit.resetBuildStorage(using: environment)
         }
+    }
+
+    /// Whether cleanup owns the package's build storage.
+    var isRunning: Bool {
+        activeCleanup != nil
     }
 
 }
