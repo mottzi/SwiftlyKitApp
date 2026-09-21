@@ -78,7 +78,7 @@ struct ProductControl: View {
 
 }
 
-/// Executable-product picker that displays only product choices.
+/// Executable-product choices, with a read-only value if only one product is ready.
 private struct ProductPicker: View {
 
     @Binding var selectedProduct: ExecutableProduct?
@@ -87,6 +87,28 @@ private struct ProductPicker: View {
     let allowsSelection: Bool
 
     var body: some View {
+        if allowsSelection, products.count == 1, let selectedProduct {
+            picker
+                .hidden()
+                .accessibilityHidden(true)
+                .allowsHitTesting(false)
+                .overlay(alignment: .leading) {
+                    Text(selectedProduct.name)
+                        .lineLimit(1)
+                        .padding(.horizontal, 10)
+                        .accessibilityLabel("Product")
+                        .accessibilityValue(selectedProduct.name)
+                }
+        } else {
+            picker
+        }
+    }
+
+}
+
+extension ProductPicker {
+
+    private var picker: some View {
         Picker(selection: $selectedProduct) {
             ForEach(products, id: \.name) { product in
                 Text(product.name)
