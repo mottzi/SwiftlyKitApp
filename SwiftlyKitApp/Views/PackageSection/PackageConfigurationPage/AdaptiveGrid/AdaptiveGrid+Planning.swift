@@ -15,8 +15,8 @@ extension AdaptiveGrid {
         let columnCount: Int
         if !measuresAutomaticArrangement, let arrangement {
             switch arrangement {
-            case .oneColumn: columnCount = min(idealWidths.count, 1)
-            case .twoColumns: columnCount = min(idealWidths.count, 2)
+                case .oneColumn: columnCount = min(idealWidths.count, 1)
+                case .twoColumns: columnCount = min(idealWidths.count, 2)
             }
         } else {
             columnCount = self.columnCount(for: proposedWidth, idealWidths: idealWidths)
@@ -57,6 +57,10 @@ extension AdaptiveGrid {
             rowSpacing: rowSpacing
         )
     }
+
+}
+
+extension AdaptiveGrid {
 
     /// Proposal-specific values used by every layout path.
     nonisolated struct LayoutPlan {

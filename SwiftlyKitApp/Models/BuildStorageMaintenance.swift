@@ -20,20 +20,15 @@ final class BuildStorageMaintenance {
     }
 
     /// Performs one cleanup using the package's prepared environment.
-    func perform(
-        _ cleanup: BuildStorageCleanup,
-        using environment: LocalBuildEnvironment
-    ) async throws {
+    func perform(_ cleanup: BuildStorageCleanup, using environment: LocalBuildEnvironment) async throws {
         guard !isRunning else { return }
 
         activeCleanup = cleanup
         defer { activeCleanup = nil }
 
         switch cleanup {
-            case .cleanArtifacts:
-                try await swiftlyKit.cleanBuildArtifacts(using: environment)
-            case .resetStorage:
-                try await swiftlyKit.resetBuildStorage(using: environment)
+            case .cleanArtifacts: try await swiftlyKit.cleanBuildArtifacts(using: environment)
+            case .resetStorage: try await swiftlyKit.resetBuildStorage(using: environment)
         }
     }
 

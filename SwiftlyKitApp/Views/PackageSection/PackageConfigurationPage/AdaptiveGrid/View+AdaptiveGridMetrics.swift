@@ -16,16 +16,12 @@ extension View {
     }
 
     /// Calls `action` when the width-recommended arrangement of a descendant `AdaptiveGrid` changes.
-    func onAdaptiveGridArrangementChange(
-        _ action: @escaping (AdaptiveGridArrangement) -> Void
-    ) -> some View {
+    func onAdaptiveGridArrangementChange(_ action: @escaping (AdaptiveGridArrangement) -> Void) -> some View {
         modifier(AdaptiveGridArrangementObserver(action: action))
     }
 
     /// Reserves the reported alternate grid height in the containing window.
-    func reservesAdaptiveGridHeightForWindow(
-        addingBottom additionalHeight: CGFloat
-    ) -> some View {
+    func reservesAdaptiveGridHeightForWindow(addingBottom additionalHeight: CGFloat) -> some View {
         overlayPreferenceValue(AdaptiveGridMetricAnchorPreferenceKey.self) { anchors in
             GeometryReader { proxy in
                 if let anchor = anchors[.oneColumnBottom] {
@@ -37,9 +33,11 @@ extension View {
         }
     }
 
-    private func adaptiveGridMetricMarker(
-        _ metric: AdaptiveGridMetric
-    ) -> some View {
+}
+
+extension View {
+
+    private func adaptiveGridMetricMarker(_ metric: AdaptiveGridMetric) -> some View {
         Color.clear
             .frame(width: 0, height: 0)
             .anchorPreference(
@@ -71,6 +69,10 @@ private struct AdaptiveGridArrangementObserver: ViewModifier {
             }
     }
 
+}
+
+extension AdaptiveGridArrangementObserver {
+
     private func arrangement(
         for anchors: [AdaptiveGridMetric: Anchor<CGRect>],
         in proxy: GeometryProxy
@@ -87,6 +89,10 @@ private struct AdaptiveGridArrangementObserver: ViewModifier {
             ? .twoColumns
             : .oneColumn
     }
+
+}
+
+extension AdaptiveGridArrangementObserver {
 
     private static let rowOriginTolerance: CGFloat = 1
 

@@ -141,11 +141,7 @@ final class ProductDiscovery {
     }
 
     /// Returns the prepared environment and selection for one matching package configuration.
-    func preparedPackage(
-        in packageRoot: URL,
-        for target: BuildTarget,
-        toolchain: ToolchainSelection
-    ) -> PreparedPackage? {
+    func preparedPackage(in packageRoot: URL, for target: BuildTarget, toolchain: ToolchainSelection) -> PreparedPackage? {
         let context = Context(
             packageRoot: packageRoot,
             target: target,
@@ -185,9 +181,7 @@ final class ProductDiscovery {
             lastPreparedContext.packageRoot == pendingInstallationContext.packageRoot,
             lastPreparedContext.target == pendingInstallationContext.target,
             lastPreparedContext.toolchain != pendingInstallationContext.toolchain
-        else {
-            return nil
-        }
+        else { return nil }
 
         self.pendingInstallationContext = nil
         if let cancellationSnapshot {
@@ -224,6 +218,21 @@ final class ProductDiscovery {
 
 extension ProductDiscovery {
 
+    private func cancellationSnapshot() -> Snapshot? {
+        guard let lastPreparedContext else { return nil }
+
+        switch state {
+            case .ready, .empty, .failed:
+                return Snapshot(
+                    context: lastPreparedContext,
+                    state: state,
+                    selectedProduct: selectedProduct
+                )
+            case .idle, .discovering, .installationRequired:
+                return nil
+        }
+    }
+
     private func report(_ progress: OperationProgress, swiftVersion: SwiftVersion) {
         guard case .discovering = state else { return }
         guard case .preparingEnvironment(let component, _) = progress.operation else { return }
@@ -252,21 +261,6 @@ extension ProductDiscovery {
         }
     }
 
-    private func cancellationSnapshot() -> Snapshot? {
-        guard let lastPreparedContext else { return nil }
-
-        switch state {
-            case .ready, .empty, .failed:
-                return Snapshot(
-                    context: lastPreparedContext,
-                    state: state,
-                    selectedProduct: selectedProduct
-                )
-            case .idle, .discovering, .installationRequired:
-                return nil
-        }
-    }
-
     private func resetContext() {
         preparedEnvironment = nil
         preparedContext = nil
@@ -276,6 +270,10 @@ extension ProductDiscovery {
         installationCancellationSnapshot = nil
         contextToSkip = nil
     }
+
+}
+
+extension ProductDiscovery {
 
     private struct Context: Equatable {
         let packageRoot: URL

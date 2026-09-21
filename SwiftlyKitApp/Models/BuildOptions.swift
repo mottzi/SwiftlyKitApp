@@ -12,11 +12,6 @@ final class BuildOptions {
     let buildWorkflow: BuildWorkflow
     let buildStorageMaintenance: BuildStorageMaintenance
 
-    /// Whether a build, publication, or build-storage operation owns the package environment.
-    var isOperationRunning: Bool {
-        buildWorkflow.isRunning || buildStorageMaintenance.isRunning
-    }
-
     /// Selected cross-compilation target.
     var target: BuildTarget = .linux(.x86_64)
 
@@ -37,13 +32,9 @@ final class BuildOptions {
         buildStorageMaintenance = BuildStorageMaintenance(swiftlyKit: swiftlyKit)
     }
 
-    /// Returns a prepared package only if it matches every current discovery choice.
-    func preparedPackage(in packageRoot: URL) -> PreparedPackage? {
-        productDiscovery.preparedPackage(
-            in: packageRoot,
-            for: target,
-            toolchain: toolchain
-        )
+    /// Whether a build, publication, or build-storage operation owns the package environment.
+    var isOperationRunning: Bool {
+        buildWorkflow.isRunning || buildStorageMaintenance.isRunning
     }
 
     /// Starts a build from the prepared package and a snapshot of the current build choices.
@@ -68,6 +59,15 @@ final class BuildOptions {
         try await buildStorageMaintenance.perform(
             cleanup,
             using: preparedPackage.environment
+        )
+    }
+
+    /// Returns a prepared package only if it matches every current discovery choice.
+    func preparedPackage(in packageRoot: URL) -> PreparedPackage? {
+        productDiscovery.preparedPackage(
+            in: packageRoot,
+            for: target,
+            toolchain: toolchain
         )
     }
 

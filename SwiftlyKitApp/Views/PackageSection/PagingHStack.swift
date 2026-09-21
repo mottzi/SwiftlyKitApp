@@ -116,11 +116,7 @@ nonisolated extension PagingHStack {
         }
     }
 
-    private func resolvedPagerWidth(
-        for proposedWidth: CGFloat?,
-        viewportWidth: CGFloat?,
-        pageSizes: [CGSize]
-    ) -> CGFloat {
+    private func resolvedPagerWidth(for proposedWidth: CGFloat?, viewportWidth: CGFloat?, pageSizes: [CGSize]) -> CGFloat {
         if let viewportWidth { return viewportWidth }
         if proposedWidth == .infinity { return .infinity }
 
@@ -134,10 +130,7 @@ nonisolated extension PagingHStack {
         return requiredViewportWidths.max() ?? 0
     }
 
-    private func resolvedPagerHeight(
-        for proposedHeight: CGFloat?,
-        idealHeight: CGFloat
-    ) -> CGFloat {
+    private func resolvedPagerHeight(for proposedHeight: CGFloat?, idealHeight: CGFloat) -> CGFloat {
 
         guard let proposedHeight, proposedHeight.isFinite else {
             return idealHeight

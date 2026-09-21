@@ -168,6 +168,10 @@ extension AdaptiveGrid {
         return LabelControlWidths(label: labelWidth, control: controlWidth)
     }
 
+}
+
+extension AdaptiveGrid {
+
     /// Widths needed to measure or place one label-control field.
     struct LabelControlWidths {
         let label: CGFloat

@@ -4,10 +4,7 @@ import SwiftUI
 extension View {
 
     /// Runs package discovery tasks and presents installation approval for the supplied models.
-    func managesPackageDiscovery(
-        packageModel: PackageModel,
-        buildOptions: BuildOptions
-    ) -> some View {
+    func managesPackageDiscovery(packageModel: PackageModel, buildOptions: BuildOptions) -> some View {
         modifier(
             PackageDiscoveryModifier(
                 packageModel: packageModel,
@@ -63,12 +60,6 @@ private struct PackageDiscoveryModifier: ViewModifier {
 
 extension PackageDiscoveryModifier {
 
-    /// Identifies one selected package, completed page transition, or explicit host retry request.
-    private struct HostDiscoveryKey: Equatable {
-        let packageRoot: URL
-        let retryRevision: Int
-    }
-
     private var hostDiscoveryKey: HostDiscoveryKey? {
         guard packageModel.isConfigurationReady else { return nil }
         guard let packageRoot = packageModel.packageURL else { return nil }
@@ -79,16 +70,15 @@ extension PackageDiscoveryModifier {
         )
     }
 
+    /// Identifies one selected package, completed page transition, or explicit host retry request.
+    private struct HostDiscoveryKey: Equatable {
+        let packageRoot: URL
+        let retryRevision: Int
+    }
+
 }
 
 extension PackageDiscoveryModifier {
-
-    /// Identifies one package, target, or explicit toolchain retry request.
-    private struct ToolchainDiscoveryKey: Equatable {
-        let packageRoot: URL
-        let target: BuildTarget
-        let retryRevision: Int
-    }
 
     private var toolchainDiscoveryKey: ToolchainDiscoveryKey? {
         guard case .ready = buildOptions.hostDiscovery.state else { return nil }
@@ -101,18 +91,16 @@ extension PackageDiscoveryModifier {
         )
     }
 
+    /// Identifies one package, target, or explicit toolchain retry request.
+    private struct ToolchainDiscoveryKey: Equatable {
+        let packageRoot: URL
+        let target: BuildTarget
+        let retryRevision: Int
+    }
+
 }
 
 extension PackageDiscoveryModifier {
-
-    /// Identifies one package, environment, or explicit product retry request.
-    private struct ProductDiscoveryKey: Equatable {
-        let packageRoot: URL
-        let target: BuildTarget
-        let toolchain: ToolchainSelection
-        let toolchainDiscoveryRevision: Int
-        let productDiscoveryRetryRevision: Int
-    }
 
     private var productDiscoveryKey: ProductDiscoveryKey? {
         guard let packageRoot = packageModel.packageURL else { return nil }
@@ -128,6 +116,15 @@ extension PackageDiscoveryModifier {
             toolchainDiscoveryRevision: buildOptions.toolchainDiscovery.revision,
             productDiscoveryRetryRevision: buildOptions.productDiscovery.retryRevision
         )
+    }
+
+    /// Identifies one package, environment, or explicit product retry request.
+    private struct ProductDiscoveryKey: Equatable {
+        let packageRoot: URL
+        let target: BuildTarget
+        let toolchain: ToolchainSelection
+        let toolchainDiscoveryRevision: Int
+        let productDiscoveryRetryRevision: Int
     }
 
 }

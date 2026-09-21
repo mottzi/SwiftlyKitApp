@@ -34,6 +34,10 @@ struct DiscoverySpinner: View {
             .help(accessibilityLabel)
     }
 
+}
+
+extension DiscoverySpinner {
+
     private var spinnerAnimation: Animation? {
         guard !reduceMotion else { return nil }
 

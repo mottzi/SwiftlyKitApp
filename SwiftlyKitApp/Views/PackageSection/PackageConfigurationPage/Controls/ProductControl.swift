@@ -36,9 +36,11 @@ struct ProductControl: View {
         }
     }
 
-    private func accessoryPresentation(
-        for state: ProductDiscoveryState
-    ) -> DiscoveryAccessoryPresentation {
+}
+
+extension ProductControl {
+
+    private func accessoryPresentation(for state: ProductDiscoveryState) -> DiscoveryAccessoryPresentation {
         switch state {
             case .idle, .ready:
                 return .information

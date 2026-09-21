@@ -102,6 +102,10 @@ struct BuildSetupStatus: Equatable {
         }
     }
 
+}
+
+extension BuildSetupStatus {
+
     /// Existing recovery or detail action for the current setup blocker.
     enum Action {
         case swiftDetails

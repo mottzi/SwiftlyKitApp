@@ -46,6 +46,10 @@ struct SwiftToolchainControl: View {
         }
     }
 
+}
+
+extension SwiftToolchainControl {
+
     private func accessoryPresentation(
         for hostState: HostDiscoveryState,
         discoveryState: ToolchainDiscoveryState
@@ -94,9 +98,7 @@ struct SwiftToolchainControl: View {
         }
     }
 
-    private func toolchainAccessoryPresentation(
-        for state: ToolchainDiscoveryState
-    ) -> DiscoveryAccessoryPresentation {
+    private func toolchainAccessoryPresentation(for state: ToolchainDiscoveryState) -> DiscoveryAccessoryPresentation {
         switch state {
             case .idle:
                 return .progress(
@@ -127,10 +129,7 @@ struct SwiftToolchainControl: View {
         }
     }
 
-    private func allowsSelection(
-        for hostState: HostDiscoveryState,
-        discoveryState: ToolchainDiscoveryState
-    ) -> Bool {
+    private func allowsSelection(for hostState: HostDiscoveryState, discoveryState: ToolchainDiscoveryState) -> Bool {
         guard case .ready = hostState else { return false }
         if case .ready = discoveryState { return true }
         return false

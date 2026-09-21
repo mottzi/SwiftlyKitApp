@@ -11,6 +11,15 @@ final class PackageModel {
     /// Whether the selected package completed its transition to configuration.
     private(set) var isConfigurationReady = false
 
+    /// Selects a different package root if `url` names an existing package directory or its `Package.swift` manifest.
+    func selectPackage(at url: URL) {
+        guard let packageURL = Self.swiftPackageRoot(for: url) else { return }
+        guard packageURL != self.packageURL else { return }
+
+        isConfigurationReady = false
+        self.packageURL = packageURL
+    }
+
     /// Whether a valid Swift package is selected.
     var isPackageSelected: Bool {
         packageURL != nil
@@ -28,17 +37,8 @@ final class PackageModel {
 
     /// Path shown for the selected package, with the home directory abbreviated as `~`.
     var displayPath: String {
-        guard let url = packageURL else { return "" }
-        return Self.displayPath(for: url)
-    }
-
-    /// Selects a different package root if `url` names an existing package directory or its `Package.swift` manifest.
-    func selectPackage(at url: URL) {
-        guard let packageURL = Self.swiftPackageRoot(for: url) else { return }
-        guard packageURL != self.packageURL else { return }
-
-        isConfigurationReady = false
-        self.packageURL = packageURL
+        guard let packageURL else { return "" }
+        return Self.displayPath(for: packageURL)
     }
 
     /// Enables discovery after the selected package finishes its page transition.
@@ -51,26 +51,6 @@ final class PackageModel {
     func clearPackage() {
         isConfigurationReady = false
         packageURL = nil
-    }
-
-    /// Page selected by the package model for the package section.
-    enum Page: Int {
-
-        /// Package selection page.
-        case picker
-
-        /// Selected package configuration page.
-        case configuration
-
-    }
-
-}
-
-extension PackageModel {
-
-    /// Shortens paths under the user's home directory to use `~`.
-    private static func displayPath(for url: URL) -> String {
-        PathDisplay.path(for: url)
     }
 
 }
@@ -105,6 +85,26 @@ extension PackageModel {
         guard manifestExists, !manifestIsDirectory.boolValue else { return nil }
 
         return packageURL
+    }
+
+    /// Shortens paths under the user's home directory to use `~`.
+    private static func displayPath(for url: URL) -> String {
+        PathDisplay.path(for: url)
+    }
+
+}
+
+extension PackageModel {
+
+    /// Page selected by the package model for the package section.
+    enum Page: Int {
+
+        /// Package selection page.
+        case picker
+
+        /// Selected package configuration page.
+        case configuration
+
     }
 
 }

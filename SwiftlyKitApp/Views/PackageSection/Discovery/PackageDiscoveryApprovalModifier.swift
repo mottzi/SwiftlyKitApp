@@ -33,6 +33,10 @@ struct PackageDiscoveryApprovalModifier: ViewModifier {
             }
     }
 
+}
+
+extension PackageDiscoveryApprovalModifier {
+
     @ViewBuilder
     private var approvalActions: some View {
         switch presentedApproval {
@@ -93,6 +97,10 @@ struct PackageDiscoveryApprovalModifier: ViewModifier {
                 ""
         }
     }
+
+}
+
+extension PackageDiscoveryApprovalModifier {
 
     private enum DiscoveryApproval: Equatable {
         case commandLineTools

@@ -88,10 +88,7 @@ extension PackageConfigurator {
 
     /// Emits exactly two direct children for `AdaptiveGrid`: a label followed by its control.
     @ViewBuilder
-    private func buildOptionField<Control: View>(
-        _ title: LocalizedStringKey,
-        control: () -> Control
-    ) -> some View {
+    private func buildOptionField<Control: View>(_ title: LocalizedStringKey, control: () -> Control) -> some View {
 
         Text(title)
             .font(.subheadline)

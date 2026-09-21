@@ -27,17 +27,16 @@ struct InstallationApprovalRequest: Equatable {
         }
     }
 
+}
+
+extension InstallationApprovalRequest {
+
     private static func formattedList(_ names: [String]) -> String {
         switch names.count {
-            case 0:
-                return "the required Swift components"
-            case 1:
-                return names[0]
-            case 2:
-                return "\(names[0]) and \(names[1])"
-            default:
-                return names.dropLast().joined(separator: ", ")
-                    + ", and \(names[names.count - 1])"
+            case 0: "the required Swift components"
+            case 1: names[0]
+            case 2: "\(names[0]) and \(names[1])"
+            default: names.dropLast().joined(separator: ", ") + ", and \(names[names.count - 1])"
         }
     }
 

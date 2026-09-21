@@ -80,12 +80,9 @@ extension BuildSection {
 
     private func performSetupAction() {
         switch setupStatus?.action {
-            case .reviewInstallation:
-                buildOptions.productDiscovery.requestInstallationApproval()
-            case .swiftDetails, .productDetails:
-                setupDetailsPresented = true
-            case nil:
-                break
+            case .reviewInstallation: buildOptions.productDiscovery.requestInstallationApproval()
+            case .swiftDetails, .productDetails: setupDetailsPresented = true
+            case nil: break
         }
     }
 
@@ -130,6 +127,11 @@ extension BuildSection {
 extension BuildSection {
 
     static let minimumHeight: CGFloat = 176
+
+}
+
+extension BuildSection {
+
     private static let dividerOpacity = 0.55
 
 }

@@ -10,8 +10,6 @@ enum AdaptiveGridMetric: Hashable {
 
 struct AdaptiveGridMetricAnchorPreferenceKey: PreferenceKey {
 
-    static let defaultValue: [AdaptiveGridMetric: Anchor<CGRect>] = [:]
-
     static func reduce(
         value: inout [AdaptiveGridMetric: Anchor<CGRect>],
         nextValue: () -> [AdaptiveGridMetric: Anchor<CGRect>]
@@ -19,18 +17,17 @@ struct AdaptiveGridMetricAnchorPreferenceKey: PreferenceKey {
         value.merge(nextValue()) { _, latest in latest }
     }
 
+    static let defaultValue: [AdaptiveGridMetric: Anchor<CGRect>] = [:]
+
 }
 
 struct AdaptiveGridArrangementPreferenceKey: PreferenceKey {
 
-    static let defaultValue: AdaptiveGridArrangement? = nil
-
-    static func reduce(
-        value: inout AdaptiveGridArrangement?,
-        nextValue: () -> AdaptiveGridArrangement?
-    ) {
+    static func reduce(value: inout AdaptiveGridArrangement?, nextValue: () -> AdaptiveGridArrangement?) {
         value = nextValue() ?? value
     }
+
+    static let defaultValue: AdaptiveGridArrangement? = nil
 
 }
 

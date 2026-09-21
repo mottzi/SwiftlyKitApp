@@ -17,12 +17,9 @@ final class BuildLog {
     /// Appends one progress, command, or subprocess output event.
     func append(_ event: SwiftlyKitEvent) {
         switch event {
-            case .progress(let progress):
-                append(progress.detail, kind: .status)
-            case .command(let command):
-                append(Self.commandDescription(command), kind: .command)
-            case .output(let output):
-                append(output)
+            case .progress(let progress): append(progress.detail, kind: .status)
+            case .command(let command): append(Self.commandDescription(command), kind: .command)
+            case .output(let output): append(output)
         }
     }
 

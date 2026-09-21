@@ -61,13 +61,13 @@ private struct WindowMinimumSizeModifier: ViewModifier {
 /// Combines independent descendant reservations without coupling them to AppKit.
 private struct WindowMinimumHeightReservationPreferenceKey: PreferenceKey {
 
-    static let defaultValue = CGFloat.zero
-
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         let nextValue = nextValue()
         guard nextValue.isFinite, nextValue > 0 else { return }
         value = max(value, nextValue)
     }
+
+    static let defaultValue = CGFloat.zero
 
 }
 

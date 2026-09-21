@@ -51,6 +51,10 @@ struct DiscoveryAccessory<StatusContent: View>: View {
         }
     }
 
+}
+
+extension DiscoveryAccessory {
+
     @ViewBuilder
     private var content: some View {
         switch displayedPresentation {
@@ -107,10 +111,7 @@ struct DiscoveryAccessory<StatusContent: View>: View {
         .foregroundStyle(status.color)
     }
 
-    private func popoverButton<Label: View>(
-        accessibilityLabel: String,
-        @ViewBuilder label: () -> Label
-    ) -> some View {
+    private func popoverButton<Label: View>(accessibilityLabel: String, @ViewBuilder label: () -> Label) -> some View {
         Button(
             action: { statusPopoverPresented = true },
             label: label
@@ -129,12 +130,14 @@ struct DiscoveryAccessory<StatusContent: View>: View {
 
     private func reconcilePopovers() {
         switch phase {
-            case .information:
-                statusPopoverPresented = false
-            case .progress, .status:
-                infoPopoverPresented = false
+            case .information: statusPopoverPresented = false
+            case .progress, .status: infoPopoverPresented = false
         }
     }
+
+}
+
+extension DiscoveryAccessory {
 
     private enum Phase {
         case information

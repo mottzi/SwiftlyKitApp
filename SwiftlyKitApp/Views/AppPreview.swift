@@ -29,6 +29,10 @@ private struct AppPreview: View {
         )
     }
 
+}
+
+extension AppPreview {
+
     private static func makePackageModel() -> PackageModel {
         let model = PackageModel()
         model.selectPackage(at: packageURL)
@@ -90,11 +94,11 @@ private struct BuildSectionHeaderPreview: View {
         .background(.quaternary.opacity(0.35))
     }
 
-    private func packageHeader(
-        title: String,
-        packageModel: PackageModel,
-        buildOptions: BuildOptions
-    ) -> some View {
+}
+
+extension BuildSectionHeaderPreview {
+
+    private func packageHeader(title: String, packageModel: PackageModel, buildOptions: BuildOptions) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
                 .font(.caption.weight(.medium))
@@ -134,12 +138,6 @@ private struct BuildSectionHeaderPreview: View {
 
 extension BuildSectionHeaderPreview {
 
-    private static let previewPadding: CGFloat = 12
-
-}
-
-extension BuildSectionHeaderPreview {
-
     private struct State: Identifiable {
 
         let id: String
@@ -164,6 +162,12 @@ extension BuildSectionHeaderPreview {
         }
 
     }
+
+}
+
+extension BuildSectionHeaderPreview {
+
+    private static let previewPadding: CGFloat = 12
 
     private static let states: [State] = [
         State(

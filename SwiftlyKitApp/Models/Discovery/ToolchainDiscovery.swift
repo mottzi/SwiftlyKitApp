@@ -35,12 +35,6 @@ final class ToolchainDiscovery {
     /// Revision identifying the current successful discovery result.
     private(set) var revision = 0
 
-    /// Exact compatible Swift toolchains available for selection.
-    var availableToolchains: [ToolchainSelection] {
-        guard case .ready(let toolchains) = state else { return [] }
-        return toolchains
-    }
-
     @ObservationIgnored private var choices: EnvironmentChoices?
     @ObservationIgnored private var context: Context?
     private let swiftlyKit: SwiftlyKit
@@ -92,6 +86,12 @@ final class ToolchainDiscovery {
         }
     }
 
+    /// Exact compatible Swift toolchains available for selection.
+    var availableToolchains: [ToolchainSelection] {
+        guard case .ready(let toolchains) = state else { return [] }
+        return toolchains
+    }
+
     /// Whether successful discovery belongs to the supplied package and target.
     func hasResults(in packageRoot: URL, for target: BuildTarget) -> Bool {
         guard case .ready = state else { return false }
@@ -116,11 +116,12 @@ final class ToolchainDiscovery {
         context = nil
     }
 
+}
+
+extension ToolchainDiscovery {
+
     /// Keeps an exact selection only while it remains compatible.
-    static func reconciledToolchain(
-        _ current: ToolchainSelection,
-        available: [ToolchainSelection]
-    ) -> ToolchainSelection {
+    static func reconciledToolchain(_ current: ToolchainSelection, available: [ToolchainSelection]) -> ToolchainSelection {
 
         if current == .automatic || !available.contains(current) {
             .automatic

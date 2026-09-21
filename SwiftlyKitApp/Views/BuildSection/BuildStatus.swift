@@ -348,6 +348,10 @@ extension BuildStatus {
         }
     }
 
+}
+
+extension BuildStatus {
+
     private struct Presentation: Equatable {
         let title: String
         let detail: String
