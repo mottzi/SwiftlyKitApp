@@ -32,10 +32,15 @@ extension BuildOptionInfo {
                 "Choose the Linux architecture for the output executable. "
                     + "Changing the target refreshes compatible Swift toolchains and products."
             case .configuration:
-                "Choose the SwiftPM build configuration used for the executable."
+                "Release enables compiler optimizations for a faster executable. " +
+                "Debug leaves optimizations off and includes debugging information, " +
+                "making it easier to inspect code while debugging."
             case .swift:
-                "Choose the Swift toolchain used to prepare the build environment. " +
-                "Automatic selects a compatible release, or you can choose an exact discovered version."
+                "Automatic uses the nearest .swift-version file in the package folder or its parent folders. " +
+                "Without that file, it prefers the newest installed Swift version with its matching Linux SDK. " +
+                "If no installed pair qualifies, it selects the newest official stable release. " +
+                "The version must meet the package's Swift tools requirement and support the Linux target. " +
+                "You can also choose an exact version."
             case .stripBinary:
                 "Strip symbols from the finished executable to reduce its size."
         }
