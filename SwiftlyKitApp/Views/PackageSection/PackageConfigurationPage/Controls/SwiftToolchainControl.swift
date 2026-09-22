@@ -150,6 +150,12 @@ private struct ToolchainPicker: View {
             Text(ToolchainSelection.automatic.displayName)
                 .tag(ToolchainSelection.automatic)
 
+            if toolchain != .automatic, !availableToolchains.contains(toolchain) {
+                Text(toolchain.displayName)
+                    .tag(toolchain)
+                    .disabled(true)
+            }
+
             ForEach(availableToolchains, id: \.self) { selection in
                 Text(selection.displayName)
                     .tag(selection)

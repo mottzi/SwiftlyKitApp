@@ -69,7 +69,11 @@ final class ToolchainDiscovery {
             revision += 1
             state = .ready(toolchains)
 
-            return Self.reconciledToolchain(selectedToolchain, available: toolchains)
+            return Self.reconciledToolchain(
+                selectedToolchain,
+                available: toolchains,
+                usesCachedCatalog: choices.usesCachedCatalog
+            )
         } catch is CancellationError {
             // a replacement task owns the next state transition
             return nil
@@ -120,14 +124,14 @@ final class ToolchainDiscovery {
 
 extension ToolchainDiscovery {
 
-    /// Keeps an exact selection only while it remains compatible.
-    static func reconciledToolchain(_ current: ToolchainSelection, available: [ToolchainSelection]) -> ToolchainSelection {
-
-        if current == .automatic || !available.contains(current) {
-            .automatic
-        } else {
-            current
-        }
+    /// Preserves exact selections if an outage limits discovery to installed environments.
+    static func reconciledToolchain(
+        _ current: ToolchainSelection,
+        available: [ToolchainSelection],
+        usesCachedCatalog: Bool = false
+    ) -> ToolchainSelection {
+        if usesCachedCatalog || available.contains(current) { return current }
+        return .automatic
     }
 
 }

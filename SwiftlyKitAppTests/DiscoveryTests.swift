@@ -92,6 +92,24 @@ struct DiscoveryTests {
     }
 
     @MainActor
+    @Test("Offline discovery preserves an explicit version absent from the installed choices")
+    func offlineDiscoveryPreservesExactSelection() {
+        let selected = ToolchainSelection.exact(SwiftVersion(major: 6, minor: 4, patch: 0))
+        let installed = ToolchainSelection.exact(SwiftVersion(major: 6, minor: 3, patch: 3))
+
+        #expect(ToolchainDiscovery.reconciledToolchain(
+            selected,
+            available: [installed],
+            usesCachedCatalog: true
+        ) == selected)
+        #expect(ToolchainDiscovery.reconciledToolchain(
+            .automatic,
+            available: [installed],
+            usesCachedCatalog: true
+        ) == .automatic)
+    }
+
+    @MainActor
     @Test
     func installationApprovalDescribesTheCompletePreparationPlan() {
         let request = InstallationApprovalRequest(
