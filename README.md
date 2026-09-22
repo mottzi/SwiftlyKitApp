@@ -21,37 +21,6 @@ matching Static Linux SDK. The app asks before installing missing components
 and tells you when preparation may update Swiftly. Downloads and uncached
 package dependencies require network access.
 
-## Installation
-
-Clone SwiftlyKit and SwiftlyKitApp into the same parent directory:
-
-```sh
-git clone https://github.com/mottzi/SwiftlyKit.git
-git clone https://github.com/mottzi/SwiftlyKitApp.git
-cd SwiftlyKitApp
-open SwiftlyKitApp.xcodeproj
-```
-
-The Xcode project references the local library at `../SwiftlyKit`. Keep the two
-checkouts beside each other:
-
-```text
-SwiftlyKit/
-SwiftlyKitApp/
-```
-
-Select the **SwiftlyKitApp** scheme and **My Mac** destination, then choose
-**Product > Run**.
-
-You can also build and launch the app from the repository root:
-
-```sh
-./script/build_and_run.sh
-```
-
-The script stops any running SwiftlyKitApp instance, builds the Debug app into
-`.derivedData`, and launches it.
-
 ## Quick start
 
 1. Click **Select Package** and choose the folder containing `Package.swift`, or
