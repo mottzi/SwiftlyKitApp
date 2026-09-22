@@ -23,9 +23,7 @@ struct SectionSurface: ViewModifier {
 
 extension SectionSurface {
 
-    private static var shape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: cornerRadius)
-    }
+    private static let shape = RoundedRectangle(cornerRadius: cornerRadius)
 
     private static let cornerRadius: CGFloat = 12
     private static let fillOpacity = 0.38
