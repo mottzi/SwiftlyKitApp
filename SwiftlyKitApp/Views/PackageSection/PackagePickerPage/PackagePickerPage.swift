@@ -1,7 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Selects a Swift package with the system folder importer or drag and drop.
+/// Selects a package folder or its manifest with the system importer or drag and drop.
 struct PackagePickerPage: View {
 
     @Environment(PackageModel.self) private var packageModel
@@ -48,13 +48,13 @@ struct PackagePickerPage: View {
         }
         .fileImporter(
             isPresented: $isFileImporterPresented,
-            allowedContentTypes: [.folder]
+            allowedContentTypes: [.folder, .swiftSource]
         ) { result in
             guard case .success(let url) = result else { return }
             selectPackage(at: url)
         }
         .alert(
-            "Package.swift Not Found",
+            "Invalid Package Selection",
             isPresented: invalidPackageAlertPresented,
             presenting: invalidPackageName
         ) { _ in
@@ -63,7 +63,8 @@ struct PackagePickerPage: View {
             }
             Button("Cancel", role: .cancel) { }
         } message: { packageName in
-            Text("No Package.swift was found in “\(packageName)”.")
+            Text("“\(packageName)” is not a package folder or a Package.swift file. " +
+                 "Choose a folder containing Package.swift, or the Package.swift file itself.")
         }
         .dropDestination(for: URL.self, isEnabled: canSelect) { items, _ in
             guard let url = items.first else { return }
