@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Package picker and configuration pages that share an adaptive section height.
 struct PackageSection: View {
 
     @Environment(PackageModel.self) private var packageModel

@@ -1,6 +1,7 @@
 import SwiftUI
 
 @main
+/// Build windows and the Help window opened from the application menu.
 struct SwiftlyKitApp: App {
 
     @Environment(\.openWindow) private var openWindow

@@ -138,6 +138,7 @@ extension ToolchainDiscovery {
 
 extension ToolchainDiscovery {
 
+    /// Package and target associated with the retained environment choices.
     private struct Context: Equatable {
         let packageRoot: URL
         let target: BuildTarget

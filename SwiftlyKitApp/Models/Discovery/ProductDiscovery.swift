@@ -275,12 +275,14 @@ extension ProductDiscovery {
 
 extension ProductDiscovery {
 
+    /// Package configuration that owns a prepared environment or installation approval.
     private struct Context: Equatable {
         let packageRoot: URL
         let target: BuildTarget
         let toolchain: ToolchainSelection
     }
 
+    /// Discovery state restored if the user cancels installation for another toolchain.
     private struct Snapshot {
         let context: Context
         let state: ProductDiscoveryState

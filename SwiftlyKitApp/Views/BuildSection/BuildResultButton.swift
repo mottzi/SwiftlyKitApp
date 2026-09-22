@@ -164,14 +164,6 @@ private struct BuildResultPopover: View {
 
 }
 
-extension BuildResultPopover {
-
-    private static let width: CGFloat = 280
-    private static let spacing: CGFloat = 10
-    private static let fileSpacing: CGFloat = 8
-
-}
-
 private struct BuildResultFileRow: View {
 
     let name: String
@@ -193,6 +185,7 @@ private struct BuildResultFileRow: View {
 
 }
 
+/// Directory chooser for exporting a completed build without renaming its executable.
 private enum BuildExportPanel {
 
     static func destination() async -> URL? {
@@ -212,5 +205,13 @@ private enum BuildExportPanel {
             }
         }
     }
+
+}
+
+extension BuildResultPopover {
+
+    private static let width: CGFloat = 280
+    private static let spacing: CGFloat = 10
+    private static let fileSpacing: CGFloat = 8
 
 }

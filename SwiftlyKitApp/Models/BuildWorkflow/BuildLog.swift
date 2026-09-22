@@ -24,11 +24,7 @@ final class BuildLog {
     }
 
     /// Records the selected product, configuration, toolchain, and stripping choice for a new build.
-    func appendBuildStart(
-        for preparedPackage: PreparedPackage,
-        configuration: BuildConfiguration,
-        stripBinary: Bool
-    ) {
+    func appendBuildStart(for preparedPackage: PreparedPackage, configuration: BuildConfiguration, stripBinary: Bool) {
         let configuration = switch configuration {
             case .debug: "debug"
             case .release: "release"

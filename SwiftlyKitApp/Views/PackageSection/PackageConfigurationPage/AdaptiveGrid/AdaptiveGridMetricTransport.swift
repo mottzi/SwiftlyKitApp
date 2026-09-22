@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Layout markers used to report column arrangement and reserve one-column height.
 enum AdaptiveGridMetric: Hashable {
 
     case firstFieldRow
@@ -8,6 +9,7 @@ enum AdaptiveGridMetric: Hashable {
 
 }
 
+/// Descendant grid anchors collected for arrangement and window-height measurements.
 struct AdaptiveGridMetricAnchorPreferenceKey: PreferenceKey {
 
     static func reduce(
@@ -21,6 +23,7 @@ struct AdaptiveGridMetricAnchorPreferenceKey: PreferenceKey {
 
 }
 
+/// Latest available column arrangement reported by a descendant grid.
 struct AdaptiveGridArrangementPreferenceKey: PreferenceKey {
 
     static func reduce(value: inout AdaptiveGridArrangement?, nextValue: () -> AdaptiveGridArrangement?) {

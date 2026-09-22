@@ -280,5 +280,5 @@ private protocol HostingViewSizingOptionsAccess: AnyObject {
 
 }
 
-///
+/// Exposes sizing options for hosting views with any SwiftUI content type.
 extension NSHostingView: HostingViewSizingOptionsAccess {}

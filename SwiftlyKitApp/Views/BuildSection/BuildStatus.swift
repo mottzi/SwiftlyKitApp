@@ -24,6 +24,7 @@ struct BuildStatus: View {
     var body: some View {
         HStack(spacing: Self.spacing) {
             statusIcon
+                .padding(.trailing, 2)
 
             VStack(alignment: .leading, spacing: Self.textSpacing) {
                 Text(presentation.title)
@@ -352,6 +353,7 @@ extension BuildStatus {
 
 extension BuildStatus {
 
+    /// Status text and icon retained together during progress transitions.
     private struct Presentation: Equatable {
         let title: String
         let detail: String

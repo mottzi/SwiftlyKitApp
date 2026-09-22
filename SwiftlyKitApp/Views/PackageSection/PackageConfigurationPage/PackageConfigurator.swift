@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Adaptive build controls with one shared contextual popover selection.
 struct PackageConfigurator: View {
 
     @Environment(BuildOptions.self) private var buildOptions

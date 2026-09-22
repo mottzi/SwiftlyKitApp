@@ -82,6 +82,7 @@ extension AdaptiveGrid {
                 + rowSpacing * CGFloat(max(rowHeights.count - 1, 0))
         }
 
+        /// Returns the field row offset from preceding row heights and spacing.
         func rowOriginY(forFieldAt fieldIndex: Int) -> CGFloat {
             let rowIndex = fieldIndex / columnCount
             return rowHeights.prefix(rowIndex).reduce(0, +)

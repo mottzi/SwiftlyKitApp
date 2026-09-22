@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Package configuration and build output with shared state for one window.
 struct AppView: View {
 
     @State private var packageModel = PackageModel()
