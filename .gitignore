@@ -2,3 +2,8 @@ xcshareddata
 xcuserdata
 .derivedData/
 .codex
+.DS_Store
+*.app/
+*.xcarchive/
+*.xcresult/
+*.dmg
