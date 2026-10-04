@@ -22,6 +22,12 @@ struct BuildFeedbackTests {
     }
 
     @Test
+    func failureSummaryShowsHostCompilerErrorRatherThanManifestQuote() {
+        let detail = "SwiftPM could not inspect the package: '\n<unknown>:0: error: unknown argument: '-target-arch-variant'"
+        #expect(BuildWorkflowState.failed(detail).failureSummary == "Unknown argument: '-target-arch-variant'")
+    }
+
+    @Test
     func failureSummaryFallsBackWithoutSourceDiagnostic() {
         let detail = "The selected product's runtime resource output could not be verified."
         #expect(BuildWorkflowState.failed(detail).failureSummary == detail)

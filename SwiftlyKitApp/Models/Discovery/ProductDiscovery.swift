@@ -48,6 +48,8 @@ final class ProductDiscovery {
     @ObservationIgnored private var preparedContext: Context?
     @ObservationIgnored private var pendingInstallationContext: Context?
     @ObservationIgnored private var approvedInstallationContext: Context?
+    @ObservationIgnored private var pendingAssessment: EnvironmentAssessment?
+    @ObservationIgnored private var approvedInstallationVersion: SwiftVersion?
     @ObservationIgnored private var lastPreparedContext: Context?
     @ObservationIgnored private var installationCancellationSnapshot: Snapshot?
     @ObservationIgnored private var contextToSkip: Context?
@@ -76,46 +78,73 @@ final class ProductDiscovery {
         }
 
         do {
-            let assessment = try environmentChoices.select(toolchain)
+            var assessment: EnvironmentAssessment
+            if pendingInstallationContext == context, let pendingAssessment {
+                assessment = pendingAssessment
+            } else {
+                assessment = try environmentChoices.select(toolchain)
+            }
+            while true {
 
-            if assessment.requiresInstallation, approvedInstallationContext != context {
+                if assessment.requiresInstallation,
+                   approvedInstallationContext != context || approvedInstallationVersion != assessment.swiftVersion {
+                    guard !Task.isCancelled else { return }
+
+                    let approval = InstallationApprovalRequest(
+                        swiftVersion: assessment.swiftVersion,
+                        staticLinuxSDKVersion: assessment.staticLinuxSDK.version,
+                        requiredComponents: assessment.requiredComponents
+                    )
+                    installationCancellationSnapshot = cancellationSnapshot()
+                    pendingInstallationContext = context
+                    pendingAssessment = assessment
+                    state = .installationRequired(approval)
+                    installationApprovalRevision += 1
+                    return
+                }
+
+                pendingInstallationContext = nil
+                pendingAssessment = nil
+                state = .discovering(
+                    detail: "Preparing Swift \(assessment.swiftVersion) for product discovery."
+                )
+
+                let swiftVersion = assessment.swiftVersion
+                let environment = try await swiftlyKit.prepare(
+                    assessment,
+                    onEvent: { [weak self] event in
+                        guard case .progress(let progress) = event else { return }
+                        await self?.report(progress, swiftVersion: swiftVersion)
+                    }
+                )
+
+                state = .discovering(detail: "Inspecting executable package products.")
+
+                let inspection: PackageInspection
+                do {
+                    inspection = try await swiftlyKit.inspectPackage(
+                        using: environment,
+                        dependencies: .resolveIfNeeded,
+                        onEvent: { [weak self] event in
+                            guard case .progress(let progress) = event else { return }
+                            await self?.report(progress, swiftVersion: swiftVersion)
+                        }
+                    )
+                } catch let error as SwiftlyKitError {
+                    guard let recovery = environmentChoices.recoveryAssessment(after: error, for: toolchain)
+                    else { throw error }
+                    assessment = recovery
+                    continue
+                }
+
                 guard !Task.isCancelled else { return }
 
-                let approval = InstallationApprovalRequest(
-                    swiftVersion: assessment.swiftVersion,
-                    staticLinuxSDKVersion: assessment.staticLinuxSDK.version,
-                    requiredComponents: assessment.requiredComponents
-                )
-                installationCancellationSnapshot = cancellationSnapshot()
-                pendingInstallationContext = context
-                state = .installationRequired(approval)
-                installationApprovalRevision += 1
-                return
+                lastPreparedContext = context
+                preparedEnvironment = inspection.environment
+                preparedContext = context
+                replaceProducts(with: Array(inspection.products))
+                break
             }
-
-            pendingInstallationContext = nil
-            state = .discovering(
-                detail: "Preparing Swift \(assessment.swiftVersion) for product discovery."
-            )
-
-            let environment = try await swiftlyKit.prepare(
-                assessment,
-                onEvent: { [weak self] event in
-                    guard case .progress(let progress) = event else { return }
-                    await self?.report(progress, swiftVersion: assessment.swiftVersion)
-                }
-            )
-
-            lastPreparedContext = context
-            state = .discovering(detail: "Inspecting executable package products.")
-
-            let products = try await swiftlyKit.executableProducts(using: environment)
-
-            guard !Task.isCancelled else { return }
-
-            preparedEnvironment = environment
-            preparedContext = context
-            replaceProducts(with: Array(products))
         } catch is CancellationError {
             // a replacement task owns the next state transition
         } catch let error as SwiftlyKitError {
@@ -164,7 +193,7 @@ final class ProductDiscovery {
         guard let pendingInstallationContext else { return }
 
         approvedInstallationContext = pendingInstallationContext
-        self.pendingInstallationContext = nil
+        approvedInstallationVersion = pendingAssessment?.swiftVersion
         installationCancellationSnapshot = nil
         retryRevision += 1
     }
@@ -235,6 +264,10 @@ extension ProductDiscovery {
 
     private func report(_ progress: OperationProgress, swiftVersion: SwiftVersion) {
         guard case .discovering = state else { return }
+        if progress.operation == .inspectingPackage || progress.operation == .resolvingDependencies {
+            state = .discovering(detail: progress.detail)
+            return
+        }
         guard case .preparingEnvironment(let component, _) = progress.operation else { return }
 
         switch component {
@@ -266,6 +299,8 @@ extension ProductDiscovery {
         preparedContext = nil
         pendingInstallationContext = nil
         approvedInstallationContext = nil
+        approvedInstallationVersion = nil
+        pendingAssessment = nil
         lastPreparedContext = nil
         installationCancellationSnapshot = nil
         contextToSkip = nil

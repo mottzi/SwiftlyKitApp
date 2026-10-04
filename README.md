@@ -11,11 +11,11 @@ to manage toolchains, SDKs, and builds. For a terminal command, use
 
 ## Download
 
-[Download SwiftlyKitApp 0.1.0](https://github.com/mottzi/SwiftlyKitApp/releases/download/0.1.0/SwiftlyKitApp-0.1.0.dmg).
+[Download SwiftlyKitApp 0.1.1](https://github.com/mottzi/SwiftlyKitApp/releases/download/0.1.1/SwiftlyKitApp-0.1.1.dmg).
 Open the DMG, drag SwiftlyKitApp to Applications, and launch it from there.
 The app is signed with Developer ID and notarized by Apple.
 
-[Release notes and SHA-256 checksum](https://github.com/mottzi/SwiftlyKitApp/releases/tag/0.1.0)
+[Release notes and SHA-256 checksum](https://github.com/mottzi/SwiftlyKitApp/releases/tag/0.1.1)
 are available on GitHub.
 
 ## Requirements
@@ -43,8 +43,9 @@ package dependencies require network access.
 5. After a successful build, open **Build files**, choose **Export Build...**,
    and select or create an empty destination folder.
 
-Starting a build allows the app to resolve package dependencies when needed and
-retry the build. Resolution can access the network and update `Package.resolved`.
+Package inspection allows the app to resolve dependencies when needed. The app
+enables building only after the root and dependency manifests can be inspected
+with the selected Swift toolchain. Resolution can access the network and update `Package.resolved`.
 SwiftPM evaluates package manifests and may run plugins with your permissions.
 Build only packages you trust.
 
@@ -63,6 +64,12 @@ nearest `.swift-version` file. Otherwise, it prefers the newest compatible
 installed toolchain and SDK pair, then the newest compatible official stable
 release. Compatibility depends on the package's Swift tools requirement and
 target architecture. It does not guarantee that the package will compile.
+
+If host manifest compilation fails, the app tries installed macOS SDKs with the
+same Swift version. Automatic selection can then assess a newer Swift release;
+an exact version or `.swift-version` pin stays fixed. Any required installation
+still needs approval. If inspection cannot succeed, the app keeps building disabled
+and reports the compiler diagnostic and SDK attempts.
 
 The app uses the package's `.build` directory, default package traits, and
 SwiftPM's default build concurrency.
@@ -99,7 +106,7 @@ cleaning or resetting its storage.
 ## Development
 
 Xcode resolves SwiftlyKit from its public repository using Up to Next Major
-Version starting at `0.5.1`, equivalent to SwiftPM's `from: "0.5.1"`. The
+Version starting at `0.6.0`, equivalent to SwiftPM's `from: "0.6.0"`. The
 lockfile records the selected public release. A sibling library checkout is not
 required. Run the app's test suite from the repository root:
 
@@ -113,3 +120,18 @@ xcodebuild \
 
 The build-and-run script also accepts `--debug` to open LLDB and `--logs` to
 launch the app with a live macOS log stream.
+
+For changes spanning the app and library, open `SwiftlyKitApp.xcworkspace`. It
+overrides the released SwiftlyKit package with the sibling `../SwiftlyKit` checkout.
+The project alone continues to use the released package.
+
+To exercise the real Deployer readiness and build workflow, run:
+
+```sh
+./script/verify_deployer.sh /path/to/Vapor-Deployer
+```
+
+The script builds the workspace and passes the package path into the test host
+through its generated `.xctestrun` configuration. The acceptance test selects
+Swift 6.3.3 explicitly, validates dependency inspection, and checks the app's
+completed build result. The toolchain and Static Linux SDK must already be installed.

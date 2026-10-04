@@ -191,7 +191,7 @@ extension BuildWorkflow {
         result = nil
         identity = nil
         state = .failed(description)
-        log.append("Build failed.", kind: .failure)
+        log.append(description, kind: .failure)
     }
 
 }

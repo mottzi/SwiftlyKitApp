@@ -29,11 +29,12 @@ final class BuildLog {
             case .debug: "debug"
             case .release: "release"
         }
+        let sdkDescription = preparedPackage.environment.hostSDKVersion.map { ", macOS SDK \($0)" } ?? ""
         let stripDescription = stripBinary ? ", stripping enabled" : ""
 
         append(
             "Starting \(configuration) build of \(preparedPackage.selectedProduct.name) with Swift "
-                + "\(preparedPackage.environment.swiftVersion)\(stripDescription).",
+                + "\(preparedPackage.environment.swiftVersion)\(sdkDescription)\(stripDescription).",
             kind: .status
         )
     }

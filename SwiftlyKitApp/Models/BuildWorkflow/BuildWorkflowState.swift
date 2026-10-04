@@ -39,6 +39,12 @@ extension BuildWorkflowState {
             return message.prefix(1).uppercased() + message.dropFirst()
         }
 
+        for line in detail.split(whereSeparator: \.isNewline) {
+            guard let range = line.range(of: "error: ") else { continue }
+            let message = line[range.upperBound...].trimmingCharacters(in: .whitespaces)
+            guard !message.isEmpty, message != "'" else { continue }
+            return message.prefix(1).uppercased() + message.dropFirst()
+        }
         return detail
     }
 
@@ -78,7 +84,7 @@ extension BuildWorkflowPhase {
         switch operation {
             case .resolvingDependencies: self = .resolvingDependencies
             case .stripping: self = .stripping
-            case .building, .preparingEnvironment, .removingEnvironment, .exporting,
+            case .inspectingPackage, .building, .preparingEnvironment, .removingEnvironment, .exporting,
                  .cleaningBuildArtifacts, .resettingBuildStorage: self = .building
         }
     }
