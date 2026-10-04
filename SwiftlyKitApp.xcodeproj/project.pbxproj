@@ -153,7 +153,7 @@
 			mainGroup = 9AA1091A3023AA57000DCC05;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				9A727BE13036482300D8C78F /* XCLocalSwiftPackageReference "../SwiftlyKit" */,
+				9A727BE13036482300D8C78F /* XCRemoteSwiftPackageReference "SwiftlyKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9AA109243023AA57000DCC05 /* Products */;
@@ -469,16 +469,21 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		9A727BE13036482300D8C78F /* XCLocalSwiftPackageReference "../SwiftlyKit" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../SwiftlyKit;
+/* Begin XCRemoteSwiftPackageReference section */
+		9A727BE13036482300D8C78F /* XCRemoteSwiftPackageReference "SwiftlyKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mottzi/SwiftlyKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.5.0;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		9A727BE23036482300D8C78F /* SwiftlyKit */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 9A727BE13036482300D8C78F /* XCRemoteSwiftPackageReference "SwiftlyKit" */;
 			productName = SwiftlyKit;
 		};
 /* End XCSwiftPackageProductDependency section */

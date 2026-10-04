@@ -89,8 +89,10 @@ cleaning or resetting its storage.
 
 ## Development
 
-Keep the sibling SwiftlyKit checkout available when building or testing. Run
-the app's test suite from the repository root:
+Xcode resolves SwiftlyKit from its public repository using Up to Next Major
+Version starting at `0.5.0`, equivalent to SwiftPM's `from: "0.5.0"`. A sibling
+library checkout is not required. Run the app's test suite from the repository
+root:
 
 ```sh
 xcodebuild \
