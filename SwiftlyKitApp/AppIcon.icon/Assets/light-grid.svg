@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Subtle blue grid for the light icon</title>
+  <path d="M 256 0 V 1024 M 512 0 V 1024 M 768 0 V 1024 M 0 256 H 1024 M 0 512 H 1024 M 0 768 H 1024"
+        fill="none" stroke="#7CB9D2" stroke-opacity="0.32" stroke-width="7"/>
+</svg>
