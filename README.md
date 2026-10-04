@@ -90,10 +90,9 @@ cleaning or resetting its storage.
 ## Development
 
 Xcode resolves SwiftlyKit from its public repository using Up to Next Major
-Version starting at `0.5.1`, equivalent to SwiftPM's `from: "0.5.1"`. This
-checkout requires that upcoming library release; refresh the lockfile after its
-tag is available. A sibling library checkout is not required. Run the app's
-test suite from the repository root:
+Version starting at `0.5.1`, equivalent to SwiftPM's `from: "0.5.1"`. The
+lockfile records the selected public release. A sibling library checkout is not
+required. Run the app's test suite from the repository root:
 
 ```sh
 xcodebuild \

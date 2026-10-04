@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mottzi/SwiftlyKit.git",
       "state" : {
-        "revision" : "e181c50347839528919dfae1e111cecde56c9466",
-        "version" : "0.5.0"
+        "revision" : "d1c0e71663d32e9b2fa9d526bd13ee386271a484",
+        "version" : "0.5.1"
       }
     }
   ],
