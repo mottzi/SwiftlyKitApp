@@ -9,6 +9,15 @@ The app uses the [SwiftlyKit](https://github.com/mottzi/SwiftlyKit) Swift librar
 to manage toolchains, SDKs, and builds. For a terminal command, use
 [SwiftlyKitCLI](https://github.com/mottzi/SwiftlyKitCLI).
 
+## Download
+
+[Download SwiftlyKitApp 0.1.0](https://github.com/mottzi/SwiftlyKitApp/releases/download/0.1.0/SwiftlyKitApp-0.1.0.dmg).
+Open the DMG, drag SwiftlyKitApp to Applications, and launch it from there.
+The app is signed with Developer ID and notarized by Apple.
+
+[Release notes and SHA-256 checksum](https://github.com/mottzi/SwiftlyKitApp/releases/tag/0.1.0)
+are available on GitHub.
+
 ## Requirements
 
 - Apple silicon Mac running macOS 26.5 or later
