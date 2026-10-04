@@ -32,7 +32,7 @@ final class BuildOptions {
         buildStorageMaintenance = BuildStorageMaintenance(swiftlyKit: swiftlyKit)
     }
 
-    /// Whether a build, publication, or build-storage operation owns the package environment.
+    /// Whether a build, export, or build-storage operation owns the package environment.
     var isOperationRunning: Bool {
         buildWorkflow.isRunning || buildStorageMaintenance.isRunning
     }
@@ -126,7 +126,7 @@ final class BuildOptions {
     /// Discards state owned by the selected package while preserving build preferences.
     func clearPackageSession() {
         guard !buildStorageMaintenance.isRunning else { return }
-        guard !buildWorkflow.isPublishing else { return }
+        guard !buildWorkflow.isExporting else { return }
 
         buildWorkflow.cancel()
         buildWorkflow.discardSession()

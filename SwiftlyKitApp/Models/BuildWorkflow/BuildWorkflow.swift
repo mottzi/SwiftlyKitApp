@@ -3,7 +3,7 @@ import Observation
 import SwiftlyKit
 
 @Observable
-/// Prepared package build, result publication, and live console workflow.
+/// Prepared package build, result export, and live console workflow.
 final class BuildWorkflow {
 
     /// Current execution state of the latest build.
@@ -14,7 +14,7 @@ final class BuildWorkflow {
 
     private(set) var identity: BuildIdentity?
 
-    private(set) var isPublishing = false
+    private(set) var isExporting = false
 
     /// Live transcript of the latest build.
     let log: BuildLog
@@ -69,20 +69,20 @@ final class BuildWorkflow {
         }
     }
 
-    /// Whether a build or publication task still owns the workflow.
+    /// Whether a build or export task still owns the workflow.
     var isRunning: Bool {
-        state.isRunning || isPublishing
+        state.isRunning || isExporting
     }
 
-    /// Publishes the successful result into an existing empty directory.
-    func publishResult(into destination: URL) async throws -> BuildResult? {
+    /// Exports the successful result into an existing empty directory.
+    func exportResult(into destination: URL) async throws -> BuildResult? {
 
         guard !isRunning else { return nil }
         guard let result else { return nil }
 
-        isPublishing = true
-        defer { isPublishing = false }
-        return try await result.publish(into: destination)
+        isExporting = true
+        defer { isExporting = false }
+        return try await result.export(into: destination)
     }
 
     /// Requests cancellation of the active build and its delegated command.

@@ -78,7 +78,7 @@ extension BuildWorkflowPhase {
         switch operation {
             case .resolvingDependencies: self = .resolvingDependencies
             case .stripping: self = .stripping
-            case .building, .preparingEnvironment, .removingEnvironment, .publishing,
+            case .building, .preparingEnvironment, .removingEnvironment, .exporting,
                  .cleaningBuildArtifacts, .resettingBuildStorage: self = .building
         }
     }

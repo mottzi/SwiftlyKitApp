@@ -118,7 +118,7 @@ extension BuildSectionHeaderPreview {
         BuildStatus(
             state: state.workflowState,
             result: nil,
-            isPublishing: false,
+            isExporting: false,
             readyDetail: state.readyDetail,
             onCancel: {},
             onExport: { _ in nil }

@@ -6,16 +6,16 @@ import SwiftlyKit
 struct BuildResultButton: View {
 
     @State private var isPopoverPresented = false
-    @State private var publicationError: String?
+    @State private var exportError: String?
 
     let result: BuildResult
-    let isPublishing: Bool
+    let isExporting: Bool
     var identity: BuildIdentity? = nil
     let onExport: (URL) async throws -> BuildResult?
 
     var body: some View {
         ZStack {
-            if isPublishing {
+            if isExporting {
                 ProgressView()
                     .controlSize(.small)
                     .accessibilityLabel("Exporting build")
@@ -45,7 +45,7 @@ struct BuildResultButton: View {
         .alert("Export Failed", isPresented: errorPresented) {
             Button("OK") { }
         } message: {
-            Text(publicationError ?? "The build could not be exported.")
+            Text(exportError ?? "The build could not be exported.")
         }
     }
 
@@ -55,10 +55,10 @@ extension BuildResultButton {
 
     private var errorPresented: Binding<Bool> {
         Binding(
-            get: { publicationError != nil },
+            get: { exportError != nil },
             set: { isPresented in
                 if !isPresented {
-                    publicationError = nil
+                    exportError = nil
                 }
             }
         )
@@ -66,7 +66,7 @@ extension BuildResultButton {
 
     private func export() {
 
-        guard !isPublishing else { return }
+        guard !isExporting else { return }
 
         Task {
             guard let destination = await BuildExportPanel.destination() else {
@@ -76,15 +76,15 @@ extension BuildResultButton {
             isPopoverPresented = false
 
             do {
-                guard let publishedResult = try await onExport(destination) else {
-                    publicationError = "The build changed before it could be exported. Try again."
+                guard let exportedResult = try await onExport(destination) else {
+                    exportError = "The build changed before it could be exported. Try again."
                     return
                 }
-                reveal(publishedResult)
+                reveal(exportedResult)
             } catch SwiftlyKitError.outputAlreadyExists {
-                publicationError = "Choose or create an empty folder for the exported build."
+                exportError = "Choose or create an empty folder for the exported build."
             } catch {
-                publicationError = error.localizedDescription
+                exportError = error.localizedDescription
             }
         }
     }

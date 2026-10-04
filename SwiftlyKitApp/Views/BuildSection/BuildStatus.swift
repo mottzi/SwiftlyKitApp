@@ -12,7 +12,7 @@ struct BuildStatus: View {
 
     let state: BuildWorkflowState
     let result: BuildResult?
-    let isPublishing: Bool
+    let isExporting: Bool
     let readyDetail: String?
     var setupStatus: BuildSetupStatus? = nil
     var cleanup: BuildStorageCleanup? = nil
@@ -89,7 +89,7 @@ extension BuildStatus {
                     if let result {
                         BuildResultButton(
                             result: result,
-                            isPublishing: isPublishing,
+                            isExporting: isExporting,
                             identity: identity,
                             onExport: onExport
                         )
