@@ -82,7 +82,7 @@ final class BuildWorkflow {
 
         isExporting = true
         defer { isExporting = false }
-        return try await result.export(into: destination)
+        return try await result.export(to: destination, policy: .requireExistingEmptyDirectory)
     }
 
     /// Requests cancellation of the active build and its delegated command.
