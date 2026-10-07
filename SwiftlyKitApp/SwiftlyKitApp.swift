@@ -6,6 +6,8 @@ struct SwiftlyKitApp: App {
 
     @Environment(\.openWindow) private var openWindow
 
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     var body: some Scene {
         WindowGroup {
             AppView()
