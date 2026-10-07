@@ -151,6 +151,34 @@ struct WindowMinimumSizeTests {
     }
 
     @MainActor
+    @Test(arguments: [CGFloat(240).nextUp, CGFloat(240.5)])
+    func minimumHeightIgnoresFloatingPointNoiseAndKeepsFractionalMeasurements(visibleHeight: CGFloat) async throws {
+        let hostingView = NSHostingView(rootView: AnyView(
+            Color.clear
+                .frame(minWidth: 500)
+                .background {
+                    WindowMinimumSizeTestBridge(visibleMinHeight: visibleHeight)
+                }
+        ))
+        let window = minimumSizeWindow(
+            contentWidth: 500,
+            contentHeight: 500,
+            hostingView: hostingView,
+            toolbarIdentifier: "WindowMinimumPrecisionTests"
+        )
+        let expectedVisibleHeight: CGFloat = visibleHeight < 240.25 ? 240 : 240.5
+        let expectedHeight = expectedMinimumHeight(
+            in: window,
+            reservedContentHeight: expectedVisibleHeight,
+            additionalContentHeight: 0
+        )
+        try await settleBridge(in: hostingView, window: window, expectedMinimumHeight: expectedHeight)
+
+        #expect(window.contentMinSize.height == expectedHeight)
+        try await close(window, hostingView: hostingView)
+    }
+
+    @MainActor
     @Test
     func reservationIsAFloorRatherThanAHeightCap() async throws {
         let contentHeight = CGFloat(281)

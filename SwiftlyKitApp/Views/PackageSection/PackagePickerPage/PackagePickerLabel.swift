@@ -13,7 +13,6 @@ struct PackagePickerLabel: View {
         }
         .fixedSize(horizontal: true, vertical: false)
         .padding()
-        .animation(PackageLayoutAnimation.adaptiveChange, value: arrangement)
     }
 
 }

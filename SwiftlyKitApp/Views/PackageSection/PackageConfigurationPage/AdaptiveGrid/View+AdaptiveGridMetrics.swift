@@ -15,7 +15,7 @@ extension View {
         }
     }
 
-    /// Calls `action` when the width-recommended arrangement of a descendant `AdaptiveGrid` changes.
+    /// Reports the width-recommended arrangement when it or the window's active appearance changes.
     func onAdaptiveGridArrangementChange(_ action: @escaping (AdaptiveGridArrangement) -> Void) -> some View {
         modifier(AdaptiveGridArrangementObserver(action: action))
     }
@@ -51,6 +51,8 @@ extension View {
 /// Resolves private grid markers and exposes only the semantic arrangement.
 private struct AdaptiveGridArrangementObserver: ViewModifier {
 
+    @Environment(\.appearsActive) private var appearsActive
+
     let action: (AdaptiveGridArrangement) -> Void
 
     func body(content: Content) -> some View {
@@ -59,12 +61,15 @@ private struct AdaptiveGridArrangementObserver: ViewModifier {
                 GeometryReader { proxy in
                     Color.clear.preference(
                         key: AdaptiveGridArrangementPreferenceKey.self,
-                        value: arrangement(for: anchors, in: proxy)
+                        value: AdaptiveGridArrangementMeasurement(
+                            arrangement: arrangement(for: anchors, in: proxy),
+                            appearsActive: appearsActive
+                        )
                     )
                 }
             }
             .onPreferenceChange(AdaptiveGridArrangementPreferenceKey.self) {
-                guard let arrangement = $0 else { return }
+                guard let arrangement = $0?.arrangement else { return }
                 action(arrangement)
             }
     }

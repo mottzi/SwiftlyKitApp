@@ -3,7 +3,8 @@ import SwiftUI
 
 struct PackageConfigurationPage: View {
 
-    let onContentHeightChange: (CGFloat) -> Void
+    var arrangement: AdaptiveGridArrangement? = nil
+    var onContentHeightChange: (CGFloat) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -12,7 +13,7 @@ struct PackageConfigurationPage: View {
                 .padding(.vertical, Self.verticalPadding)
             Divider()
                 .opacity(Self.dividerOpacity)
-            PackageConfigurator()
+            PackageConfigurator(arrangement: arrangement)
                 .padding(.leading, Self.horizontalPadding)
                 .padding(.trailing, ConfigurationAccessoryMetrics.spacing)
                 .padding(.top, Self.spacing)

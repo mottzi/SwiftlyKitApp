@@ -26,11 +26,11 @@ struct AdaptiveGridMetricAnchorPreferenceKey: PreferenceKey {
 /// Latest available column arrangement reported by a descendant grid.
 struct AdaptiveGridArrangementPreferenceKey: PreferenceKey {
 
-    static func reduce(value: inout AdaptiveGridArrangement?, nextValue: () -> AdaptiveGridArrangement?) {
+    static func reduce(value: inout AdaptiveGridArrangementMeasurement?, nextValue: () -> AdaptiveGridArrangementMeasurement?) {
         value = nextValue() ?? value
     }
 
-    static let defaultValue: AdaptiveGridArrangement? = nil
+    static let defaultValue: AdaptiveGridArrangementMeasurement? = nil
 
 }
 

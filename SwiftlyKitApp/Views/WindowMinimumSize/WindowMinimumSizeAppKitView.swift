@@ -98,7 +98,12 @@ extension WindowMinimumSizeAppKitView {
             window.frame.height - window.contentLayoutRect.height,
             0
         )
-        let minContentHeight = visibleMinHeight + layoutInsetHeight
+        let measuredMinContentHeight = visibleMinHeight + layoutInsetHeight
+        let integralHeight = measuredMinContentHeight.rounded()
+        // Animated anchors can add floating-point noise that AppKit rounds up by a full point.
+        let minContentHeight = abs(measuredMinContentHeight - integralHeight) <= measuredMinContentHeight.ulp * 4
+            ? integralHeight
+            : measuredMinContentHeight
 
         let minLayoutWidth = max(
             swiftUIWidthFloor ?? 0,
