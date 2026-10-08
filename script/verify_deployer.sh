@@ -24,7 +24,7 @@ import plistlib
 import sys
 
 products, package, destination = sys.argv[1:]
-sources = [path for path in pathlib.Path(products).glob("*.xctestrun") if path.name != pathlib.Path(destination).name]
+sources = [path for path in pathlib.Path(products).glob("*.xctestrun") if path.name.startswith("SwiftlyKitApp_SwiftlyKitApp_")]
 if len(sources) != 1:
     raise SystemExit(f"Expected one generated test configuration, found {len(sources)}")
 with sources[0].open("rb") as stream:
