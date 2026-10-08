@@ -82,7 +82,7 @@ final class BuildWorkflow {
             guard let self else { return }
             await run(
                 request,
-                using: preparedPackage.environment,
+                using: .prepared(preparedPackage.environment),
                 choices: environmentChoices,
                 toolchain: toolchain,
                 buildID: buildID
@@ -148,7 +148,13 @@ final class BuildWorkflow {
         state = .active(phase: .preparingEnvironment, detail: "Preparing the approved Swift environment.")
         task = Task { [weak self] in
             guard let self else { return }
-            await resume(pendingRecovery, buildID: buildID)
+            await run(
+                pendingRecovery.request,
+                using: .approved(pendingRecovery.assessment),
+                choices: pendingRecovery.choices,
+                toolchain: pendingRecovery.toolchain,
+                buildID: buildID
+            )
         }
     }
 
@@ -158,7 +164,7 @@ extension BuildWorkflow {
 
     private func run(
         _ request: BuildRequest,
-        using environment: LocalBuildEnvironment,
+        using source: EnvironmentSource,
         choices: EnvironmentChoices?,
         toolchain: ToolchainSelection,
         buildID: UUID
@@ -171,6 +177,15 @@ extension BuildWorkflow {
         }
 
         do {
+            let environment: LocalBuildEnvironment
+            switch source {
+                case .prepared(let prepared):
+                    environment = prepared
+
+                case .approved(let assessment):
+                    environment = try await prepare(assessment, onEvent: onEvent, buildID: buildID)
+            }
+
             let result = try await build(
                 request,
                 using: environment,
@@ -191,6 +206,19 @@ extension BuildWorkflow {
             guard self.buildID == buildID else { return }
             fail(with: error)
         }
+    }
+
+    private func prepare(
+        _ assessment: EnvironmentAssessment,
+        onEvent: @escaping SwiftlyKitEvent.Handler,
+        buildID: UUID
+    ) async throws -> LocalBuildEnvironment {
+
+        let environment = try await operations.prepare(assessment, onEvent)
+        try Task.checkCancellation()
+        guard self.buildID == buildID else { throw CancellationError() }
+        updateIdentity(swiftVersion: environment.swiftVersion)
+        return environment
     }
 
     private func build(
@@ -234,39 +262,8 @@ extension BuildWorkflow {
                     return nil
                 }
                 state = .active(phase: .preparingEnvironment, detail: "Preparing Swift \(assessment.swiftVersion).")
-                environment = try await operations.prepare(assessment, onEvent)
-                try Task.checkCancellation()
-                guard self.buildID == buildID else { throw CancellationError() }
-                updateIdentity(swiftVersion: environment.swiftVersion)
+                environment = try await prepare(assessment, onEvent: onEvent, buildID: buildID)
             }
-        }
-    }
-
-    private func resume(_ recovery: PendingRecovery, buildID: UUID) async {
-
-        let onEvent: SwiftlyKitEvent.Handler = { [weak self] event in
-            await self?.report(event, buildID: buildID)
-        }
-        do {
-            let environment = try await operations.prepare(recovery.assessment, onEvent)
-            try Task.checkCancellation()
-            guard self.buildID == buildID else { return }
-            updateIdentity(swiftVersion: environment.swiftVersion)
-            await run(
-                recovery.request,
-                using: environment,
-                choices: recovery.choices,
-                toolchain: recovery.toolchain,
-                buildID: buildID
-            )
-        } catch is CancellationError {
-            guard self.buildID == buildID else { return }
-            completeCancellation()
-            task = nil
-        } catch {
-            guard self.buildID == buildID else { return }
-            fail(with: error)
-            task = nil
         }
     }
 
@@ -333,6 +330,18 @@ extension BuildWorkflow {
 
 extension BuildWorkflow {
 
+    /// Starting environment or approved recovery assessment for one build task.
+    private enum EnvironmentSource {
+
+        /// Environment captured before the build starts.
+        case prepared(LocalBuildEnvironment)
+
+        /// Accepted recovery assessment used to prepare the environment.
+        case approved(EnvironmentAssessment)
+
+    }
+
+    /// Captured build choices retained while recovery waits for installation approval.
     private struct PendingRecovery {
         let request: BuildRequest
         let assessment: EnvironmentAssessment

@@ -360,6 +360,87 @@ struct StagedPackageWorkflowTests {
         #expect(await preparedVersions.values == [fixture.newer])
     }
 
+    @Test("Recovery preparation failure ends the captured build", arguments: [false, true])
+    func recoveryPreparationFailure(requiresApproval: Bool) async throws {
+
+        let fixture = try StagedPackageFixture()
+        defer { fixture.remove() }
+        let builds = VersionRecorder()
+        let failure = SwiftlyKitError.swiftlyInstallationFailed("Recovery preparation failed")
+        var operations = fixture.buildOperations()
+        operations.build = { _, environment, _ in
+            await builds.record(environment.swiftVersion)
+            throw SwiftlyKitError.hostCompilationFailed(swiftVersion: fixture.older, detail: "Host compiler failed")
+        }
+        operations.prepare = { _, _ in throw failure }
+        let workflow = BuildWorkflow(operations: operations)
+        workflow.start(
+            fixture.prepared(),
+            target: .linux(.x86_64),
+            configuration: .debug,
+            stripBinary: true,
+            environmentChoices: fixture.choices(newerRequiresInstallation: requiresApproval)
+        )
+        if requiresApproval {
+            await waitUntil {
+                if case .installationRequired = workflow.state { return true }
+                return false
+            }
+            workflow.approveInstallation()
+        }
+        await waitUntil { !workflow.isRunning }
+
+        #expect(workflow.state == .failed(failure.localizedDescription))
+        #expect(workflow.result == nil)
+        #expect(workflow.identity == nil)
+        #expect(await builds.values == [fixture.older])
+    }
+
+    @Test("Cancellation during recovery preparation rejects its environment and late events", arguments: [false, true])
+    func cancelledRecoveryPreparation(requiresApproval: Bool) async throws {
+
+        let fixture = try StagedPackageFixture()
+        defer { fixture.remove() }
+        let gate = WorkflowGate()
+        let builds = VersionRecorder()
+        var operations = fixture.buildOperations()
+        operations.build = { _, environment, _ in
+            await builds.record(environment.swiftVersion)
+            throw SwiftlyKitError.hostCompilationFailed(swiftVersion: fixture.older, detail: "Host compiler failed")
+        }
+        operations.prepare = { assessment, onEvent in
+            await gate.wait()
+            await onEvent?(.progress(OperationProgress(operation: .building, detail: "Late recovery progress")))
+            return fixture.environment(version: assessment.swiftVersion)
+        }
+        let workflow = BuildWorkflow(operations: operations)
+        workflow.start(
+            fixture.prepared(),
+            target: .linux(.x86_64),
+            configuration: .debug,
+            stripBinary: true,
+            environmentChoices: fixture.choices(newerRequiresInstallation: requiresApproval)
+        )
+        if requiresApproval {
+            await waitUntil {
+                if case .installationRequired = workflow.state { return true }
+                return false
+            }
+            workflow.approveInstallation()
+        }
+        await gate.waitForEntry()
+        #expect(workflow.identity?.swiftVersion == fixture.older)
+        workflow.cancel()
+        await gate.open()
+        await waitUntil { !workflow.isRunning }
+
+        #expect(workflow.state == .cancelled)
+        #expect(workflow.result == nil)
+        #expect(workflow.identity == nil)
+        #expect(await builds.values == [fixture.older])
+        #expect(!workflow.log.text.contains("Late recovery progress"))
+    }
+
 }
 
 @MainActor
