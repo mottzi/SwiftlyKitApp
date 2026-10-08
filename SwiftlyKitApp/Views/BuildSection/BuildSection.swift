@@ -21,6 +21,7 @@ struct BuildSection: View {
                 identity: buildOptions.buildWorkflow.identity,
                 onSetupAction: performSetupAction,
                 onCancel: buildOptions.buildWorkflow.cancel,
+                onReviewInstallation: buildOptions.buildWorkflow.requestInstallationApproval,
                 onExport: buildOptions.buildWorkflow.exportResult
             )
             .popover(isPresented: $setupDetailsPresented, arrowEdge: .trailing) {

@@ -9,6 +9,11 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DERIVED_DATA="$ROOT_DIR/.derivedData"
 APP_BUNDLE="$DERIVED_DATA/Build/Products/Debug/$APP_NAME.app"
 APP_BINARY="$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+BUILD_CONTAINER=(-project "$ROOT_DIR/SwiftlyKitApp.xcodeproj")
+if [[ -f "$ROOT_DIR/../SwiftlyKit/Package.swift" ]]; then
+  BUILD_CONTAINER=(-workspace "$ROOT_DIR/SwiftlyKitApp.xcworkspace")
+  echo "Building with the local SwiftlyKit workspace dependency."
+fi
 
 app_is_running() {
   pgrep -x "$APP_NAME" >/dev/null 2>&1
@@ -65,14 +70,14 @@ if application "Xcode" is not running then
 end if
 
 tell application "Xcode"
-  try
-    set workspaceDocument to workspace document "SwiftlyKitApp.xcodeproj"
-  on error
-    return "not-open"
-  end try
-
-  stop workspaceDocument
-  return "stop-sent"
+  repeat with workspaceName in {"SwiftlyKitApp.xcworkspace", "SwiftlyKitApp.xcodeproj"}
+    try
+      set workspaceDocument to workspace document (workspaceName as text)
+      stop workspaceDocument
+      return "stop-sent"
+    end try
+  end repeat
+  return "not-open"
 end tell
 APPLESCRIPT
 )"; then
@@ -123,7 +128,7 @@ stop_existing_app() {
 stop_existing_app
 
 xcodebuild \
-  -project "$ROOT_DIR/SwiftlyKitApp.xcodeproj" \
+  "${BUILD_CONTAINER[@]}" \
   -scheme "$APP_NAME" \
   -configuration Debug \
   -derivedDataPath "$DERIVED_DATA" \

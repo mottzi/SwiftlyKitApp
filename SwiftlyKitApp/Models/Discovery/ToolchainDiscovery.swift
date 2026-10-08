@@ -37,10 +37,15 @@ final class ToolchainDiscovery {
 
     @ObservationIgnored private var choices: EnvironmentChoices?
     @ObservationIgnored private var context: Context?
-    private let swiftlyKit: SwiftlyKit
+    @ObservationIgnored private var discoveryID = UUID()
+    private let compatibleEnvironments: @Sendable (URL, BuildTarget) async throws -> EnvironmentChoices
 
     init(swiftlyKit: SwiftlyKit) {
-        self.swiftlyKit = swiftlyKit
+        compatibleEnvironments = { try await swiftlyKit.compatibleEnvironments($0, for: $1) }
+    }
+
+    init(compatibleEnvironments: @escaping @Sendable (URL, BuildTarget) async throws -> EnvironmentChoices) {
+        self.compatibleEnvironments = compatibleEnvironments
     }
 
     /// Discovers exact compatible Swift releases without mutating the local environment.
@@ -49,14 +54,16 @@ final class ToolchainDiscovery {
         for target: BuildTarget,
         selectedToolchain: ToolchainSelection
     ) async -> ToolchainSelection? {
+        let discoveryID = UUID()
+        self.discoveryID = discoveryID
         choices = nil
         context = nil
         state = .discovering
 
         do {
-            let choices = try await swiftlyKit.compatibleEnvironments(packageRoot, for: target)
+            let choices = try await compatibleEnvironments(packageRoot, target)
 
-            guard !Task.isCancelled else { return nil }
+            guard isCurrent(discoveryID) else { return nil }
 
             let toolchains = choices.map { ToolchainSelection.exact($0.swiftVersion) }
             guard !toolchains.isEmpty else {
@@ -78,12 +85,12 @@ final class ToolchainDiscovery {
             // a replacement task owns the next state transition
             return nil
         } catch let error as SwiftlyKitError {
-            guard !Task.isCancelled else { return nil }
+            guard isCurrent(discoveryID) else { return nil }
 
             state = .failed(error.errorDescription ?? error.localizedDescription)
             return nil
         } catch {
-            guard !Task.isCancelled else { return nil }
+            guard isCurrent(discoveryID) else { return nil }
 
             state = .failed("An unexpected toolchain discovery error occurred.")
             return nil
@@ -115,6 +122,7 @@ final class ToolchainDiscovery {
 
     /// Clears results that belong to a package or target that is no longer selected.
     func clear() {
+        discoveryID = UUID()
         state = .idle
         choices = nil
         context = nil
@@ -123,6 +131,10 @@ final class ToolchainDiscovery {
 }
 
 extension ToolchainDiscovery {
+
+    private func isCurrent(_ discoveryID: UUID) -> Bool {
+        self.discoveryID == discoveryID && !Task.isCancelled
+    }
 
     /// Preserves exact selections if an outage limits discovery to installed environments.
     static func reconciledToolchain(

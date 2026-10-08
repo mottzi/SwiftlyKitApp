@@ -42,7 +42,7 @@ extension ProductControl {
 
     private func accessoryPresentation(for state: ProductDiscoveryState) -> DiscoveryAccessoryPresentation {
         switch state {
-            case .idle, .ready:
+            case .idle, .configured:
                 return .information
             case .discovering(let detail, _):
                 return .progress(accessibilityLabel: detail)
@@ -74,7 +74,7 @@ extension ProductControl {
     }
 
     private func allowsSelection(for state: ProductDiscoveryState) -> Bool {
-        if case .ready = state { return true }
+        if case .configured = state { return true }
         return false
     }
 

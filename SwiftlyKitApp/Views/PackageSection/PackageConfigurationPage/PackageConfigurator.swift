@@ -4,6 +4,7 @@ import SwiftUI
 struct PackageConfigurator: View {
 
     @Environment(BuildOptions.self) private var buildOptions
+    @Environment(PackageModel.self) private var packageModel
     var arrangement: AdaptiveGridArrangement? = nil
 
     @State private var presentedPopover: PresentedBuildOptionPopover?
@@ -51,7 +52,7 @@ struct PackageConfigurator: View {
         }
         .publishesAdaptiveGridMetrics()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .disabled(buildOptions.isOperationRunning)
+        .disabled(!buildOptions.canEditConfiguration(for: packageModel))
     }
 
 }

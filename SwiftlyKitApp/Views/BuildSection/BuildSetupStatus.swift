@@ -97,7 +97,7 @@ struct BuildSetupStatus: Equatable {
                 return Self(title: "Tool installation failed", detail: detail, action: .productDetails)
             case .failed(let error):
                 return Self(title: "Package inspection failed", detail: error.localizedDescription, action: .productDetails)
-            case .ready:
+            case .configured:
                 return Self(title: "Select an executable product", detail: "Choose a product in the Product menu.")
         }
     }

@@ -11,7 +11,7 @@ struct BuildButton: View {
                 .padding(4)
         }
         .labelStyle(.iconOnly)
-        .disabled(!canBuild || buildOptions.isOperationRunning)
+        .disabled(!canBuild)
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.circle)
         .keyboardShortcut("b", modifiers: .command)
@@ -23,13 +23,11 @@ struct BuildButton: View {
 extension BuildButton {
 
     private var canBuild: Bool {
-        guard let packageRoot = packageModel.packageURL else { return false }
-        return buildOptions.preparedPackage(in: packageRoot) != nil
+        buildOptions.canStartBuild(for: packageModel)
     }
 
     private func startBuild() {
-        guard let packageRoot = packageModel.packageURL else { return }
-        buildOptions.startBuild(in: packageRoot)
+        buildOptions.startBuild(for: packageModel)
     }
 
 }

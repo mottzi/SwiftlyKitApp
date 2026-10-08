@@ -16,15 +16,25 @@ final class BuildWorkflow {
 
     private(set) var isExporting = false
 
+    /// Requests presentation of installation approval for automatic compiler recovery.
+    private(set) var installationApprovalRevision = 0
+
     /// Live transcript of the latest build.
     let log: BuildLog
 
     @ObservationIgnored private var task: Task<Void, Never>?
-    private let swiftlyKit: SwiftlyKit
+    @ObservationIgnored private var buildID = UUID()
+    @ObservationIgnored private var pendingRecovery: PendingRecovery?
+    private let operations: BuildWorkflowOperations
 
     init(swiftlyKit: SwiftlyKit) {
         log = BuildLog()
-        self.swiftlyKit = swiftlyKit
+        operations = BuildWorkflowOperations(swiftlyKit: swiftlyKit)
+    }
+
+    init(operations: BuildWorkflowOperations) {
+        log = BuildLog()
+        self.operations = operations
     }
 
     /// Starts a build from the prepared environment and a snapshot of the selected options.
@@ -32,10 +42,15 @@ final class BuildWorkflow {
         _ preparedPackage: PreparedPackage,
         target: BuildTarget,
         configuration: BuildConfiguration,
-        stripBinary: Bool
+        stripBinary: Bool,
+        environmentChoices: EnvironmentChoices? = nil,
+        toolchain: ToolchainSelection = .automatic
     ) {
 
         guard !isRunning else { return }
+        let buildID = UUID()
+        self.buildID = buildID
+        pendingRecovery = nil
 
         let request = BuildRequest(
             preparedPackage.selectedProduct,
@@ -54,8 +69,8 @@ final class BuildWorkflow {
         result = nil
         log.clear()
         state = .active(
-            phase: .building,
-            detail: "Starting the build."
+            phase: .inspectingPackage,
+            detail: "Validating dependencies before compilation."
         )
         log.appendBuildStart(
             for: preparedPackage,
@@ -65,7 +80,13 @@ final class BuildWorkflow {
 
         task = Task { [weak self] in
             guard let self else { return }
-            await run(request, using: preparedPackage.environment)
+            await run(
+                request,
+                using: preparedPackage.environment,
+                choices: environmentChoices,
+                toolchain: toolchain,
+                buildID: buildID
+            )
         }
     }
 
@@ -89,6 +110,12 @@ final class BuildWorkflow {
     func cancel() {
         guard state.canCancel else { return }
 
+        if case .installationRequired = state {
+            pendingRecovery = nil
+            completeCancellation()
+            return
+        }
+
         state = .cancelling
         log.append("Cancelling the build.", kind: .status)
         task?.cancel()
@@ -98,36 +125,70 @@ final class BuildWorkflow {
     func discardSession() {
         guard !isRunning else { return }
 
+        buildID = UUID()
+        pendingRecovery = nil
+
         result = nil
         identity = nil
         log.clear()
         state = .idle
     }
 
+    /// Presents the retained recovery approval again without restarting dependency inspection.
+    func requestInstallationApproval() {
+        guard case .installationRequired = state else { return }
+        installationApprovalRevision += 1
+    }
+
+    /// Accepts only the retained recovery assessment, then resumes the same captured build request.
+    func approveInstallation() {
+        guard let pendingRecovery, case .installationRequired = state else { return }
+        self.pendingRecovery = nil
+        let buildID = self.buildID
+        state = .active(phase: .preparingEnvironment, detail: "Preparing the approved Swift environment.")
+        task = Task { [weak self] in
+            guard let self else { return }
+            await resume(pendingRecovery, buildID: buildID)
+        }
+    }
+
 }
 
 extension BuildWorkflow {
 
-    private func run(_ request: BuildRequest, using environment: LocalBuildEnvironment) async {
+    private func run(
+        _ request: BuildRequest,
+        using environment: LocalBuildEnvironment,
+        choices: EnvironmentChoices?,
+        toolchain: ToolchainSelection,
+        buildID: UUID
+    ) async {
 
-        defer { task = nil }
+        defer { if self.buildID == buildID { task = nil } }
 
         let onEvent: SwiftlyKitEvent.Handler = { [weak self] event in
-            await self?.report(event)
+            await self?.report(event, buildID: buildID)
         }
 
         do {
             let result = try await build(
                 request,
                 using: environment,
-                onEvent: onEvent
+                choices: choices,
+                toolchain: toolchain,
+                onEvent: onEvent,
+                buildID: buildID
             )
 
             try Task.checkCancellation()
+            guard self.buildID == buildID else { return }
+            guard let result else { return }
             complete(with: result)
         } catch is CancellationError {
+            guard self.buildID == buildID else { return }
             completeCancellation()
         } catch {
+            guard self.buildID == buildID else { return }
             fail(with: error)
         }
     }
@@ -135,38 +196,89 @@ extension BuildWorkflow {
     private func build(
         _ request: BuildRequest,
         using environment: LocalBuildEnvironment,
-        onEvent: @escaping SwiftlyKitEvent.Handler
-    ) async throws -> BuildResult {
+        choices: EnvironmentChoices?,
+        toolchain: ToolchainSelection,
+        onEvent: @escaping SwiftlyKitEvent.Handler,
+        buildID: UUID
+    ) async throws -> BuildResult? {
 
-        do {
-            return try await swiftlyKit.build(
-                request,
-                using: environment,
-                onEvent: onEvent
-            )
-        } catch SwiftlyKitError.dependencyResolutionRequired {
+        var environment = environment
+        while true {
             try Task.checkCancellation()
+            do {
+                return try await operations.build(request, environment, onEvent)
+            } catch let error as SwiftlyKitError {
+                guard self.buildID == buildID else { throw CancellationError() }
+                guard let assessment = choices?.recoveryAssessment(after: error, for: toolchain)
+                else { throw error }
+                guard assessment.swiftVersion > environment.swiftVersion else { throw error }
 
-            state = .active(
-                phase: .resolvingDependencies,
-                detail: "Resolving package dependencies."
-            )
-            log.append("Dependency resolution is required before building.", kind: .status)
-
-            try await swiftlyKit.resolveDependencies(
-                in: request.scratchStorage,
-                using: environment,
-                onEvent: onEvent
-            )
-            try Task.checkCancellation()
-
-            log.append("Dependencies resolved. Retrying the build.", kind: .status)
-            return try await swiftlyKit.build(
-                request,
-                using: environment,
-                onEvent: onEvent
-            )
+                log.append(
+                    "Host compilation failed with Swift \(environment.swiftVersion). "
+                        + "Trying compatible Swift \(assessment.swiftVersion).",
+                    kind: .status
+                )
+                if assessment.requiresInstallation {
+                    pendingRecovery = PendingRecovery(
+                        request: request,
+                        assessment: assessment,
+                        choices: choices,
+                        toolchain: toolchain
+                    )
+                    state = .installationRequired(InstallationApprovalRequest(
+                        swiftVersion: assessment.swiftVersion,
+                        staticLinuxSDKVersion: assessment.staticLinuxSDK.version,
+                        requiredComponents: assessment.requiredComponents
+                    ))
+                    installationApprovalRevision += 1
+                    return nil
+                }
+                state = .active(phase: .preparingEnvironment, detail: "Preparing Swift \(assessment.swiftVersion).")
+                environment = try await operations.prepare(assessment, onEvent)
+                try Task.checkCancellation()
+                guard self.buildID == buildID else { throw CancellationError() }
+                updateIdentity(swiftVersion: environment.swiftVersion)
+            }
         }
+    }
+
+    private func resume(_ recovery: PendingRecovery, buildID: UUID) async {
+
+        let onEvent: SwiftlyKitEvent.Handler = { [weak self] event in
+            await self?.report(event, buildID: buildID)
+        }
+        do {
+            let environment = try await operations.prepare(recovery.assessment, onEvent)
+            try Task.checkCancellation()
+            guard self.buildID == buildID else { return }
+            updateIdentity(swiftVersion: environment.swiftVersion)
+            await run(
+                recovery.request,
+                using: environment,
+                choices: recovery.choices,
+                toolchain: recovery.toolchain,
+                buildID: buildID
+            )
+        } catch is CancellationError {
+            guard self.buildID == buildID else { return }
+            completeCancellation()
+            task = nil
+        } catch {
+            guard self.buildID == buildID else { return }
+            fail(with: error)
+            task = nil
+        }
+    }
+
+    private func updateIdentity(swiftVersion: SwiftVersion) {
+        guard let identity else { return }
+        self.identity = BuildIdentity(
+            product: identity.product,
+            target: identity.target,
+            configuration: identity.configuration,
+            swiftVersion: swiftVersion,
+            stripBinary: identity.stripBinary
+        )
     }
 
     private func complete(with result: BuildResult) {
@@ -198,7 +310,8 @@ extension BuildWorkflow {
 
 extension BuildWorkflow {
 
-    private func report(_ event: SwiftlyKitEvent) {
+    private func report(_ event: SwiftlyKitEvent, buildID: UUID) {
+        guard self.buildID == buildID, !Task.isCancelled, case .active = state else { return }
         if case .progress(let progress) = event {
             report(progress)
         } else {
@@ -214,6 +327,30 @@ extension BuildWorkflow {
             detail: progress.detail
         )
         log.append(.progress(progress))
+    }
+
+}
+
+extension BuildWorkflow {
+
+    private struct PendingRecovery {
+        let request: BuildRequest
+        let assessment: EnvironmentAssessment
+        let choices: EnvironmentChoices?
+        let toolchain: ToolchainSelection
+    }
+
+}
+
+/// Internal adapters keep build orchestration testable without spawning real compilers.
+nonisolated struct BuildWorkflowOperations: Sendable {
+
+    var build: @Sendable (BuildRequest, LocalBuildEnvironment, SwiftlyKitEvent.Handler?) async throws -> BuildResult
+    var prepare: @Sendable (EnvironmentAssessment, SwiftlyKitEvent.Handler?) async throws -> LocalBuildEnvironment
+
+    init(swiftlyKit: SwiftlyKit) {
+        build = { try await swiftlyKit.build($0, using: $1, dependencies: .resolveIfNeeded, onEvent: $2) }
+        prepare = { try await swiftlyKit.prepare($0, onEvent: $1) }
     }
 
 }

@@ -23,6 +23,9 @@ struct PackageDiscoveryApprovalModifier: ViewModifier {
             ) {
                 presentPendingApproval()
             }
+            .onChange(of: buildOptions.buildWorkflow.installationApprovalRevision) {
+                presentPendingApproval()
+            }
             .alert(
                 approvalTitle,
                 isPresented: $approvalPresented
@@ -62,6 +65,16 @@ extension PackageDiscoveryApprovalModifier {
                     buildOptions.cancelInstallation()
                 }
 
+            case .buildRecovery:
+                Button("Install") {
+                    buildOptions.buildWorkflow.approveInstallation()
+                }
+                .keyboardShortcut(.defaultAction)
+
+                Button("Cancel", role: .cancel) {
+                    buildOptions.buildWorkflow.cancel()
+                }
+
             case nil:
                 EmptyView()
         }
@@ -70,6 +83,9 @@ extension PackageDiscoveryApprovalModifier {
     private func presentPendingApproval() {
         if buildOptions.hostDiscovery.installationApprovalRequested {
             presentedApproval = .commandLineTools
+            approvalPresented = true
+        } else if case .installationRequired(let approval) = buildOptions.buildWorkflow.state {
+            presentedApproval = .buildRecovery(approval)
             approvalPresented = true
         } else if case .installationRequired(let approval) = buildOptions.productDiscovery.state {
             presentedApproval = .components(approval)
@@ -83,7 +99,7 @@ extension PackageDiscoveryApprovalModifier {
     private var approvalTitle: String {
         switch presentedApproval {
             case .commandLineTools: "Install Command Line Tools?"
-            case .components, nil: "Install required tools?"
+            case .components, .buildRecovery, nil: "Install required tools?"
         }
     }
 
@@ -91,7 +107,7 @@ extension PackageDiscoveryApprovalModifier {
         switch presentedApproval {
             case .commandLineTools:
                 "SwiftlyKit needs Apple Command Line Tools before it can discover compatible Swift releases."
-            case .components(let approval):
+            case .components(let approval), .buildRecovery(let approval):
                 approval.message
             case nil:
                 ""
@@ -105,6 +121,7 @@ extension PackageDiscoveryApprovalModifier {
     private enum DiscoveryApproval: Equatable {
         case commandLineTools
         case components(InstallationApprovalRequest)
+        case buildRecovery(InstallationApprovalRequest)
     }
 
 }

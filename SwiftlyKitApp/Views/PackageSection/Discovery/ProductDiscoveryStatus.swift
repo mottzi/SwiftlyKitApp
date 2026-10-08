@@ -51,7 +51,7 @@ struct ProductDiscoveryStatus: View {
                     onRetry: onRetry
                 )
 
-            case .idle, .ready:
+            case .idle, .configured:
                 EmptyView()
         }
     }

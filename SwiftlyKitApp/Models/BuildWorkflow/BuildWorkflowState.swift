@@ -10,6 +10,9 @@ enum BuildWorkflowState: Equatable {
     /// SwiftlyKit is performing one stage of the build.
     case active(phase: BuildWorkflowPhase, detail: String)
 
+    /// A compatible recovery environment needs installation approval before the captured build resumes.
+    case installationRequired(InstallationApprovalRequest)
+
     /// The active build is stopping in response to cancellation.
     case cancelling
 
@@ -51,20 +54,29 @@ extension BuildWorkflowState {
     /// Whether a build task still owns the workflow.
     var isRunning: Bool {
         switch self {
-            case .active, .cancelling: true
+            case .active, .installationRequired, .cancelling: true
             case .idle, .succeeded, .failed, .cancelled: false
         }
     }
 
     /// Whether the active build can accept a cancellation request.
     var canCancel: Bool {
-        if case .active = self { true } else { false }
+        switch self {
+            case .active, .installationRequired: true
+            default: false
+        }
     }
 
 }
 
 /// User-visible stage of an active build workflow.
 enum BuildWorkflowPhase: Equatable {
+
+    /// SwiftPM evaluates dependency manifests and chooses a working host SDK before compilation.
+    case inspectingPackage
+
+    /// SwiftlyKit prepares a compatible recovery environment.
+    case preparingEnvironment
 
     /// SwiftPM is compiling or linking the selected product.
     case building
@@ -84,7 +96,9 @@ extension BuildWorkflowPhase {
         switch operation {
             case .resolvingDependencies: self = .resolvingDependencies
             case .stripping: self = .stripping
-            case .inspectingPackage, .building, .preparingEnvironment, .removingEnvironment, .exporting,
+            case .inspectingPackage: self = .inspectingPackage
+            case .preparingEnvironment: self = .preparingEnvironment
+            case .building, .removingEnvironment, .exporting,
                  .cleaningBuildArtifacts, .resettingBuildStorage: self = .building
         }
     }

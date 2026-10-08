@@ -154,7 +154,7 @@ struct DiscoveryTests {
 
         #expect(discovery.selectedProduct == replacement)
         #expect(discovery.availableProducts == [firstProduct, replacement])
-        #expect(discovery.state == .ready)
+        #expect(discovery.state == .configured)
     }
 
     @MainActor

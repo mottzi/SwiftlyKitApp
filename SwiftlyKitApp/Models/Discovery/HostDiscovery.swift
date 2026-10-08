@@ -45,16 +45,24 @@ final class HostDiscovery {
     private(set) var retryRevision = 0
 
     @ObservationIgnored private var installerWasRequested = false
+    @ObservationIgnored private var inspectionID = UUID()
+    private let readiness: @Sendable () async throws -> HostReadiness
+
+    init(readiness: @escaping @Sendable () async throws -> HostReadiness = SwiftlyKit.hostReadiness) {
+        self.readiness = readiness
+    }
 
     /// Inspects the host without changing developer tools state.
     func inspect() async {
+        let inspectionID = UUID()
+        self.inspectionID = inspectionID
         installationApprovalRequested = false
         state = .checking
 
         do {
-            let readiness = try await SwiftlyKit.hostReadiness()
+            let readiness = try await readiness()
 
-            guard !Task.isCancelled else { return }
+            guard isCurrent(inspectionID) else { return }
 
             switch readiness {
                 case .ready:
@@ -68,7 +76,7 @@ final class HostDiscovery {
         } catch is CancellationError {
             // a replacement task owns the next state transition
         } catch {
-            guard !Task.isCancelled else { return }
+            guard isCurrent(inspectionID) else { return }
             state = .failed("SwiftlyKit could not inspect the current host.")
         }
     }
@@ -81,6 +89,8 @@ final class HostDiscovery {
     /// Opens Apple's Command Line Tools installer and checks readiness again.
     func approveInstallation() async {
         guard installationApprovalRequested else { return }
+        let inspectionID = UUID()
+        self.inspectionID = inspectionID
 
         installationApprovalRequested = false
         state = .requestingCommandLineTools
@@ -88,14 +98,16 @@ final class HostDiscovery {
         do {
             try await SwiftlyKit.requestCommandLineToolsInstallation()
 
-            guard !Task.isCancelled else { return }
+            guard isCurrent(inspectionID) else { return }
 
             installerWasRequested = true
             await inspect()
+            guard !Task.isCancelled else { return }
+            if case .ready = state { requestRetry() }
         } catch is CancellationError {
             // a replacement task owns the next state transition
         } catch let error as SwiftlyKitError {
-            guard !Task.isCancelled else { return }
+            guard isCurrent(inspectionID) else { return }
 
             if case .unsupportedHost = error {
                 state = .unsupported
@@ -103,7 +115,7 @@ final class HostDiscovery {
                 state = .failed(error.errorDescription ?? error.localizedDescription)
             }
         } catch {
-            guard !Task.isCancelled else { return }
+            guard isCurrent(inspectionID) else { return }
             state = .failed("The Command Line Tools installer could not be opened.")
         }
     }
@@ -123,6 +135,7 @@ final class HostDiscovery {
 
     /// Clears host readiness and installer recovery state.
     func clear() {
+        inspectionID = UUID()
         state = .idle
         installationApprovalRequested = false
         installerWasRequested = false
@@ -131,6 +144,10 @@ final class HostDiscovery {
 }
 
 extension HostDiscovery {
+
+    private func isCurrent(_ inspectionID: UUID) -> Bool {
+        self.inspectionID == inspectionID && !Task.isCancelled
+    }
 
     private func handleUnavailableDeveloperTools() {
         if installerWasRequested {

@@ -43,9 +43,10 @@ package dependencies require network access.
 5. After a successful build, open **Build files**, choose **Export Build...**,
    and select or create an empty destination folder.
 
-Package inspection allows the app to resolve dependencies when needed. The app
-enables building only after the root and dependency manifests can be inspected
-with the selected Swift toolchain. Resolution can access the network and update `Package.resolved`.
+Configuration evaluates the root manifest to list products without resolving
+or inspecting dependencies. Clicking Build starts cancellable dependency
+validation, SDK recovery, and then compilation. Resolution can access the network
+and update `Package.resolved`.
 SwiftPM evaluates package manifests and may run plugins with your permissions.
 Build only packages you trust.
 
@@ -68,11 +69,13 @@ target architecture. It does not guarantee that the package will compile.
 If host manifest compilation fails, the app tries installed macOS SDKs with the
 same Swift version. Automatic selection can then assess a newer Swift release;
 an exact version or `.swift-version` pin stays fixed. Any required installation
-still needs approval. If inspection cannot succeed, the app keeps building disabled
-and reports the compiler diagnostic and SDK attempts.
+still needs approval. If dependency inspection cannot succeed, the build stops
+before compilation and reports the compiler diagnostic and SDK attempts.
 
-The app uses the package's `.build` directory, default package traits, and
-SwiftPM's default build concurrency.
+Builds use the package's `.build` directory, default package traits, and
+SwiftPM's default build concurrency. Root configuration uses separate stable
+scratch storage in the user cache directory, so it can run while a build owns
+the package's build storage.
 
 ## Build output and export
 
@@ -105,27 +108,30 @@ cleaning or resetting its storage.
 
 ## Development
 
-Xcode resolves SwiftlyKit from its public repository using Up to Next Major
+The Xcode project references SwiftlyKit's public repository using Up to Next Major
 Version starting at `0.6.0`, equivalent to SwiftPM's `from: "0.6.0"`. The
-lockfile records the selected public release. A sibling library checkout is not
-required. Run the app's test suite from the repository root:
+lockfile records the selected public release. Development uses
+`SwiftlyKitApp.xcworkspace`, which overrides that dependency with `../SwiftlyKit`.
+The staged configuration interface currently requires the sibling checkout until
+the corresponding library release is published. Run the app's test suite from the repository root:
 
 ```sh
 xcodebuild \
-  -project SwiftlyKitApp.xcodeproj \
+  -workspace SwiftlyKitApp.xcworkspace \
   -scheme SwiftlyKitApp \
   -destination 'platform=macOS' \
   test
 ```
 
-The build-and-run script also accepts `--debug` to open LLDB and `--logs` to
-launch the app with a live macOS log stream.
+`script/build_and_run.sh` uses the workspace when the sibling library exists.
+It also accepts `--debug` to open LLDB, `--logs` for process logs, and
+`--telemetry` for configuration timings from the `PackageDiscovery` category.
 
 For changes spanning the app and library, open `SwiftlyKitApp.xcworkspace`. It
 overrides the released SwiftlyKit package with the sibling `../SwiftlyKit` checkout.
 The project alone continues to use the released package.
 
-To exercise the real Deployer readiness and build workflow, run:
+To exercise the real Deployer configuration and build workflow, run:
 
 ```sh
 ./script/verify_deployer.sh /path/to/Vapor-Deployer
@@ -135,3 +141,14 @@ The script builds the workspace and passes the package path into the test host
 through its generated `.xctestrun` configuration. The acceptance test selects
 Swift 6.3.3 explicitly, validates dependency inspection, and checks the app's
 completed build result. The toolchain and Static Linux SDK must already be installed.
+
+To measure package selection through usable configuration, including the SwiftUI
+discovery task and transition completion, run:
+
+```sh
+./script/benchmark_deployer_setup.sh /path/to/Vapor-Deployer 2
+```
+
+The optional limit applies to every run. The test records first and repeated
+selections separately for Automatic and exact Swift 6.3.3. Compilation and
+dependency validation are measured by the separate acceptance workflow.

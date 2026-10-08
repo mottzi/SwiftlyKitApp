@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import OSLog
 import SwiftlyKit
 
 @Observable
@@ -24,17 +25,105 @@ final class BuildOptions {
     /// Whether the strip-binary toggle is enabled.
     var stripBinary = false
 
+    @ObservationIgnored private var discoveryID = UUID()
+    @ObservationIgnored private var discoveryPackage: URL?
+    @ObservationIgnored private var discoveredHostRevision = -1
+    @ObservationIgnored private var discoveredToolchainRevision = -1
+
     init(swiftlyKit: SwiftlyKit = SwiftlyKit()) {
-        hostDiscovery = HostDiscovery()
-        toolchainDiscovery = ToolchainDiscovery(swiftlyKit: swiftlyKit)
-        productDiscovery = ProductDiscovery(swiftlyKit: swiftlyKit)
+        let operations = PackageDiscoveryOperations(swiftlyKit: swiftlyKit)
+        hostDiscovery = HostDiscovery(readiness: operations.hostReadiness)
+        toolchainDiscovery = ToolchainDiscovery(compatibleEnvironments: operations.compatibleEnvironments)
+        productDiscovery = ProductDiscovery(operations: operations)
         buildWorkflow = BuildWorkflow(swiftlyKit: swiftlyKit)
         buildStorageMaintenance = BuildStorageMaintenance(swiftlyKit: swiftlyKit)
+    }
+
+    init(discoveryOperations: PackageDiscoveryOperations, swiftlyKit: SwiftlyKit = SwiftlyKit()) {
+        hostDiscovery = HostDiscovery(readiness: discoveryOperations.hostReadiness)
+        toolchainDiscovery = ToolchainDiscovery(compatibleEnvironments: discoveryOperations.compatibleEnvironments)
+        productDiscovery = ProductDiscovery(operations: discoveryOperations)
+        buildWorkflow = BuildWorkflow(swiftlyKit: swiftlyKit)
+        buildStorageMaintenance = BuildStorageMaintenance(swiftlyKit: swiftlyKit)
+    }
+
+    /// Owns the ordered discovery stages for one selected package and set of choices.
+    func discoverPackage(in packageRoot: URL, for target: BuildTarget, toolchain: ToolchainSelection) async {
+
+        let discoveryID = UUID()
+        self.discoveryID = discoveryID
+        self.toolchain = toolchain
+        let clock = ContinuousClock()
+        let started = clock.now
+        let hostRevision = hostDiscovery.retryRevision
+        let toolchainRevision = toolchainDiscovery.retryRevision
+
+        if discoveryPackage != packageRoot || discoveredHostRevision != hostRevision {
+            discoveryPackage = packageRoot
+            await discoverHost()
+            guard isCurrent(discoveryID) else { return }
+            discoveredHostRevision = hostRevision
+            Self.logger.info(
+                "Host discovery finished after \(started.duration(to: clock.now).description, privacy: .public)"
+            )
+        }
+        guard case .ready = hostDiscovery.state else { return }
+
+        if !hasDiscoveredToolchains(in: packageRoot, for: target)
+            || discoveredToolchainRevision != toolchainRevision {
+            productDiscovery.invalidate()
+            let selected = await toolchainDiscovery.discover(
+                in: packageRoot,
+                for: target,
+                selectedToolchain: toolchain
+            )
+            guard isCurrent(discoveryID) else { return }
+            guard let selected else { return }
+            self.toolchain = selected
+            discoveredToolchainRevision = toolchainRevision
+            Self.logger.info(
+                "Swift choices finished after \(started.duration(to: clock.now).description, privacy: .public)"
+            )
+        }
+        guard isCurrent(discoveryID) else { return }
+        await discoverProducts(in: packageRoot, for: target, toolchain: self.toolchain)
+        guard isCurrent(discoveryID) else { return }
+        Self.logger.info(
+            "Package configuration finished after \(started.duration(to: clock.now).description, privacy: .public)"
+        )
     }
 
     /// Whether a build, export, or build-storage operation owns the package environment.
     var isOperationRunning: Bool {
         buildWorkflow.isRunning || buildStorageMaintenance.isRunning
+    }
+
+    /// Whether package selection has given the discovery workflow a package session to discard.
+    var hasPackageSession: Bool { discoveryPackage != nil }
+
+    /// Keeps configuration controls still during I/O, while retaining actions for setup failures and approvals.
+    func canEditConfiguration(for packageModel: PackageModel) -> Bool {
+        guard packageModel.isConfigurationReady else { return false }
+        guard !isOperationRunning else { return false }
+        if case .checking = hostDiscovery.state { return false }
+        if case .discovering = toolchainDiscovery.state { return false }
+        if case .discovering = productDiscovery.state { return false }
+        return true
+    }
+
+    /// Allows the visible Build action after the page transition and root configuration both finish.
+    func canStartBuild(for packageModel: PackageModel) -> Bool {
+        guard packageModel.isConfigurationReady else { return false }
+        guard !isOperationRunning else { return false }
+        guard let packageRoot = packageModel.packageURL else { return false }
+        return preparedPackage(in: packageRoot) != nil
+    }
+
+    /// Uses the same presentation and configuration requirements as the Build button.
+    func startBuild(for packageModel: PackageModel) {
+        guard canStartBuild(for: packageModel) else { return }
+        guard let packageRoot = packageModel.packageURL else { return }
+        startBuild(in: packageRoot)
     }
 
     /// Starts a build from the prepared package and a snapshot of the current build choices.
@@ -46,7 +135,9 @@ final class BuildOptions {
             preparedPackage,
             target: target,
             configuration: configuration,
-            stripBinary: stripBinary
+            stripBinary: stripBinary,
+            environmentChoices: toolchainDiscovery.environmentChoices(in: packageRoot, for: target),
+            toolchain: toolchain
         )
     }
 
@@ -73,7 +164,7 @@ final class BuildOptions {
 
     /// Inspects host readiness before package environment discovery begins.
     func discoverHost() async {
-        clearEnvironmentDiscoveries()
+        clearEnvironmentDiscoveries(resetToolchain: false)
         await hostDiscovery.inspect()
     }
 
@@ -128,6 +219,11 @@ final class BuildOptions {
         guard !buildStorageMaintenance.isRunning else { return }
         guard !buildWorkflow.isExporting else { return }
 
+        discoveryID = UUID()
+        discoveryPackage = nil
+        discoveredHostRevision = -1
+        discoveredToolchainRevision = -1
+
         buildWorkflow.cancel()
         buildWorkflow.discardSession()
         hostDiscovery.clear()
@@ -138,11 +234,17 @@ final class BuildOptions {
 
 extension BuildOptions {
 
+    private func isCurrent(_ discoveryID: UUID) -> Bool {
+        self.discoveryID == discoveryID && !Task.isCancelled
+    }
+
     /// Clears package environment discoveries but preserves current host readiness.
-    func clearEnvironmentDiscoveries() {
+    func clearEnvironmentDiscoveries(resetToolchain: Bool = true) {
         toolchainDiscovery.clear()
         productDiscovery.clear()
-        toolchain = .automatic
+        if resetToolchain { toolchain = .automatic }
     }
+
+    private static let logger = Logger(subsystem: "codes.mottzi.SwiftlyKitApp", category: "PackageDiscovery")
 
 }

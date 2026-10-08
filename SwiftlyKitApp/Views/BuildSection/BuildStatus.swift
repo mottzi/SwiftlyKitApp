@@ -19,6 +19,7 @@ struct BuildStatus: View {
     var identity: BuildIdentity? = nil
     var onSetupAction: () -> Void = {}
     let onCancel: () -> Void
+    var onReviewInstallation: () -> Void = {}
     let onExport: (URL) async throws -> BuildResult?
 
     var body: some View {
@@ -117,6 +118,12 @@ extension BuildStatus {
                     }
                     .transition(statusTransition)
 
+                case .reviewInstallation:
+                    Button("Review Installation", systemImage: "arrow.down.circle", action: onReviewInstallation)
+                        .labelStyle(.iconOnly)
+                        .help("Review the tools needed to resume this build")
+                        .transition(statusTransition)
+
                 case .none:
                     EmptyView()
             }
@@ -182,6 +189,7 @@ extension BuildStatus {
 
         return switch state {
             case .active: .cancel
+            case .installationRequired: .reviewInstallation
             case .succeeded where result != nil: .showResult
             case .failed: .failureDetails
             case .idle, .cancelling, .succeeded, .cancelled: .none
@@ -209,8 +217,8 @@ extension BuildStatus {
     private var presentation: Presentation {
         if presentsImmediately { return requestedPresentation }
         return visiblePresentation ?? Presentation(
-            title: "Checking build configuration",
-            detail: "Validating the selected package and Swift environment.",
+            title: "Discovering build options",
+            detail: "Reading package products and installed Swift tools.",
             symbolName: "hammer",
             symbolColor: .secondary
         )
@@ -254,8 +262,8 @@ extension BuildStatus {
         if cleanup != nil { return currentPresentation }
         if setupStatus?.isInstalling == true { return currentPresentation }
         return Presentation(
-            title: "Checking build configuration",
-            detail: "Validating the selected package and Swift environment.",
+            title: "Discovering build options",
+            detail: "Reading package products and installed Swift tools.",
             symbolName: "hammer",
             symbolColor: .secondary,
             showsProgress: true
@@ -288,7 +296,7 @@ extension BuildStatus {
             case .idle:
                 if let readyDetail {
                     Presentation(
-                        title: "Ready to build",
+                        title: "Build configuration ready",
                         detail: readyDetail,
                         symbolName: "hammer.fill",
                         symbolColor: .accentColor,
@@ -311,6 +319,14 @@ extension BuildStatus {
                     symbolName: "circle",
                     symbolColor: .secondary,
                     showsProgress: true
+                )
+
+            case .installationRequired:
+                Presentation(
+                    title: "Swift components required",
+                    detail: "Review installation to resume dependency validation.",
+                    symbolName: "arrow.down.circle",
+                    symbolColor: .secondary
                 )
 
             case .cancelling:
@@ -374,6 +390,7 @@ extension BuildStatus {
         case showResult
         case setup
         case failureDetails
+        case reviewInstallation
     }
 
 }
@@ -382,6 +399,8 @@ extension BuildWorkflowPhase {
 
     fileprivate var title: String {
         switch self {
+            case .inspectingPackage: "Validating dependencies"
+            case .preparingEnvironment: "Preparing Swift environment"
             case .building: "Building"
             case .resolvingDependencies: "Resolving dependencies"
             case .stripping: "Stripping executable"

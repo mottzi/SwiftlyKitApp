@@ -14,8 +14,8 @@ enum ProductDiscoveryState: Equatable {
     /// Product discovery is paused until the user approves required installations.
     case installationRequired(InstallationApprovalRequest)
 
-    /// Executable products were discovered in name order.
-    case ready
+    /// The root manifest supplied executable products; dependencies will be validated when building.
+    case configured
 
     /// Package inspection succeeded without finding an executable product.
     case empty
@@ -53,10 +53,15 @@ final class ProductDiscovery {
     @ObservationIgnored private var lastPreparedContext: Context?
     @ObservationIgnored private var installationCancellationSnapshot: Snapshot?
     @ObservationIgnored private var contextToSkip: Context?
-    private let swiftlyKit: SwiftlyKit
+    @ObservationIgnored private var discoveryID = UUID()
+    private let operations: PackageDiscoveryOperations
 
     init(swiftlyKit: SwiftlyKit) {
-        self.swiftlyKit = swiftlyKit
+        operations = PackageDiscoveryOperations(swiftlyKit: swiftlyKit)
+    }
+
+    init(operations: PackageDiscoveryOperations) {
+        self.operations = operations
     }
 
     /// Prepares the selected environment and discovers its executable products.
@@ -66,6 +71,8 @@ final class ProductDiscovery {
         toolchain: ToolchainSelection,
         environmentChoices: EnvironmentChoices
     ) async {
+        let discoveryID = UUID()
+        self.discoveryID = discoveryID
         let context = Context(
             packageRoot: packageRoot,
             target: target,
@@ -88,7 +95,7 @@ final class ProductDiscovery {
 
                 if assessment.requiresInstallation,
                    approvedInstallationContext != context || approvedInstallationVersion != assessment.swiftVersion {
-                    guard !Task.isCancelled else { return }
+                    guard isCurrent(discoveryID) else { return }
 
                     let approval = InstallationApprovalRequest(
                         swiftVersion: assessment.swiftVersion,
@@ -110,48 +117,49 @@ final class ProductDiscovery {
                 )
 
                 let swiftVersion = assessment.swiftVersion
-                let environment = try await swiftlyKit.prepare(
+                let environment = try await operations.prepare(
                     assessment,
-                    onEvent: { [weak self] event in
+                    { [weak self] event in
                         guard case .progress(let progress) = event else { return }
-                        await self?.report(progress, swiftVersion: swiftVersion)
+                        await self?.report(progress, swiftVersion: swiftVersion, discoveryID: discoveryID)
                     }
                 )
 
+                guard isCurrent(discoveryID) else { return }
                 state = .discovering(detail: "Inspecting executable package products.")
 
-                let inspection: PackageInspection
+                let configuration: PackageConfiguration
                 do {
-                    inspection = try await swiftlyKit.inspectPackage(
-                        using: environment,
-                        dependencies: .resolveIfNeeded,
-                        onEvent: { [weak self] event in
+                    configuration = try await operations.configure(
+                        environment,
+                        { [weak self] event in
                             guard case .progress(let progress) = event else { return }
-                            await self?.report(progress, swiftVersion: swiftVersion)
+                            await self?.report(progress, swiftVersion: swiftVersion, discoveryID: discoveryID)
                         }
                     )
                 } catch let error as SwiftlyKitError {
+                    guard isCurrent(discoveryID) else { return }
                     guard let recovery = environmentChoices.recoveryAssessment(after: error, for: toolchain)
                     else { throw error }
                     assessment = recovery
                     continue
                 }
 
-                guard !Task.isCancelled else { return }
+                guard isCurrent(discoveryID) else { return }
 
                 lastPreparedContext = context
-                preparedEnvironment = inspection.environment
+                preparedEnvironment = configuration.environment
                 preparedContext = context
-                replaceProducts(with: Array(inspection.products))
+                replaceProducts(with: Array(configuration.products))
                 break
             }
         } catch is CancellationError {
             // a replacement task owns the next state transition
         } catch let error as SwiftlyKitError {
-            guard !Task.isCancelled else { return }
+            guard isCurrent(discoveryID) else { return }
             state = .failed(error)
         } catch {
-            guard !Task.isCancelled else { return }
+            guard isCurrent(discoveryID) else { return }
             state = .failed(
                 .packageInspectionFailed("An unexpected product discovery error occurred.")
             )
@@ -177,7 +185,7 @@ final class ProductDiscovery {
             toolchain: toolchain
         )
 
-        guard case .ready = state else { return nil }
+        guard case .configured = state else { return nil }
         guard preparedContext == context else { return nil }
         guard let preparedEnvironment else { return nil }
         guard let selectedProduct, availableProducts.contains(selectedProduct) else { return nil }
@@ -224,6 +232,7 @@ final class ProductDiscovery {
 
     /// Clears products that belong to a package or environment that is no longer selected.
     func clear() {
+        discoveryID = UUID()
         state = .idle
         availableProducts = []
         selectedProduct = nil
@@ -232,6 +241,7 @@ final class ProductDiscovery {
 
     /// Invalidates discovery while a replacement result is prepared.
     func invalidate() {
+        discoveryID = UUID()
         state = .idle
         resetContext()
     }
@@ -240,18 +250,22 @@ final class ProductDiscovery {
     func replaceProducts(with products: [ExecutableProduct]) {
         availableProducts = products
         selectedProduct = products.first { $0.name == selectedProduct?.name } ?? products.first
-        state = products.isEmpty ? .empty : .ready
+        state = products.isEmpty ? .empty : .configured
     }
 
 }
 
 extension ProductDiscovery {
 
+    private func isCurrent(_ discoveryID: UUID) -> Bool {
+        self.discoveryID == discoveryID && !Task.isCancelled
+    }
+
     private func cancellationSnapshot() -> Snapshot? {
         guard let lastPreparedContext else { return nil }
 
         switch state {
-            case .ready, .empty, .failed:
+            case .configured, .empty, .failed:
                 return Snapshot(
                     context: lastPreparedContext,
                     state: state,
@@ -262,7 +276,8 @@ extension ProductDiscovery {
         }
     }
 
-    private func report(_ progress: OperationProgress, swiftVersion: SwiftVersion) {
+    private func report(_ progress: OperationProgress, swiftVersion: SwiftVersion, discoveryID: UUID) {
+        guard isCurrent(discoveryID) else { return }
         guard case .discovering = state else { return }
         if progress.operation == .inspectingPackage || progress.operation == .resolvingDependencies {
             state = .discovering(detail: progress.detail)
