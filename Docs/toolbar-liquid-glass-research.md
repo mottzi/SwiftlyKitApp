@@ -71,7 +71,7 @@ That supplies an animated transaction for the model mutation, but the toolbar ho
 
 The user-linked question is an iOS 26 report, not a macOS example. Its original code attaches different `.toolbar` modifiers to alternate content views. Normal switches update instantly, while rapid switches sometimes overlap long enough to reveal the native animation. Two answers treat this as unintended framework behavior. The accepted answer moves one toolbar to a stable common ancestor, switches between complete `ToolbarItemGroup` values, and applies `.animation` after `.toolbar`.
 
-SwiftlyKit already has one stable toolbar owner. The iOS group-replacement workaround is not the macOS fix. The macOS toolbar needs stable sibling item identity instead.
+Triple already has one stable toolbar owner. The iOS group-replacement workaround is not the macOS fix. The macOS toolbar needs stable sibling item identity instead.
 
 ## Verified macOS result
 
