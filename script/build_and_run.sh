@@ -2,17 +2,18 @@
 set -euo pipefail
 
 MODE="${1:-run}"
-APP_NAME="SwiftlyKitApp"
+APP_NAME="Triple"
+SCHEME="TripleApp"
 BUNDLE_ID="codes.mottzi.SwiftlyKitApp"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DERIVED_DATA="$ROOT_DIR/.derivedData"
 APP_BUNDLE="$DERIVED_DATA/Build/Products/Debug/$APP_NAME.app"
 APP_BINARY="$APP_BUNDLE/Contents/MacOS/$APP_NAME"
-BUILD_CONTAINER=(-project "$ROOT_DIR/SwiftlyKitApp.xcodeproj")
+BUILD_CONTAINER=(-project "$ROOT_DIR/TripleApp.xcodeproj")
 if [[ -f "$ROOT_DIR/../SwiftlyKit/Package.swift" ]]; then
-  BUILD_CONTAINER=(-workspace "$ROOT_DIR/SwiftlyKitApp.xcworkspace")
-  echo "Building with the local SwiftlyKit workspace dependency."
+  BUILD_CONTAINER=(-workspace "$ROOT_DIR/TripleApp.xcworkspace")
+  echo "Building with the local Triple workspace dependency."
 fi
 
 app_is_running() {
@@ -70,7 +71,7 @@ if application "Xcode" is not running then
 end if
 
 tell application "Xcode"
-  repeat with workspaceName in {"SwiftlyKitApp.xcworkspace", "SwiftlyKitApp.xcodeproj"}
+  repeat with workspaceName in {"TripleApp.xcworkspace", "TripleApp.xcodeproj"}
     try
       set workspaceDocument to workspace document (workspaceName as text)
       stop workspaceDocument
@@ -81,7 +82,7 @@ tell application "Xcode"
 end tell
 APPLESCRIPT
 )"; then
-    echo "Could not ask Xcode about its SwiftlyKitApp run session." >&2
+    echo "Could not ask Xcode about its TripleApp run session." >&2
     return 1
   fi
 
@@ -127,9 +128,9 @@ stop_existing_app() {
 
 stop_existing_app
 
-xcodebuild \
+"$(dirname "${BASH_SOURCE[0]}")/xcodebuild.sh" \
   "${BUILD_CONTAINER[@]}" \
-  -scheme "$APP_NAME" \
+  -scheme "$SCHEME" \
   -configuration Debug \
   -derivedDataPath "$DERIVED_DATA" \
   build

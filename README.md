@@ -1,22 +1,20 @@
-# SwiftlyKitApp
+# Triple
 
-SwiftlyKitApp is a macOS app that cross-compiles local Swift packages into
+Triple is a macOS app that cross-compiles local Swift packages into
 verified, statically linked ARM64 or x86-64 Linux Musl executables. Choose a
 package, configure its build, and export the executable with its required
 resource bundles.
 
-The app uses the [SwiftlyKit](https://github.com/mottzi/SwiftlyKit) Swift library
+The app uses the [Triple](https://github.com/mottzi/Triple) Swift library
 to manage toolchains, SDKs, and builds. For a terminal command, use
-[SwiftlyKitCLI](https://github.com/mottzi/SwiftlyKitCLI).
+[TripleCLI](https://github.com/mottzi/TripleCLI).
 
 ## Download
 
-[Download SwiftlyKitApp 0.1.1](https://github.com/mottzi/SwiftlyKitApp/releases/download/0.1.1/SwiftlyKitApp-0.1.1.dmg).
-Open the DMG, drag SwiftlyKitApp to Applications, and launch it from there.
-The app is signed with Developer ID and notarized by Apple.
-
-[Release notes and SHA-256 checksum](https://github.com/mottzi/SwiftlyKitApp/releases/tag/0.1.1)
-are available on GitHub.
+The Triple release is pending. The last published app remains
+[SwiftlyKitApp 0.1.1](https://github.com/mottzi/SwiftlyKitApp/releases/tag/0.1.1),
+with its original release name and DMG asset. A Triple download will be linked
+once the renamed repositories and signed release are published.
 
 ## Requirements
 
@@ -83,7 +81,7 @@ the package's build storage.
 you wrap lines, copy the transcript, or clear it. You can cancel an active build
 or open error details when a build fails.
 
-SwiftlyKit verifies that the result is a static Linux executable for the selected
+Triple verifies that the result is a static Linux executable for the selected
 architecture and validates its required resource bundles. **Build files** lists
 those files and the settings used for that build. **Show in Finder** reveals
 them in build storage.
@@ -108,17 +106,27 @@ cleaning or resetting its storage.
 
 ## Development
 
-The Xcode project references SwiftlyKit's public repository using Up to Next Major
-Version starting at `0.6.0`, equivalent to SwiftPM's `from: "0.6.0"`. The
-lockfile records the selected public release. Development uses
-`SwiftlyKitApp.xcworkspace`, which overrides that dependency with `../SwiftlyKit`.
-The staged configuration interface currently requires the sibling checkout until
-the corresponding library release is published. Run the app's test suite from the repository root:
+The Xcode project points at the intended Triple repository and pins library
+revision `99c216dda112be33f7359d3fd5bf8d0334f20498`. That revision will become
+available after the library rebrand is pushed and the remote repository is
+renamed. `TripleApp.xcworkspace` opens the app project. The sibling library
+checkout stays at `../SwiftlyKit`, and its module and package are `Triple`.
+Xcode cannot override the renamed remote with the old checkout folder because
+their package identities differ.
+
+`script/xcodebuild.sh` resolves the pinned Triple commit from that sibling Git
+repository when its manifest declares Triple. It scopes the Git URL rewrite to
+the build command and does not change repository or global Git configuration.
+It builds the pinned commit, so commit library changes and update the project
+revision before testing them in the app. Without the sibling checkout, it uses
+the intended remote repository.
+
+Run the app's test suite from the repository root:
 
 ```sh
-xcodebuild \
-  -workspace SwiftlyKitApp.xcworkspace \
-  -scheme SwiftlyKitApp \
+./script/xcodebuild.sh \
+  -workspace TripleApp.xcworkspace \
+  -scheme TripleApp \
   -destination 'platform=macOS' \
   test
 ```
@@ -127,9 +135,9 @@ xcodebuild \
 It also accepts `--debug` to open LLDB, `--logs` for process logs, and
 `--telemetry` for configuration timings from the `PackageDiscovery` category.
 
-For changes spanning the app and library, open `SwiftlyKitApp.xcworkspace`. It
-overrides the released SwiftlyKit package with the sibling `../SwiftlyKit` checkout.
-The project alone continues to use the released package.
+For changes spanning the app and library, open `TripleApp.xcworkspace`.
+Until the Triple remote is published, use the helper for builds and tests.
+The project alone uses the intended remote repository and pinned revision.
 
 To exercise the real Deployer configuration and build workflow, run:
 
@@ -152,3 +160,20 @@ discovery task and transition completion, run:
 The optional limit applies to every run. The test records first and repeated
 selections separately for Automatic and exact Swift 6.3.3. Compilation and
 dependency validation are measured by the separate acceptance workflow.
+
+## App identity and updates
+
+The app bundle and executable are `Triple.app` and `Triple`. The Xcode target,
+Swift module, test target, and shared scheme use `TripleApp` or `TripleAppTests`.
+The main and Help windows display Triple.
+
+The bundle identifier remains `codes.mottzi.SwiftlyKitApp`. This preserves
+existing preferences, signing identity, and Sparkle's update history. The
+Sparkle public signing key remains unchanged. The update feed points to the
+intended `mottzi/TripleApp` release repository; publish a signed appcast there
+when the repository rename and release are complete. No new release or feed
+has been published by this source change.
+
+`Docs/ui-ux-audit-2026-09-12.md` and the screenshots under `Docs/` describe the
+pre-rebrand app. Their historical labels and source paths remain unchanged.
+Local release logs and icon research under `Docs/` also retain their historical names.

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>SUFeedURL</key>
-    <string>https://github.com/mottzi/SwiftlyKitApp/releases/latest/download/appcast.xml</string>
+    <string>https://github.com/mottzi/TripleApp/releases/latest/download/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>ZSFqgrDlhzWckeLuxdmQC+16UOEDJKNquxCVWcwoRlQ=</string>
     <key>SUEnableAutomaticChecks</key>

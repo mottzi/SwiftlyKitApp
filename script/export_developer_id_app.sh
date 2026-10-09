@@ -11,24 +11,29 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output="$1"
 mkdir -p "$output"
 
-xcodebuild \
-  -project "$root/SwiftlyKitApp.xcodeproj" \
-  -scheme SwiftlyKitApp \
+build_container=(-project "$root/TripleApp.xcodeproj")
+if [[ -f "$root/../SwiftlyKit/Package.swift" ]]; then
+  build_container=(-workspace "$root/TripleApp.xcworkspace")
+fi
+
+"$(dirname "${BASH_SOURCE[0]}")/xcodebuild.sh" \
+  "${build_container[@]}" \
+  -scheme TripleApp \
   -configuration Release \
   -destination 'generic/platform=macOS' \
   -derivedDataPath "$root/.derivedData/release-build" \
-  -archivePath "$output/SwiftlyKitApp.xcarchive" \
+  -archivePath "$output/Triple.xcarchive" \
   CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=4DXABR577J \
   archive
 
-xcodebuild \
+"$(dirname "${BASH_SOURCE[0]}")/xcodebuild.sh" \
   -exportArchive \
-  -archivePath "$output/SwiftlyKitApp.xcarchive" \
+  -archivePath "$output/Triple.xcarchive" \
   -exportPath "$output/Export" \
   -exportOptionsPlist "$root/script/DeveloperIDExportOptions.plist" \
   -allowProvisioningUpdates
 
-app="$output/Export/SwiftlyKitApp.app"
+app="$output/Export/Triple.app"
 signature="$(codesign -dv --verbose=4 "$app" 2>&1)"
 printf '%s\n' "$signature" | grep -q '^Authority=Developer ID Application:'
 printf '%s\n' "$signature" | grep -q '^TeamIdentifier=4DXABR577J$'

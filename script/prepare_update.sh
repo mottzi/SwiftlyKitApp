@@ -14,7 +14,7 @@ output="$3"
 [[ -f "$dmg" && "$dmg" == *.dmg && -s "$notes" && "$notes" == *.md ]] || usage
 [[ ! -e "$output" ]] || { echo "Output already exists: $output" >&2; exit 1; }
 [[ $# -lt 4 || -f "$4" ]] || usage
-repo="mottzi/SwiftlyKitApp"
+repo="mottzi/TripleApp"
 account="codes.mottzi.SwiftlyKitApp"
 
 tools="${SPARKLE_TOOLS:-}"
@@ -37,7 +37,7 @@ expected_key="$(/usr/libexec/PlistBuddy -c 'Print :SUPublicEDKey' "$root/Config/
   exit 1
 }
 
-scratch="$(mktemp -d "${TMPDIR:-/tmp}/swiftlykit-update.XXXXXX")"
+scratch="$(mktemp -d "${TMPDIR:-/tmp}/triple-update.XXXXXX")"
 mounted=false
 cleanup() {
   if [[ "$mounted" == true ]]; then
@@ -57,7 +57,7 @@ xcrun stapler validate "$dmg"
 /usr/sbin/spctl --assess --type open --context context:primary-signature "$dmg"
 /usr/sbin/diskutil image attach --readOnly --nobrowse --mountPoint "$scratch/mount" "$dmg" >/dev/null
 mounted=true
-app="$scratch/mount/SwiftlyKitApp.app"
+app="$scratch/mount/Triple.app"
 plist="$app/Contents/Info.plist"
 /usr/bin/codesign --verify --deep --strict "$app"
 xcrun stapler validate "$app"
@@ -116,9 +116,9 @@ for item in ET.parse(sys.argv[1]).findall('./channel/item'):
 PY
 fi
 
-filename="SwiftlyKitApp-$version.dmg"
+filename="Triple-$version.dmg"
 cp "$dmg" "$stage/$filename"
-cp "$notes" "$stage/SwiftlyKitApp-$version.md"
+cp "$notes" "$stage/Triple-$version.md"
 "$tools/generate_appcast" \
   --account "$account" \
   --versions "$build" \
@@ -151,7 +151,7 @@ if item is None or item.findtext(ns + 'shortVersionString') != version:
 if not item.findtext(ns + 'minimumSystemVersion'):
     raise SystemExit('The generated feed is missing its minimum macOS version.')
 enclosure = item.find('enclosure')
-expected = f'https://github.com/mottzi/SwiftlyKitApp/releases/download/{version}/{filename}'
+expected = f'https://github.com/mottzi/TripleApp/releases/download/{version}/{filename}'
 if enclosure is None or enclosure.get('url') != expected or not enclosure.get(ns + 'edSignature'):
     raise SystemExit('The generated update download or signature is invalid.')
 if int(enclosure.get('length')) != pathlib.Path(feed).with_name(filename).stat().st_size:
@@ -164,7 +164,7 @@ print(enclosure.get(ns + 'edSignature'))
 PY
 )"
 "$tools/sign_update" --account "$account" --verify "$stage/$filename" "$update_signature"
-rm "$stage/SwiftlyKitApp-$version.md"
+rm "$stage/Triple-$version.md"
 cp "$notes" "$stage/release-notes.md"
 (cd "$stage" && /usr/bin/shasum -a 256 "$filename" appcast.xml > SHA256SUMS.txt)
 mkdir -p "$(dirname "$output")"

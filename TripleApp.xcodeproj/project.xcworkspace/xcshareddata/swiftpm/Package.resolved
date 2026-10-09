@@ -1,0 +1,40 @@
+{
+  "pins": [
+    {
+      "identity": "sparkle",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/sparkle-project/Sparkle",
+      "state": {
+        "revision": "eef1a539a373c1f1a320624b1130fc5de7b2e100",
+        "version": "2.10.0"
+      }
+    },
+    {
+      "identity": "swift-subprocess",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/swiftlang/swift-subprocess.git",
+      "state": {
+        "revision": "b3937ab85dd32f6e9435914599c1519074769c1a",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "identity": "swift-system",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/apple/swift-system",
+      "state": {
+        "revision": "869129b7bf4ecc57b97d0193ad29690ca2134750",
+        "version": "1.8.1"
+      }
+    },
+    {
+      "identity": "triple",
+      "kind": "remoteSourceControl",
+      "location": "https://github.com/mottzi/Triple.git",
+      "state": {
+        "revision": "99c216dda112be33f7359d3fd5bf8d0334f20498"
+      }
+    }
+  ],
+  "version": 3
+}

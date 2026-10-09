@@ -7,3 +7,14 @@ xcuserdata
 *.xcarchive/
 *.xcresult/
 *.dmg
+
+# Share the reproducible app scheme.
+!TripleApp.xcodeproj/xcshareddata/
+!TripleApp.xcodeproj/xcshareddata/xcschemes/
+!TripleApp.xcodeproj/xcshareddata/xcschemes/TripleApp.xcscheme
+!TripleApp.xcodeproj/project.xcworkspace/xcshareddata/
+!TripleApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+!TripleApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+!TripleApp.xcworkspace/xcshareddata/
+!TripleApp.xcworkspace/xcshareddata/swiftpm/
+!TripleApp.xcworkspace/xcshareddata/swiftpm/Package.resolved

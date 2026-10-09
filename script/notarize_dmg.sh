@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 /path/to/SwiftlyKitApp.app /path/to/output.dmg keychain-profile" >&2
+  echo "Usage: $0 /path/to/Triple.app /path/to/output.dmg keychain-profile" >&2
   echo "The app must already be exported with Developer ID Application signing." >&2
   exit 2
 }
@@ -31,7 +31,7 @@ security find-identity -p codesigning -v | grep -Fq "\"$identity\"" || {
   exit 1
 }
 xcrun notarytool history --keychain-profile "$profile" --output-format plist >/dev/null
-scratch="$(mktemp -d "${TMPDIR:-/tmp}/swiftlykit-notarize.XXXXXX")"
+scratch="$(mktemp -d "${TMPDIR:-/tmp}/triple-notarize.XXXXXX")"
 cleanup() {
   local status=$?
   rm -rf "$scratch"
@@ -40,7 +40,7 @@ cleanup() {
   fi
 }
 trap cleanup EXIT
-app="$scratch/SwiftlyKitApp.app"
+app="$scratch/Triple.app"
 /usr/bin/ditto "$source_app" "$app"
 
 submit_and_check() {
@@ -55,7 +55,7 @@ submit_and_check() {
   fi
 }
 
-zip="$scratch/SwiftlyKitApp.zip"
+zip="$scratch/Triple.zip"
 if ! xcrun stapler validate "$app" >/dev/null 2>&1; then
   /usr/bin/ditto -c -k --keepParent "$app" "$zip"
   submit_and_check "$zip" "$scratch/app-notary.plist"
@@ -65,10 +65,10 @@ xcrun stapler validate "$app"
 
 stage="$scratch/dmg-content"
 mkdir "$stage"
-/usr/bin/ditto "$app" "$stage/SwiftlyKitApp.app"
+/usr/bin/ditto "$app" "$stage/Triple.app"
 ln -s /Applications "$stage/Applications"
 mkdir -p "$(dirname "$output_dmg")"
-/usr/sbin/diskutil image create from --format UDZO --volumeName "SwiftlyKitApp $version" "$stage" "$output_dmg"
+/usr/sbin/diskutil image create from --format UDZO --volumeName "Triple $version" "$stage" "$output_dmg"
 /usr/bin/codesign --sign "$identity" --timestamp --identifier "$bundle_id.dmg" "$output_dmg"
 /usr/bin/codesign --verify --strict --verbose=2 "$output_dmg"
 submit_and_check "$output_dmg" "$scratch/dmg-notary.plist"
