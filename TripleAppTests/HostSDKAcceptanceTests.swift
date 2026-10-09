@@ -54,6 +54,13 @@ struct HostSDKAcceptanceTests {
         #expect(workflow.log.text.contains("Using macOS SDK 26.5 with Swift 6.3.3"), "\(workflow.log.text)")
         let result = try #require(workflow.result)
         #expect(result.executableName == "deployer")
+        #expect(result.resourceBundles.isEmpty)
+        let export = FileManager.default.temporaryDirectory.appending(path: "Triple-Deployer-Export-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: export, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: export) }
+        let exported = try #require(try await workflow.exportResult(into: export))
+        #expect(exported.resourceBundles.isEmpty)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: export.path()) == ["deployer"])
         #expect(workflow.log.text.contains("macOS SDK"))
         #expect(FileManager.default.isExecutableFile(atPath: result.executable.path(percentEncoded: false)))
     }

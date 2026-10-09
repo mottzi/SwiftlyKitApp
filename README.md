@@ -107,7 +107,7 @@ cleaning or resetting its storage.
 ## Development
 
 The Xcode project uses the published [Triple repository](https://github.com/mottzi/Triple)
-and pins library revision `99c216dda112be33f7359d3fd5bf8d0334f20498`.
+and pins library revision `bd84be712528d516f658a74a3e258fc05e1488c5`.
 `TripleApp.xcworkspace` opens the app project. The sibling library
 checkout stays at `../SwiftlyKit`, and its module and package are `Triple`.
 Xcode cannot override the renamed remote with the old checkout folder because
