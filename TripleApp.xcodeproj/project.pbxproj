@@ -494,7 +494,7 @@
 			repositoryURL = "https://github.com/mottzi/Triple.git";
 			requirement = {
 				kind = revision;
-				revision = bd84be712528d516f658a74a3e258fc05e1488c5;
+				revision = 513be38e4dcb137c7cd19cb76a101d387fd12c4c;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
