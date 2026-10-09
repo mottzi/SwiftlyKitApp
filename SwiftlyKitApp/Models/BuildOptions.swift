@@ -25,30 +25,41 @@ final class BuildOptions {
     /// Whether the strip-binary toggle is enabled.
     var stripBinary = false
 
+    private let activity: AppActivity
+
     @ObservationIgnored private var discoveryID = UUID()
     @ObservationIgnored private var discoveryPackage: URL?
     @ObservationIgnored private var discoveredHostRevision = -1
     @ObservationIgnored private var discoveredToolchainRevision = -1
 
-    init(swiftlyKit: SwiftlyKit = SwiftlyKit()) {
+    init(swiftlyKit: SwiftlyKit = SwiftlyKit(), activity: AppActivity = AppActivity()) {
+        self.activity = activity
         let operations = PackageDiscoveryOperations(swiftlyKit: swiftlyKit)
-        hostDiscovery = HostDiscovery(readiness: operations.hostReadiness)
+        hostDiscovery = HostDiscovery(readiness: operations.hostReadiness, activity: activity)
         toolchainDiscovery = ToolchainDiscovery(compatibleEnvironments: operations.compatibleEnvironments)
         productDiscovery = ProductDiscovery(operations: operations)
-        buildWorkflow = BuildWorkflow(swiftlyKit: swiftlyKit)
-        buildStorageMaintenance = BuildStorageMaintenance(swiftlyKit: swiftlyKit)
+        buildWorkflow = BuildWorkflow(swiftlyKit: swiftlyKit, activity: activity)
+        buildStorageMaintenance = BuildStorageMaintenance(swiftlyKit: swiftlyKit, activity: activity)
     }
 
-    init(discoveryOperations: PackageDiscoveryOperations, swiftlyKit: SwiftlyKit = SwiftlyKit()) {
-        hostDiscovery = HostDiscovery(readiness: discoveryOperations.hostReadiness)
+    init(
+        discoveryOperations: PackageDiscoveryOperations,
+        swiftlyKit: SwiftlyKit = SwiftlyKit(),
+        activity: AppActivity = AppActivity()
+    ) {
+        self.activity = activity
+        hostDiscovery = HostDiscovery(readiness: discoveryOperations.hostReadiness, activity: activity)
         toolchainDiscovery = ToolchainDiscovery(compatibleEnvironments: discoveryOperations.compatibleEnvironments)
         productDiscovery = ProductDiscovery(operations: discoveryOperations)
-        buildWorkflow = BuildWorkflow(swiftlyKit: swiftlyKit)
-        buildStorageMaintenance = BuildStorageMaintenance(swiftlyKit: swiftlyKit)
+        buildWorkflow = BuildWorkflow(swiftlyKit: swiftlyKit, activity: activity)
+        buildStorageMaintenance = BuildStorageMaintenance(swiftlyKit: swiftlyKit, activity: activity)
     }
 
     /// Owns the ordered discovery stages for one selected package and set of choices.
     func discoverPackage(in packageRoot: URL, for target: BuildTarget, toolchain: ToolchainSelection) async {
+
+        let operation = activity.beginOperation()
+        defer { activity.endOperation(operation) }
 
         let discoveryID = UUID()
         self.discoveryID = discoveryID

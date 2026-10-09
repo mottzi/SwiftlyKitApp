@@ -25,14 +25,17 @@ final class BuildWorkflow {
     @ObservationIgnored private var task: Task<Void, Never>?
     @ObservationIgnored private var buildID = UUID()
     @ObservationIgnored private var pendingRecovery: PendingRecovery?
+    private let activity: AppActivity
     private let operations: BuildWorkflowOperations
 
-    init(swiftlyKit: SwiftlyKit) {
+    init(swiftlyKit: SwiftlyKit, activity: AppActivity = AppActivity()) {
+        self.activity = activity
         log = BuildLog()
         operations = BuildWorkflowOperations(swiftlyKit: swiftlyKit)
     }
 
-    init(operations: BuildWorkflowOperations) {
+    init(operations: BuildWorkflowOperations, activity: AppActivity = AppActivity()) {
+        self.activity = activity
         log = BuildLog()
         self.operations = operations
     }
@@ -78,7 +81,9 @@ final class BuildWorkflow {
             stripBinary: stripBinary
         )
 
-        task = Task { [weak self] in
+        let operation = activity.beginOperation()
+        task = Task { [weak self, activity] in
+            defer { activity.endOperation(operation) }
             guard let self else { return }
             await run(
                 request,
@@ -101,8 +106,12 @@ final class BuildWorkflow {
         guard !isRunning else { return nil }
         guard let result else { return nil }
 
+        let operation = activity.beginOperation()
         isExporting = true
-        defer { isExporting = false }
+        defer {
+            isExporting = false
+            activity.endOperation(operation)
+        }
         return try await result.export(to: destination, policy: .requireExistingEmptyDirectory)
     }
 
@@ -146,7 +155,9 @@ final class BuildWorkflow {
         self.pendingRecovery = nil
         let buildID = self.buildID
         state = .active(phase: .preparingEnvironment, detail: "Preparing the approved Swift environment.")
-        task = Task { [weak self] in
+        let operation = activity.beginOperation()
+        task = Task { [weak self, activity] in
+            defer { activity.endOperation(operation) }
             guard let self else { return }
             await run(
                 pendingRecovery.request,

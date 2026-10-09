@@ -11,7 +11,7 @@ struct SwiftlyKitApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppView()
+            AppView(activity: appDelegate.activity)
         }
         .defaultSize(width: 500, height: 420)
         .windowToolbarStyle(.unifiedCompact)
@@ -35,8 +35,31 @@ struct SwiftlyKitApp: App {
 
 }
 
-/// Application termination after the final window closes.
+/// Application termination after active work finishes.
 final class AppDelegate: NSObject, NSApplicationDelegate {
+
+    let activity: AppActivity
+    private var terminationPending = false
+
+    override init() {
+        let activity = AppActivity()
+        self.activity = activity
+        super.init()
+    }
+
+    /// Delays termination until active operations finish, including updates installed on quit.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+
+        guard activity.isBusy else { return .terminateNow }
+        if !terminationPending {
+            terminationPending = true
+            activity.whenIdle { [weak self, weak sender] in
+                self?.terminationPending = false
+                sender?.reply(toApplicationShouldTerminate: true)
+            }
+        }
+        return .terminateLater
+    }
 
     /// Returns permission to terminate after the final window closes.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

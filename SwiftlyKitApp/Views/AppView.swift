@@ -4,7 +4,11 @@ import SwiftUI
 struct AppView: View {
 
     @State private var packageModel = PackageModel()
-    @State private var buildOptions = BuildOptions()
+    @State private var buildOptions: BuildOptions
+
+    init(activity: AppActivity = AppActivity()) {
+        _buildOptions = State(initialValue: BuildOptions(activity: activity))
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Self.spacing) {

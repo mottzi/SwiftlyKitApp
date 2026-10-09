@@ -46,9 +46,14 @@ final class HostDiscovery {
 
     @ObservationIgnored private var installerWasRequested = false
     @ObservationIgnored private var inspectionID = UUID()
+    private let activity: AppActivity
     private let readiness: @Sendable () async throws -> HostReadiness
 
-    init(readiness: @escaping @Sendable () async throws -> HostReadiness = SwiftlyKit.hostReadiness) {
+    init(
+        readiness: @escaping @Sendable () async throws -> HostReadiness = SwiftlyKit.hostReadiness,
+        activity: AppActivity = AppActivity()
+    ) {
+        self.activity = activity
         self.readiness = readiness
     }
 
@@ -89,6 +94,9 @@ final class HostDiscovery {
     /// Opens Apple's Command Line Tools installer and checks readiness again.
     func approveInstallation() async {
         guard installationApprovalRequested else { return }
+        let operation = activity.beginOperation()
+        defer { activity.endOperation(operation) }
+
         let inspectionID = UUID()
         self.inspectionID = inspectionID
 

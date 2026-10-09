@@ -10,6 +10,67 @@ import Testing
 @Suite("Staged package workflow", .timeLimit(.minutes(1)))
 struct StagedPackageWorkflowTests {
 
+    @Test("Cancelled discovery delays an update until its work actually returns")
+    func cancelledDiscoveryDelaysUpdate() async throws {
+
+        let fixture = try StagedPackageFixture()
+        defer { fixture.remove() }
+        let activity = AppActivity()
+        let gate = WorkflowGate()
+        let choices = fixture.choices()
+        var operations = fixture.discoveryOperations()
+        operations.compatibleEnvironments = { _, _ in
+            await gate.wait()
+            return choices
+        }
+        let options = BuildOptions(discoveryOperations: operations, activity: activity)
+        let task = Task {
+            await options.discoverPackage(in: fixture.root, for: .linux(.x86_64), toolchain: .automatic)
+        }
+        await gate.waitForEntry()
+        var restarted = false
+        activity.whenIdle { restarted = true }
+
+        task.cancel()
+        options.clearPackageSession()
+        #expect(activity.isBusy)
+        #expect(!restarted)
+
+        await gate.open()
+        await task.value
+        #expect(!activity.isBusy)
+        #expect(restarted)
+    }
+
+    @Test("Build work blocks restart before its task starts and until cancellation finishes")
+    func cancelledBuildDelaysUpdate() async throws {
+
+        let fixture = try StagedPackageFixture()
+        defer { fixture.remove() }
+        let activity = AppActivity()
+        let gate = WorkflowGate()
+        var operations = fixture.buildOperations()
+        operations.build = { _, _, _ in
+            await gate.wait()
+            try Task.checkCancellation()
+            return fixture.result
+        }
+        let workflow = BuildWorkflow(operations: operations, activity: activity)
+        workflow.start(fixture.prepared(), target: .linux(.x86_64), configuration: .release, stripBinary: false)
+        #expect(activity.isBusy)
+
+        await gate.waitForEntry()
+        var restarted = false
+        activity.whenIdle { restarted = true }
+        workflow.cancel()
+        #expect(!restarted)
+
+        await gate.open()
+        await waitUntil { !activity.isBusy }
+        #expect(restarted)
+        #expect(workflow.state == .cancelled)
+    }
+
     @Test("Selected packages begin discovery before the page transition, while Build waits for both stages")
     func selectionStartsDiscoveryBeforeTransition() async throws {
 

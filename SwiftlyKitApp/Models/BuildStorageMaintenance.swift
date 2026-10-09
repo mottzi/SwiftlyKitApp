@@ -13,9 +13,11 @@ final class BuildStorageMaintenance {
 
     private(set) var activeCleanup: BuildStorageCleanup?
 
+    private let activity: AppActivity
     private let swiftlyKit: SwiftlyKit
 
-    init(swiftlyKit: SwiftlyKit) {
+    init(swiftlyKit: SwiftlyKit, activity: AppActivity = AppActivity()) {
+        self.activity = activity
         self.swiftlyKit = swiftlyKit
     }
 
@@ -23,8 +25,12 @@ final class BuildStorageMaintenance {
     func perform(_ cleanup: BuildStorageCleanup, using environment: LocalBuildEnvironment) async throws {
         guard !isRunning else { return }
 
+        let operation = activity.beginOperation()
         activeCleanup = cleanup
-        defer { activeCleanup = nil }
+        defer {
+            activeCleanup = nil
+            activity.endOperation(operation)
+        }
 
         switch cleanup {
             case .cleanArtifacts: try await swiftlyKit.cleanBuildArtifacts(using: environment)
