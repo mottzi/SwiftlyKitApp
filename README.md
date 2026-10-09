@@ -14,7 +14,7 @@ to manage toolchains, SDKs, and builds. For a terminal command, use
 The Triple release is pending. The last published app remains
 [SwiftlyKitApp 0.1.1](https://github.com/mottzi/SwiftlyKitApp/releases/tag/0.1.1),
 with its original release name and DMG asset. A Triple download will be linked
-once the renamed repositories and signed release are published.
+once a signed Triple release is published.
 
 ## Requirements
 
@@ -106,10 +106,9 @@ cleaning or resetting its storage.
 
 ## Development
 
-The Xcode project points at the intended Triple repository and pins library
-revision `99c216dda112be33f7359d3fd5bf8d0334f20498`. That revision will become
-available after the library rebrand is pushed and the remote repository is
-renamed. `TripleApp.xcworkspace` opens the app project. The sibling library
+The Xcode project uses the published [Triple repository](https://github.com/mottzi/Triple)
+and pins library revision `99c216dda112be33f7359d3fd5bf8d0334f20498`.
+`TripleApp.xcworkspace` opens the app project. The sibling library
 checkout stays at `../SwiftlyKit`, and its module and package are `Triple`.
 Xcode cannot override the renamed remote with the old checkout folder because
 their package identities differ.
@@ -119,7 +118,7 @@ repository when its manifest declares Triple. It scopes the Git URL rewrite to
 the build command and does not change repository or global Git configuration.
 It builds the pinned commit, so commit library changes and update the project
 revision before testing them in the app. Without the sibling checkout, it uses
-the intended remote repository.
+the published Triple repository.
 
 Run the app's test suite from the repository root:
 
@@ -136,8 +135,8 @@ It also accepts `--debug` to open LLDB, `--logs` for process logs, and
 `--telemetry` for configuration timings from the `PackageDiscovery` category.
 
 For changes spanning the app and library, open `TripleApp.xcworkspace`.
-Until the Triple remote is published, use the helper for builds and tests.
-The project alone uses the intended remote repository and pinned revision.
+Use the helper to resolve the pinned commit from the sibling library checkout.
+The project also resolves the published remote repository directly with `xcodebuild`.
 
 To exercise the real Deployer configuration and build workflow, run:
 
@@ -170,9 +169,9 @@ The main and Help windows display Triple.
 The bundle identifier remains `codes.mottzi.SwiftlyKitApp`. This preserves
 existing preferences, signing identity, and Sparkle's update history. The
 Sparkle public signing key remains unchanged. The update feed points to the
-intended `mottzi/TripleApp` release repository; publish a signed appcast there
-when the repository rename and release are complete. No new release or feed
-has been published by this source change.
+renamed [`mottzi/TripleApp` repository](https://github.com/mottzi/TripleApp).
+The rebranded source is published, but a signed Triple app release and its
+appcast are still pending.
 
 `Docs/ui-ux-audit-2026-09-12.md` and the screenshots under `Docs/` describe the
 pre-rebrand app. Their historical labels and source paths remain unchanged.
