@@ -1,12 +1,12 @@
-# Direct release of SwiftlyKitApp
+# Direct release of Triple
 
-This is the manual release path for v0.1.0. It keeps App Sandbox off so the app can use local Swift projects and developer tools. It produces a Developer ID signed, hardened, notarized app in a notarized DMG. A private rehearsal is still a real submission to Apple's notary service; it is not a public release.
+This is the manual release path for the Triple macOS app. It keeps App Sandbox off so the app can use local Swift projects and developer tools. It produces a Developer ID signed, hardened, notarized app in a notarized DMG. A private rehearsal is still a real submission to Apple's notary service; it is not a public release.
 
 ## One-time setup
 
-1. In Xcode, sign in to the paid Apple Developer team `4DXABR577J`. The private export script and plist select this team. The SwiftlyKitApp target uses version `0.1.0`, Hardened Runtime, Developer Tools category, and no App Sandbox.
+1. In Xcode, sign in to the paid Apple Developer team `4DXABR577J`. The export script and plist select this team. The `TripleApp` target uses Hardened Runtime, Developer Tools category, and no App Sandbox. The app bundle is `Triple.app`; its bundle identifier remains `codes.mottzi.SwiftlyKitApp`. The source currently records Marketing Version `0.1.1`, Build `2`. Set the next release version and a higher build number before producing its artifacts.
 2. Install a local **Developer ID Application** identity for this team, including its private key. Xcode's managed cloud signing can export the app, but the local identity is needed to sign the outer DMG. In **Xcode > Settings > Accounts**, select the Apple Account and team, click **Manage Certificates**, then use **+ > Developer ID Application**. An Account Holder can create it. Confirm that `security find-identity -p codesigning -v` lists `Developer ID Application: Berken Sayilir (4DXABR577J)`.
-3. Set up `notarytool` credentials in the login keychain. For an Apple ID, first create an app-specific password in your Apple account, then run the command below and enter that password at its secure prompt. An App Store Connect API key is another option. Keep credentials out of the repository.
+3. Set up `notarytool` credentials in the login keychain. For an Apple ID, first create an app-specific password in your Apple account, then run the command below and enter that password at its secure prompt. An App Store Connect API key is another option. Keep credentials out of the repository. The existing `SwiftlyKitApp` Keychain profile name stays unchanged so the notarization command can reuse its saved credentials.
 
    ```sh
    xcrun notarytool store-credentials SwiftlyKitApp \
@@ -15,12 +15,12 @@ This is the manual release path for v0.1.0. It keeps App Sandbox off so the app 
 
 ## Archive and export
 
-1. Check that the intended source is committed and the target's Marketing Version is `0.1.0`. Increment its Build number for a later build of the same version.
-2. Run the app and its tests. Confirm selection, environment preparation, a real package build, and export.
+1. Check that the intended source is committed. The last public app is `0.1.1`, Build `2`; choose a Marketing Version above `0.1.1` and a Build number above `2` for the first Triple release. Later releases must exceed the published version and all previous build numbers. The project pins the published Triple library revision `99c216dda112be33f7359d3fd5bf8d0334f20498`; update that pin and lockfiles if a release needs newer library changes.
+2. Run `./script/build_and_run.sh` and the tests described in the README. Confirm selection, environment preparation, a real package build, and export. The Xcode project, workspace, shared scheme, and Swift module use `TripleApp`; the executable and app bundle use `Triple`.
 3. Export a Developer ID app into a new private directory. The script makes a hardened ad hoc archive, then has Xcode export it using Developer ID cloud signing. It verifies the final signature.
 
    ```sh
-   release_dir='/absolute/path/to/new/private/SwiftlyKitApp-0.1.0-build'
+   release_dir='/absolute/path/to/new/private/Triple-NEW_VERSION-build'
    script/export_developer_id_app.sh "$release_dir"
    ```
 
@@ -28,10 +28,10 @@ This is the manual release path for v0.1.0. It keeps App Sandbox off so the app 
 4. Package and notarize the exported app and DMG:
 
    ```sh
-   release_dir='/absolute/path/to/new/private/SwiftlyKitApp-0.1.0-build'
+   release_dir='/absolute/path/to/new/private/Triple-NEW_VERSION-build'
    script/notarize_dmg.sh \
-     "$release_dir/Export/SwiftlyKitApp.app" \
-     '/absolute/path/to/new/private/SwiftlyKitApp-0.1.0.dmg' \
+     "$release_dir/Export/Triple.app" \
+     '/absolute/path/to/new/private/Triple-NEW_VERSION.dmg' \
      SwiftlyKitApp
    ```
 
@@ -41,7 +41,18 @@ This is the manual release path for v0.1.0. It keeps App Sandbox off so the app 
 
 Open the DMG from the same path a recipient would download, drag the app to Applications, and launch that copy. On a separate Mac or clean macOS account, check that Gatekeeper identifies the developer without the unnotarized-app override, then build and export a trusted sample package. Check both online and offline launch if possible. Keep the private test DMG out of public GitHub releases and the website.
 
-The release build must be archived, signed, and notarized again after any change to its code, assets, version, or build number. The test DMG is evidence that the workflow works; it is not the final v0.1.0 artifact. Record the final DMG's SHA-256 hash alongside the download when publishing.
+The release build must be archived, signed, and notarized again after any change to its code, assets, version, or build number. The test DMG is evidence that the workflow works; it is not the final Triple release artifact. Record the final DMG's SHA-256 hash alongside the download when publishing.
+
+The Triple source repositories are published. A signed Triple app release and
+its first Sparkle appcast are still pending. Preparing or verifying local source
+does not publish a binary release.
+
+## Historical release evidence
+
+The dated records below retain their original product names, paths, release
+versions, and verification results. Their old commands and release status do
+not describe the current source. Use the active instructions above and the
+Sparkle workflow below for the next Triple release.
 
 ## Alpha readiness on 2026-10-04
 
@@ -183,10 +194,11 @@ At the user's request, skipped the additional installation test and proceeded wi
 
 ## Sparkle update workflow
 
-The app now includes Sparkle 2.10.0. Its feed URL is
-`https://github.com/mottzi/SwiftlyKitApp/releases/latest/download/appcast.xml`.
-Every stable release must include a DMG and `appcast.xml`. Keep the repository
-public. The latest release controls which feed every installed app sees.
+The app includes Sparkle 2.10.0. Its configured feed URL is
+`https://github.com/mottzi/TripleApp/releases/latest/download/appcast.xml`.
+The repository has been renamed, but a signed Triple release and appcast are
+still pending. Every stable Sparkle release must include a DMG and `appcast.xml`.
+Keep the repository public. The latest release controls which feed every installed app sees.
 Attach all assets to a draft before publishing it as the latest stable release.
 Do not publish a newer release without its feed.
 
@@ -218,7 +230,7 @@ For each release:
 
    ```sh
    script/prepare_update.sh \
-     '/absolute/path/to/SwiftlyKitApp-NEW_VERSION.dmg' \
+     '/absolute/path/to/Triple-NEW_VERSION.dmg' \
      '/absolute/path/to/release-notes.md' \
      '/absolute/path/to/new-update-assets'
    ```
@@ -259,9 +271,13 @@ its own release; future releases add the newer builds to that feed.
 
 Build, launch, preference UI, task lifetime tests, Release dependency resolution,
 and feed-generation checks are local verification. They do not replace the
-signed/notarized upgrade rehearsal in step 4. No new public release or appcast
-has been published by this implementation task. Release scripts and this guide
-remain local, as previously agreed.
+signed/notarized upgrade rehearsal in step 4. The rebranded source, release
+scripts, and this guide are published. A signed Triple app release and appcast
+have not been published.
+
+The dated implementation record below describes the pre-rebrand source and
+its earlier dependency mismatch. The current Triple project resolves its
+pinned library revision from the published remote without a local override.
 
 ### Implementation verification, 2026-10-09
 

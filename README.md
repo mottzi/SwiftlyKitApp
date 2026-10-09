@@ -171,7 +171,8 @@ existing preferences, signing identity, and Sparkle's update history. The
 Sparkle public signing key remains unchanged. The update feed points to the
 renamed [`mottzi/TripleApp` repository](https://github.com/mottzi/TripleApp).
 The rebranded source is published, but a signed Triple app release and its
-appcast are still pending.
+appcast are still pending. [The release guide](Docs/direct-release.md) covers
+archive export, notarization, and Sparkle asset preparation.
 
 `Docs/ui-ux-audit-2026-09-12.md` and the screenshots under `Docs/` describe the
 pre-rebrand app. Their historical labels and source paths remain unchanged.
