@@ -106,6 +106,9 @@ cleaning or resetting its storage.
 
 ## Development
 
+The local repositories share the parent folder `/Users/berken/Development/Swift/Triple`.
+The app checkout is `TripleApp/` and the library checkout is `Triple/` within that folder.
+
 Open **`TripleApp.xcworkspace`** for development. Select the **TripleApp**
 scheme and **My Mac**, then use **Product > Run** or **Command-R**.
 The workspace builds the local library at `../Triple`, including uncommitted
