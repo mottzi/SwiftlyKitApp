@@ -2,15 +2,15 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 /path/to/Triple.app /path/to/output.dmg keychain-profile" >&2
+  echo "Usage: $0 /path/to/Triple.app /path/to/output.dmg [keychain-profile=TripleApp]" >&2
   echo "The app must already be exported with Developer ID Application signing." >&2
   exit 2
 }
 
-[[ $# -eq 3 ]] || usage
+[[ $# -eq 2 || $# -eq 3 ]] || usage
 source_app="$1"
 output_dmg="$2"
-profile="$3"
+profile="${3:-TripleApp}"
 
 [[ -d "$source_app" && "$source_app" == *.app ]] || usage
 [[ "$output_dmg" == *.dmg ]] || usage
@@ -18,7 +18,7 @@ profile="$3"
 
 bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$source_app/Contents/Info.plist")"
 version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$source_app/Contents/Info.plist")"
-[[ "$bundle_id" == "codes.mottzi.SwiftlyKitApp" ]] || { echo "Unexpected bundle ID: $bundle_id" >&2; exit 1; }
+[[ "$bundle_id" == "codes.mottzi.TripleApp" ]] || { echo "Unexpected bundle ID: $bundle_id" >&2; exit 1; }
 
 signature="$(/usr/bin/codesign -dv --verbose=4 "$source_app" 2>&1)"
 identity="$(printf '%s\n' "$signature" | sed -n 's/^Authority=\(Developer ID Application:.*\)$/\1/p' | head -n 1)"

@@ -4,7 +4,7 @@ set -euo pipefail
 MODE="${1:-run}"
 APP_NAME="Triple"
 SCHEME="TripleApp"
-BUNDLE_ID="codes.mottzi.SwiftlyKitApp"
+BUNDLE_ID="codes.mottzi.TripleApp"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DERIVED_DATA="$ROOT_DIR/.derivedData"

@@ -15,7 +15,7 @@ output="$3"
 [[ ! -e "$output" ]] || { echo "Output already exists: $output" >&2; exit 1; }
 [[ $# -lt 4 || -f "$4" ]] || usage
 repo="mottzi/TripleApp"
-account="codes.mottzi.SwiftlyKitApp"
+account="codes.mottzi.TripleApp"
 
 tools="${SPARKLE_TOOLS:-}"
 if [[ -z "$tools" ]]; then

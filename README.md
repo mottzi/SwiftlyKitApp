@@ -166,9 +166,11 @@ The app bundle and executable are `Triple.app` and `Triple`. The Xcode target,
 Swift module, test target, and shared scheme use `TripleApp` or `TripleAppTests`.
 The main and Help windows display Triple.
 
-The bundle identifier remains `codes.mottzi.SwiftlyKitApp`. This preserves
-existing preferences, signing identity, and Sparkle's update history. The
-Sparkle public signing key remains unchanged. The update feed points to the
+The bundle identifier is `codes.mottzi.TripleApp`. This starts a new preferences
+domain; preferences from the old app are not migrated automatically. The
+Sparkle public signing key remains unchanged, and its Keychain account is
+`codes.mottzi.TripleApp`. Release commands use the notarization credential profile
+`TripleApp`; save that profile in Keychain before notarizing. The update feed points to the
 renamed [`mottzi/TripleApp` repository](https://github.com/mottzi/TripleApp).
 The rebranded source is published, but a signed Triple app release and its
 appcast are still pending. [The release guide](Docs/direct-release.md) covers

@@ -256,6 +256,6 @@ extension BuildOptions {
         if resetToolchain { toolchain = .automatic }
     }
 
-    private static let logger = Logger(subsystem: "codes.mottzi.SwiftlyKitApp", category: "PackageDiscovery")
+    private static let logger = Logger(subsystem: "codes.mottzi.TripleApp", category: "PackageDiscovery")
 
 }

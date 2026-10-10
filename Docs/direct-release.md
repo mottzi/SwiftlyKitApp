@@ -4,12 +4,12 @@ This is the manual release path for the Triple macOS app. It keeps App Sandbox o
 
 ## One-time setup
 
-1. In Xcode, sign in to the paid Apple Developer team `4DXABR577J`. The export script and plist select this team. The `TripleApp` target uses Hardened Runtime, Developer Tools category, and no App Sandbox. The app bundle is `Triple.app`; its bundle identifier remains `codes.mottzi.SwiftlyKitApp`. The source currently records Marketing Version `0.1.1`, Build `2`. Set the next release version and a higher build number before producing its artifacts.
+1. In Xcode, sign in to the paid Apple Developer team `4DXABR577J`. The export script and plist select this team. The `TripleApp` target uses Hardened Runtime, Developer Tools category, and no App Sandbox. The app bundle is `Triple.app`; its bundle identifier is `codes.mottzi.TripleApp`. The source currently records Marketing Version `0.1.1`, Build `2`. Set the next release version and a higher build number before producing its artifacts.
 2. Install a local **Developer ID Application** identity for this team, including its private key. Xcode's managed cloud signing can export the app, but the local identity is needed to sign the outer DMG. In **Xcode > Settings > Accounts**, select the Apple Account and team, click **Manage Certificates**, then use **+ > Developer ID Application**. An Account Holder can create it. Confirm that `security find-identity -p codesigning -v` lists `Developer ID Application: Berken Sayilir (4DXABR577J)`.
-3. Set up `notarytool` credentials in the login keychain. For an Apple ID, first create an app-specific password in your Apple account, then run the command below and enter that password at its secure prompt. An App Store Connect API key is another option. Keep credentials out of the repository. The existing `SwiftlyKitApp` Keychain profile name stays unchanged so the notarization command can reuse its saved credentials.
+3. Set up `notarytool` credentials in the login keychain. For an Apple ID, first create an app-specific password in your Apple account, then run the command below and enter that password at its secure prompt. An App Store Connect API key is another option. Keep credentials out of the repository. Save the credentials under the `TripleApp` Keychain profile. Apple protects notarization profiles in its own Keychain access group; if only the old profile exists, run the command below to save the new one. Enter the app-specific password at the secure terminal prompt, not in a chat or a script.
 
    ```sh
-   xcrun notarytool store-credentials SwiftlyKitApp \
+   xcrun notarytool store-credentials TripleApp \
      --apple-id 'YOUR_APPLE_ID' --team-id 4DXABR577J
    ```
 
@@ -32,7 +32,7 @@ This is the manual release path for the Triple macOS app. It keeps App Sandbox o
    script/notarize_dmg.sh \
      "$release_dir/Export/Triple.app" \
      '/absolute/path/to/new/private/Triple-NEW_VERSION.dmg' \
-     SwiftlyKitApp
+     TripleApp
    ```
 
    The script checks the app's Developer ID signature and Hardened Runtime, staples the app, makes a DMG with an Applications shortcut, submits the DMG, staples it, checks Gatekeeper, and prints its SHA-256 hash. If Xcode already stapled the app, the script skips its app submission. It refuses to overwrite an existing DMG.
@@ -211,9 +211,10 @@ are not restored after restart. External projects, outputs, SDKs, and toolchains
 are not removed by app updates.
 
 The signing key is stored in the login Keychain under Sparkle's account
-`codes.mottzi.SwiftlyKitApp`. `Config/Info.plist` contains only its public key.
+`codes.mottzi.TripleApp`. `Config/Info.plist` contains only its public key.
 Keep the private key available on the Mac that prepares releases and include
 the login Keychain in your backups. Do not regenerate the key for each release.
+The existing signing key was retained when its Keychain account was renamed.
 The local preparation script refuses to use a key that differs from the app's
 public key. It uses Sparkle's tools from the resolved package artifact. Set
 `SPARKLE_TOOLS` to another Sparkle `bin` directory if necessary.

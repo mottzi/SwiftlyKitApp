@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C01000000000000000000001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = C01000000000000000000002 /* Sparkle */; };
 		9A727BE33036482300D8C78F /* Triple in Frameworks */ = {isa = PBXBuildFile; productRef = 9A727BE23036482300D8C78F /* Triple */; };
+		C01000000000000000000001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = C01000000000000000000002 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -349,8 +349,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Triple;
 				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Triple;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -358,9 +358,9 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 0.1.1;
-				PRODUCT_BUNDLE_IDENTIFIER = codes.mottzi.SwiftlyKitApp;
-				PRODUCT_NAME = Triple;
+				PRODUCT_BUNDLE_IDENTIFIER = codes.mottzi.TripleApp;
 				PRODUCT_MODULE_NAME = TripleApp;
+				PRODUCT_NAME = Triple;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -384,8 +384,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Triple;
 				INFOPLIST_FILE = Config/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Triple;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -393,9 +393,9 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 0.1.1;
-				PRODUCT_BUNDLE_IDENTIFIER = codes.mottzi.SwiftlyKitApp;
-				PRODUCT_NAME = Triple;
+				PRODUCT_BUNDLE_IDENTIFIER = codes.mottzi.TripleApp;
 				PRODUCT_MODULE_NAME = TripleApp;
+				PRODUCT_NAME = Triple;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -416,7 +416,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = codes.mottzi.SwiftlyKitAppTests;
+				PRODUCT_BUNDLE_IDENTIFIER = codes.mottzi.TripleAppTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -437,7 +437,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = codes.mottzi.SwiftlyKitAppTests;
+				PRODUCT_BUNDLE_IDENTIFIER = codes.mottzi.TripleAppTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -481,14 +481,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		C01000000000000000000003 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.10.0;
-			};
-		};
 		9A727BE13036482300D8C78F /* XCRemoteSwiftPackageReference "Triple" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/mottzi/Triple.git";
@@ -497,18 +489,26 @@
 				revision = 513be38e4dcb137c7cd19cb76a101d387fd12c4c;
 			};
 		};
+		C01000000000000000000003 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.10.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		C01000000000000000000002 /* Sparkle */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C01000000000000000000003 /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
-		};
 		9A727BE23036482300D8C78F /* Triple */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 9A727BE13036482300D8C78F /* XCRemoteSwiftPackageReference "Triple" */;
 			productName = Triple;
+		};
+		C01000000000000000000002 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C01000000000000000000003 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
