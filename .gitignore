@@ -1,8 +1,6 @@
 xcshareddata 
 xcuserdata
 .derivedData/
-Development/Triple/.build/
-Development/Triple/.swiftpm/
 .codex
 .DS_Store
 *.app/

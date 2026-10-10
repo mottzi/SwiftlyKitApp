@@ -41,7 +41,7 @@ extension AppPreview {
     }
 
     private static let packageURL = FileManager.default.homeDirectoryForCurrentUser
-        .appending(path: "Development/Swift/SwiftlyKit/Tests/TripleTests/Fixtures/CrossCompilationPackage")
+        .appending(path: "Development/Swift/Triple/Tests/TripleTests/Fixtures/CrossCompilationPackage")
 }
 
 private struct BuildSectionHeaderPreview: View {

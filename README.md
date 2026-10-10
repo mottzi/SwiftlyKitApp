@@ -108,15 +108,13 @@ cleaning or resetting its storage.
 
 Open **`TripleApp.xcworkspace`** for development. Select the **TripleApp**
 scheme and **My Mac**, then use **Product > Run** or **Command-R**.
-The workspace builds the local library at `../SwiftlyKit`, including uncommitted
+The workspace builds the local library at `../Triple`, including uncommitted
 changes. You do not need to publish library changes or update the project's
 remote revision to test them in the app.
 
-The workspace includes `Development/Triple`, whose manifest, source, and test
-links point to the existing sibling library checkout. Xcode requires the local
-package directory to be named `Triple` to override the GitHub package identity.
-Editing the library in the workspace edits the original files. See
-[the local library setup](Development/README.md) for the directory layout.
+The workspace includes the sibling `../Triple` package directly. Editing the
+library in the workspace edits its original files. Keep the app and library
+checkout folders beside each other. See [the local library setup](Development/README.md).
 
 `TripleApp.xcodeproj` keeps the pinned [GitHub library dependency](https://github.com/mottzi/Triple)
 for release builds. Open the project by itself to test that dependency. Its

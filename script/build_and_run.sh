@@ -11,7 +11,7 @@ DERIVED_DATA="$ROOT_DIR/.derivedData"
 APP_BUNDLE="$DERIVED_DATA/Build/Products/Debug/$APP_NAME.app"
 APP_BINARY="$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 BUILD_CONTAINER=(-project "$ROOT_DIR/TripleApp.xcodeproj")
-if [[ -f "$ROOT_DIR/../SwiftlyKit/Package.swift" ]]; then
+if [[ -f "$ROOT_DIR/../Triple/Package.swift" ]]; then
   BUILD_CONTAINER=(-workspace "$ROOT_DIR/TripleApp.xcworkspace")
   echo "Building with the local Triple workspace dependency."
 fi
