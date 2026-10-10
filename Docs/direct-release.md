@@ -15,9 +15,9 @@ This is the manual release path for the Triple macOS app. It keeps App Sandbox o
 
 ## Archive and export
 
-1. Check that the intended source is committed. The last public app is `0.1.1`, Build `2`; choose a Marketing Version above `0.1.1` and a Build number above `2` for the first Triple release. Later releases must exceed the published version and all previous build numbers. The project pins the published Triple library revision `99c216dda112be33f7359d3fd5bf8d0334f20498`; update that pin and lockfiles if a release needs newer library changes.
+1. Check that the intended source is committed. The last public app is `0.1.1`, Build `2`; choose a Marketing Version above `0.1.1` and a Build number above `2` for the first Triple release. Later releases must exceed the published version and all previous build numbers. The standalone `TripleApp.xcodeproj` pins a GitHub Triple library revision. Before release, publish the required library commit and update the project pin and its lockfile. The development workspace uses local library files, so a successful workspace build does not verify the remote release dependency.
 2. Run `./script/build_and_run.sh` and the tests described in the README. Confirm selection, environment preparation, a real package build, and export. The Xcode project, workspace, shared scheme, and Swift module use `TripleApp`; the executable and app bundle use `Triple`.
-3. Export a Developer ID app into a new private directory. The script makes a hardened ad hoc archive, then has Xcode export it using Developer ID cloud signing. It verifies the final signature.
+3. Export a Developer ID app into a new private directory. The script archives the standalone project with its GitHub dependency, then has Xcode export the hardened ad hoc archive using Developer ID cloud signing. It verifies the final signature.
 
    ```sh
    release_dir='/absolute/path/to/new/private/Triple-NEW_VERSION-build'
@@ -276,8 +276,9 @@ scripts, and this guide are published. A signed Triple app release and appcast
 have not been published.
 
 The dated implementation record below describes the pre-rebrand source and
-its earlier dependency mismatch. The current Triple project resolves its
-pinned library revision from the published remote without a local override.
+its earlier dependency mismatch. The standalone Triple project resolves its
+pinned library revision from GitHub. Verify that the revision is published
+before archiving. The development workspace uses a local override.
 
 ### Implementation verification, 2026-10-09
 

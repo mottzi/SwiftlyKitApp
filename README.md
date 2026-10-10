@@ -106,37 +106,37 @@ cleaning or resetting its storage.
 
 ## Development
 
-The Xcode project uses the published [Triple repository](https://github.com/mottzi/Triple)
-and pins library revision `513be38e4dcb137c7cd19cb76a101d387fd12c4c`.
-`TripleApp.xcworkspace` opens the app project. The sibling library
-checkout stays at `../SwiftlyKit`, and its module and package are `Triple`.
-Xcode cannot override the renamed remote with the old checkout folder because
-their package identities differ.
+Open **`TripleApp.xcworkspace`** for development. Select the **TripleApp**
+scheme and **My Mac**, then use **Product > Run** or **Command-R**.
+The workspace builds the local library at `../SwiftlyKit`, including uncommitted
+changes. You do not need to publish library changes or update the project's
+remote revision to test them in the app.
 
-`script/xcodebuild.sh` resolves the pinned Triple commit from that sibling Git
-repository when its manifest declares Triple. It scopes the Git URL rewrite to
-the build command and does not change repository or global Git configuration.
-It builds the pinned commit, so commit library changes and update the project
-revision before testing them in the app. Without the sibling checkout, it uses
-the published Triple repository.
+The workspace includes `Development/Triple`, whose manifest, source, and test
+links point to the existing sibling library checkout. Xcode requires the local
+package directory to be named `Triple` to override the GitHub package identity.
+Editing the library in the workspace edits the original files. See
+[the local library setup](Development/README.md) for the directory layout.
+
+`TripleApp.xcodeproj` keeps the pinned [GitHub library dependency](https://github.com/mottzi/Triple)
+for release builds. Open the project by itself to test that dependency. Its
+pinned commit must exist on GitHub. The release export script always uses the
+project, so it does not include the workspace's local override.
 
 Run the app's test suite from the repository root:
 
 ```sh
-./script/xcodebuild.sh \
+xcodebuild \
   -workspace TripleApp.xcworkspace \
   -scheme TripleApp \
   -destination 'platform=macOS' \
   test
 ```
 
-`script/build_and_run.sh` uses the workspace when the sibling library exists.
-It also accepts `--debug` to open LLDB, `--logs` for process logs, and
+`script/build_and_run.sh` uses the development workspace when the sibling library
+exists. It also accepts `--debug` to open LLDB, `--logs` for process logs, and
 `--telemetry` for configuration timings from the `PackageDiscovery` category.
-
-For changes spanning the app and library, open `TripleApp.xcworkspace`.
-Use the helper to resolve the pinned commit from the sibling library checkout.
-The project also resolves the published remote repository directly with `xcodebuild`.
+`script/xcodebuild.sh` forwards commands to Xcode without rewriting Git URLs.
 
 To exercise the real Deployer configuration and build workflow, run:
 

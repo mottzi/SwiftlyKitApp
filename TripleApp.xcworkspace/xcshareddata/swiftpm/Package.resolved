@@ -1,5 +1,5 @@
 {
-  "originHash" : "594a19442683e0b8fcb1eecf900d5d217ac3e03ef02e9703718f3fac96579f76",
+  "originHash" : "8830f631de3fbec5a554d9e38ce6163128a05dd1ad5167a1a4a7b84d088b5eed",
   "pins" : [
     {
       "identity" : "sparkle",
@@ -26,14 +26,6 @@
       "state" : {
         "revision" : "869129b7bf4ecc57b97d0193ad29690ca2134750",
         "version" : "1.8.1"
-      }
-    },
-    {
-      "identity" : "triple",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mottzi/Triple.git",
-      "state" : {
-        "revision" : "513be38e4dcb137c7cd19cb76a101d387fd12c4c"
       }
     }
   ],

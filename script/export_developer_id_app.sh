@@ -11,13 +11,8 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output="$1"
 mkdir -p "$output"
 
-build_container=(-project "$root/TripleApp.xcodeproj")
-if [[ -f "$root/../SwiftlyKit/Package.swift" ]]; then
-  build_container=(-workspace "$root/TripleApp.xcworkspace")
-fi
-
 "$(dirname "${BASH_SOURCE[0]}")/xcodebuild.sh" \
-  "${build_container[@]}" \
+  -project "$root/TripleApp.xcodeproj" \
   -scheme TripleApp \
   -configuration Release \
   -destination 'generic/platform=macOS' \
