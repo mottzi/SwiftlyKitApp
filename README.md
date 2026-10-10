@@ -1,194 +1,75 @@
 # Triple
 
-Triple is a macOS app that cross-compiles local Swift packages into
-verified, statically linked ARM64 or x86-64 Linux Musl executables. Choose a
-package, configure its build, and export the executable with its required
-resource bundles.
+Build Swift packages for Linux on your Mac. Triple creates statically linked
+executables for ARM64 or x86-64 Linux Musl, checks the result, and exports it
+with the resource bundles it needs.
 
-The app uses the [Triple](https://github.com/mottzi/Triple) Swift library
-to manage toolchains, SDKs, and builds. For a terminal command, use
-[TripleCLI](https://github.com/mottzi/TripleCLI).
+## Download and install
 
-## Download
+Triple 0.2.0 is not available yet. Check [Releases](https://github.com/mottzi/TripleApp/releases)
+for the download. The latest published app is still SwiftlyKitApp 0.1.1.
 
-Triple 0.2.0 is prepared for release. Publication is pending. The
-[Triple 0.2.0 DMG](https://github.com/mottzi/TripleApp/releases/download/0.2.0/Triple-0.2.0.dmg)
-will become available when the release is published. Read the
-[prepared release notes](Docs/releases/0.2.0.md) for installation and update details.
-The last published app remains
-[SwiftlyKitApp 0.1.1](https://github.com/mottzi/TripleApp/releases/tag/0.1.1),
-with its original release name and DMG asset.
+When Triple is available, open its DMG and drag **Triple** to **Applications**.
+See the [0.2.0 release notes](Docs/releases/0.2.0.md).
 
-Users of SwiftlyKitApp 0.1.1 or earlier must install Triple manually once.
-Quit the old app, open the Triple DMG, and drag Triple to Applications.
-Triple starts with new preferences. Future Triple releases can update through
-Sparkle; existing projects, exports, SDKs, and toolchains stay in place.
+If you use SwiftlyKitApp 0.1.1 or earlier, quit it and install Triple manually
+once. Triple starts with new preferences. Your projects, exports, toolchains,
+and SDKs stay in place. Later Triple releases can update from within the app.
 
-## Requirements
+## What you need
 
-- Apple silicon Mac running macOS 26.5 or later
-- Xcode with Swift 6.3 or later and the macOS 26.5 SDK or later to build the app
-- A trusted local Swift package with an executable product and dependencies that
-  support Linux Musl
+- An Apple silicon Mac with macOS 26.5 or later.
+- A local Swift package with an executable product. Its code and dependencies
+  must support Linux Musl.
+- Internet access to download tools and package dependencies that are not
+  already on your Mac.
 
-Cross-compilation also needs Swiftly, an official Swift toolchain, and its
-matching Static Linux SDK. The app asks before installing missing components
-and tells you when preparation may update Swiftly. Downloads and uncached
-package dependencies require network access.
+Triple checks for Apple Command Line Tools, Swiftly, Swift, and the matching
+Static Linux SDK. It asks before installing missing tools and tells you if
+Swiftly needs an update. You can use Xcode's tools if they are already installed.
 
-## Quick start
+Build only packages you trust. Package manifests and plugins can run code with
+your permissions. A build can also update the package's `Package.resolved` file.
 
-1. Click **Select Package** and choose the folder containing `Package.swift`, or
-   the manifest itself. You can also drag either into the app.
-2. Review any request to install the required Swift tools. Once preparation
-   finishes, the app lists the package's executable products.
-3. Choose the product, Linux target architecture, build configuration, and Swift
-   version. Changing the target or Swift version refreshes product discovery and
-   may require another installation.
-4. Click **Build** or press **Command-B**. Follow progress in **Build Output**.
-5. After a successful build, open **Build files**, choose **Export Build...**,
-   and select or create an empty destination folder.
+## Build and export
 
-Configuration evaluates the root manifest to list products without resolving
-or inspecting dependencies. Clicking Build starts cancellable dependency
-validation, SDK recovery, and then compilation. Resolution can access the network
-and update `Package.resolved`.
-SwiftPM evaluates package manifests and may run plugins with your permissions.
-Build only packages you trust.
+1. Click **Select Package**. Choose a folder that contains `Package.swift`, or
+   choose the file itself. You can also drag either into the window.
+2. Review any tool installation request. When setup finishes, choose the
+   executable product and the architecture of the Linux machine that will run it.
+3. Use **Release** for an optimized build or **Debug** for debugging. Leave
+   **Swift** on **Automatic**, or choose an exact version. Turn on **Strip Binary**
+   to remove symbols from a copy of the executable.
+4. Click the blue **Build** button, or press **Command-B**. Follow progress in
+   **Build Output**. You can cancel the build or open error details if it fails.
+5. After a successful build, click the **Build files** folder button beside the
+   status. Choose **Export Build…**, then select or create an empty folder.
 
-## Configuration
+Automatic prefers a compatible version from the nearest `.swift-version` file
+before choosing an installed or available Swift release.
 
-| Option | Default | Effect |
-| --- | --- | --- |
-| Product | First discovered executable | Selects the executable product to build. |
-| Target | x86_64 Linux | Selects x86-64 or ARM64 Linux Musl. |
-| Configuration | Release | Selects an optimized release build or a debug build. |
-| Swift | Automatic | Selects a compatible official Swift release and matching SDK, or an exact version you choose. |
-| Strip Binary | Off | Removes symbols from a copy of the executable, then verifies it again. |
+Export copies the checked executable and its resource bundles without rebuilding.
+Keep all exported files together on Linux. Static linking does not include the
+resource bundles inside the executable. The executable runs on the selected
+Linux architecture, not on your Mac.
 
-Automatic selection first uses a compatible official stable version from the
-nearest `.swift-version` file. Otherwise, it prefers the newest compatible
-installed toolchain and SDK pair, then the newest compatible official stable
-release. Compatibility depends on the package's Swift tools requirement and
-target architecture. It does not guarantee that the package will compile.
+Use **Show in Finder** to find the current build files. The **Package actions**
+menu can clean build artifacts or reset all build storage. Export anything you
+want to keep before you use these actions.
 
-If host manifest compilation fails, the app tries installed macOS SDKs with the
-same Swift version. Automatic selection can then assess a newer Swift release;
-an exact version or `.swift-version` pin stays fixed. Any required installation
-still needs approval. If dependency inspection cannot succeed, the build stops
-before compilation and reports the compiler diagnostic and SDK attempts.
+## Updates
 
-Builds use the package's `.build` directory, default package traits, and
-SwiftPM's default build concurrency. Root configuration uses separate stable
-scratch storage in the user cache directory, so it can run while a build owns
-the package's build storage.
+Choose **Triple > Check for Updates…** to check now. In **Triple > Settings…**,
+you can enable automatic checks and automatic download and installation.
+Automatic installations take place when Triple quits. Update restarts wait for
+active work in every window, including builds, exports, and tool installation.
 
-## Build output and export
+## Help
 
-**Build Output** shows progress, commands, and process output. Its toolbar lets
-you wrap lines, copy the transcript, or clear it. You can cancel an active build
-or open error details when a build fails.
+Open **Help > Triple Help** for the built-in guide. If a build fails, include the
+error details and relevant **Build Output** when you
+[report an issue](https://github.com/mottzi/TripleApp/issues).
 
-Triple verifies that the result is a static Linux executable for the selected
-architecture and validates its required resource bundles. **Build files** lists
-those files and the settings used for that build. **Show in Finder** reveals
-them in build storage.
-
-**Export Build...** copies the verified executable and resource bundles into an
-empty folder without rebuilding. Keep the exported files together on Linux.
-Static linking does not embed resource bundles. The executable runs on the
-selected Linux architecture.
-
-## Build storage
-
-Open the **Package actions** menu beside the package name to manage its build
-storage:
-
-| Action | Effect |
-| --- | --- |
-| Clean Build Artifacts... | Removes compiled products and intermediates while keeping dependency state. |
-| Reset Build Storage... | Removes the package's complete SwiftPM build storage, including dependency state. |
-
-Both actions ask for confirmation. Export any build you want to keep before
-cleaning or resetting its storage.
-
-## Development
-
-The local repositories share the parent folder `/Users/berken/Development/Swift/Triple`.
-The app checkout is `TripleApp/` and the library checkout is `Triple/` within that folder.
-
-Open **`TripleApp.xcworkspace`** for development. Select the **TripleApp**
-scheme and **My Mac**, then use **Product > Run** or **Command-R**.
-The workspace builds the local library at `../Triple`, including uncommitted
-changes. You do not need to publish library changes or update the project's
-remote revision to test them in the app.
-
-The workspace includes the sibling `../Triple` package directly. Editing the
-library in the workspace edits its original files. Keep the app and library
-checkout folders beside each other. See [the local library setup](Development/README.md).
-
-`TripleApp.xcodeproj` keeps the pinned [GitHub library dependency](https://github.com/mottzi/Triple)
-for release builds. Open the project by itself to test that dependency. Its
-pinned commit must exist on GitHub. The release export script always uses the
-project, so it does not include the workspace's local override.
-
-Run the app's test suite from the repository root:
-
-```sh
-xcodebuild \
-  -workspace TripleApp.xcworkspace \
-  -scheme TripleApp \
-  -destination 'platform=macOS' \
-  test
-```
-
-Run the release script checks with `python3 script/tests/test_release_validation.py`.
-They exercise version/build gates and signed entitlement fixtures without
-notarizing or publishing artifacts.
-
-`script/build_and_run.sh` uses the development workspace when the sibling library
-exists. It also accepts `--debug` to open LLDB, `--logs` for process logs, and
-`--telemetry` for configuration timings from the `PackageDiscovery` category.
-`script/xcodebuild.sh` forwards commands to Xcode without rewriting Git URLs.
-
-To exercise the real Deployer configuration and build workflow, run:
-
-```sh
-./script/verify_deployer.sh /path/to/Vapor-Deployer
-```
-
-The script builds the workspace and passes the package path into the test host
-through its generated `.xctestrun` configuration. The acceptance test selects
-Swift 6.3.3 explicitly, validates dependency inspection, and checks the app's
-completed build result. The toolchain and Static Linux SDK must already be installed.
-
-To measure package selection through usable configuration, including the SwiftUI
-discovery task and transition completion, run:
-
-```sh
-./script/benchmark_deployer_setup.sh /path/to/Vapor-Deployer 2
-```
-
-The optional limit applies to every run. The test records first and repeated
-selections separately for Automatic and exact Swift 6.3.3. Compilation and
-dependency validation are measured by the separate acceptance workflow.
-
-## App identity and updates
-
-The app bundle and executable are `Triple.app` and `Triple`. The Xcode target,
-Swift module, test target, and shared scheme use `TripleApp` or `TripleAppTests`.
-The main and Help windows display Triple.
-
-The bundle identifier is `codes.mottzi.TripleApp`. This starts a new preferences
-domain; preferences from the old app are not migrated automatically. The
-Sparkle public signing key remains unchanged, and its Keychain account is
-`codes.mottzi.TripleApp`. Release commands use the notarization credential profile
-`TripleApp`; save that profile in Keychain before notarizing. The update feed points to the
-renamed [`mottzi/TripleApp` repository](https://github.com/mottzi/TripleApp).
-The rebranded source is published, but a signed Triple app release and its
-appcast are still pending. [The release guide](Docs/direct-release.md) covers
-archive export, notarization, and Sparkle asset preparation.
-
-`Docs/ui-ux-audit-2026-09-12.md` and the screenshots under `Docs/` describe the
-pre-rebrand app. Their historical labels and source paths remain unchanged.
-Local release logs and icon research under `Docs/` also retain their historical names.
+Prefer a terminal? Use [TripleCLI](https://github.com/mottzi/TripleCLI).
+See also the [Triple library](https://github.com/mottzi/Triple) and
+[Triple website](https://triple.mottzi.codes).
