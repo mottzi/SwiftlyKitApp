@@ -4,6 +4,12 @@ Build Swift packages for Linux on your Mac. Triple creates statically linked
 executables for ARM64 or x86-64 Linux Musl, checks the result, and exports it
 with the resource bundles it needs.
 
+<p align="center">
+  <a href="Docs/images/triple-build-export.png">
+    <img src="Docs/images/triple-build-export.png" width="760" alt="Triple after a successful Linux build, with the Build files popover open and the Export Build button visible." />
+  </a>
+</p>
+
 ## Download and install
 
 Triple 0.2.0 is not available yet. Check [Releases](https://github.com/mottzi/TripleApp/releases)
