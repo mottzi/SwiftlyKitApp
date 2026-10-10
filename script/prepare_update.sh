@@ -60,6 +60,7 @@ mounted=true
 app="$scratch/mount/Triple.app"
 plist="$app/Contents/Info.plist"
 /usr/bin/codesign --verify --deep --strict "$app"
+"$(dirname "${BASH_SOURCE[0]}")/verify_distribution_entitlements.sh" "$app"
 xcrun stapler validate "$app"
 signature="$(/usr/bin/codesign -dv --verbose=4 "$app" 2>&1)"
 printf '%s\n' "$signature" | /usr/bin/grep -q '^Authority=Developer ID Application:'
@@ -79,17 +80,7 @@ mounted=false
 
 # fetch a known release so a concurrent publication cannot mix its metadata and feed
 gh release view --repo "$repo" --json tagName,assets > "$scratch/latest.json"
-python3 - "$scratch/latest.json" "$version" <<'PY'
-import json, re, sys
-latest = json.load(open(sys.argv[1]))['tagName'].removeprefix('v')
-def parts(value):
-    if not re.fullmatch(r'\d+\.\d+(?:\.\d+)?', value):
-        raise SystemExit('The latest stable release does not have a numeric version.')
-    result = tuple(map(int, value.split('.')))
-    return result + (0,) * (3 - len(result))
-if parts(sys.argv[2]) <= parts(latest):
-    raise SystemExit('Increment the marketing version above the latest public release before preparing an update.')
-PY
+python3 "$root/script/release_validation.py" version "$scratch/latest.json" "$version" "$build"
 if [[ $# -eq 4 ]]; then
   cp "$4" "$stage/appcast.xml"
 else

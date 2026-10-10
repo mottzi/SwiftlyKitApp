@@ -11,10 +11,18 @@ to manage toolchains, SDKs, and builds. For a terminal command, use
 
 ## Download
 
-The Triple release is pending. The last published app remains
-[SwiftlyKitApp 0.1.1](https://github.com/mottzi/SwiftlyKitApp/releases/tag/0.1.1),
-with its original release name and DMG asset. A Triple download will be linked
-once a signed Triple release is published.
+Triple 0.2.0 is prepared for release. Publication is pending. The
+[Triple 0.2.0 DMG](https://github.com/mottzi/TripleApp/releases/download/0.2.0/Triple-0.2.0.dmg)
+will become available when the release is published. Read the
+[prepared release notes](Docs/releases/0.2.0.md) for installation and update details.
+The last published app remains
+[SwiftlyKitApp 0.1.1](https://github.com/mottzi/TripleApp/releases/tag/0.1.1),
+with its original release name and DMG asset.
+
+Users of SwiftlyKitApp 0.1.1 or earlier must install Triple manually once.
+Quit the old app, open the Triple DMG, and drag Triple to Applications.
+Triple starts with new preferences. Future Triple releases can update through
+Sparkle; existing projects, exports, SDKs, and toolchains stay in place.
 
 ## Requirements
 
@@ -133,6 +141,10 @@ xcodebuild \
   -destination 'platform=macOS' \
   test
 ```
+
+Run the release script checks with `python3 script/tests/test_release_validation.py`.
+They exercise version/build gates and signed entitlement fixtures without
+notarizing or publishing artifacts.
 
 `script/build_and_run.sh` uses the development workspace when the sibling library
 exists. It also accepts `--debug` to open LLDB, `--logs` for process logs, and

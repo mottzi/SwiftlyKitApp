@@ -34,4 +34,5 @@ printf '%s\n' "$signature" | grep -q '^Authority=Developer ID Application:'
 printf '%s\n' "$signature" | grep -q '^TeamIdentifier=4DXABR577J$'
 printf '%s\n' "$signature" | grep -q 'flags=.*runtime'
 codesign --verify --deep --strict --verbose=2 "$app"
+"$(dirname "${BASH_SOURCE[0]}")/verify_distribution_entitlements.sh" "$app"
 echo "Developer ID app ready for notarization: $app"

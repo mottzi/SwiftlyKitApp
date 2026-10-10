@@ -26,6 +26,7 @@ identity="$(printf '%s\n' "$signature" | sed -n 's/^Authority=\(Developer ID App
 printf '%s\n' "$signature" | grep -q '^TeamIdentifier=4DXABR577J$' || { echo "The app is signed by the wrong developer team." >&2; exit 1; }
 printf '%s\n' "$signature" | grep -q 'flags=.*runtime' || { echo "The app lacks Hardened Runtime." >&2; exit 1; }
 /usr/bin/codesign --verify --deep --strict --verbose=2 "$source_app"
+"$(dirname "${BASH_SOURCE[0]}")/verify_distribution_entitlements.sh" "$source_app"
 security find-identity -p codesigning -v | grep -Fq "\"$identity\"" || {
   echo "Install a local Developer ID Application identity to sign the outer DMG: $identity" >&2
   exit 1
