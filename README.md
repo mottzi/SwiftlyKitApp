@@ -12,11 +12,9 @@ with the resource bundles it needs.
 
 ## Download and install
 
-Triple 0.2.0 is not available yet. Check [Releases](https://github.com/mottzi/TripleApp/releases)
-for the download. The latest published app is still SwiftlyKitApp 0.1.1.
-
-When Triple is available, open its DMG and drag **Triple** to **Applications**.
-See the [0.2.0 release notes](Docs/releases/0.2.0.md).
+[Download Triple 0.2.0](https://github.com/mottzi/TripleApp/releases/download/0.2.0/Triple-0.2.0.dmg).
+Open the DMG and drag **Triple** to **Applications**.
+See the [release notes](https://github.com/mottzi/TripleApp/releases/tag/0.2.0).
 
 If you use SwiftlyKitApp 0.1.1 or earlier, quit it and install Triple manually
 once. Triple starts with new preferences. Your projects, exports, toolchains,
