@@ -4,7 +4,7 @@ This is the manual release path for the Triple macOS app. It keeps App Sandbox o
 
 ## One-time setup
 
-1. In Xcode, sign in to the paid Apple Developer team `4DXABR577J`. The export script and plist select this team. The `TripleApp` target uses Hardened Runtime, Developer Tools category, and no App Sandbox. The app bundle is `Triple.app`; its bundle identifier is `codes.mottzi.TripleApp`. The source currently records Marketing Version `0.1.1`, Build `2`. Set the next release version and a higher build number before producing its artifacts.
+1. In Xcode, sign in to the paid Apple Developer team `4DXABR577J`. The export script and plist select this team. The `TripleApp` target uses Hardened Runtime, Developer Tools category, and no App Sandbox. The app bundle is `Triple.app`; its bundle identifier is `codes.mottzi.TripleApp`. The source currently records Marketing Version `0.2.0`, Build `3`, for the first Triple release candidate. Later releases need a higher version and build number before producing their artifacts.
 2. Install a local **Developer ID Application** identity for this team, including its private key. Xcode's managed cloud signing can export the app, but the local identity is needed to sign the outer DMG. In **Xcode > Settings > Accounts**, select the Apple Account and team, click **Manage Certificates**, then use **+ > Developer ID Application**. An Account Holder can create it. Confirm that `security find-identity -p codesigning -v` lists `Developer ID Application: Berken Sayilir (4DXABR577J)`.
 3. Set up `notarytool` credentials in the login keychain. For an Apple ID, first create an app-specific password in your Apple account, then run the command below and enter that password at its secure prompt. An App Store Connect API key is another option. Keep credentials out of the repository. Save the credentials under the `TripleApp` Keychain profile. Apple protects notarization profiles in its own Keychain access group; if only the old profile exists, run the command below to save the new one. Enter the app-specific password at the secure terminal prompt, not in a chat or a script.
 
@@ -248,12 +248,17 @@ For each release:
    Existing feed entries and their download metadata are retained. Delta updates
    are disabled. The script checks the signature and writes `SHA256SUMS.txt`.
    It does not upload assets, create a tag, or publish a release.
-4. Test an upgrade from a genuine previous Sparkle-enabled app to the new signed,
-   notarized app. Test Install Later, Skip, disabled automatic checks, automatic
-   installation, restart deferral during discovery, tool installation, building,
-   exporting and cleanup, including a second window. Test a skipped-version
-   upgrade and rejection of an incompatible macOS update. Keep a failed release
-   out of the public feed.
+4. For the first Sparkle release, use a private Developer ID signed, notarized
+   baseline fixture with the same bundle identifier, a lower version/build,
+   and the same Sparkle public key. No previous public app supports Sparkle.
+   Record the fixture's identity and do not describe it as a public predecessor.
+   For later releases, test from the genuine previous public Sparkle-enabled app
+   to the new signed, notarized app. Test Remind Me Later, Skip, disabled
+   automatic checks, automatic installation, restart deferral during discovery,
+   tool installation, building, exporting and cleanup, including a second
+   window. Test a manual check after skipping a version, and rejection of an
+   incompatible macOS update and an invalid archive signature. Record any case
+   that could not be verified. Keep a failed release out of the public feed.
 5. Create a draft GitHub release tagged at the tested source commit. Attach the
    prepared DMG, `appcast.xml`, and `SHA256SUMS.txt`, and use `release-notes.md`
    for its description. Publish it as a stable latest release after all assets
@@ -275,6 +280,16 @@ and feed-generation checks are local verification. They do not replace the
 signed/notarized upgrade rehearsal in step 4. The rebranded source, release
 scripts, and this guide are published. A signed Triple app release and appcast
 have not been published.
+
+The signed and notarized 0.2.0 build 3 candidate was validated locally on
+2026-10-10. Its [validation record](releases/0.2.0-validation.md) identifies the
+exact source, tests, notary submissions, asset hashes, and completed private
+Sparkle modes. The first-release fixture was version 0.1.9, build 2. The combined
+signed update during active work in multiple windows remains unverified because
+accessibility automation failed. The 87 passing app tests cover operation
+restart deferral across windows. Actual runtime testing used macOS 27 on Apple
+silicon; macOS 26.5 and Intel runtime testing were unavailable. Publication
+still awaits approval.
 
 The dated implementation record below describes the pre-rebrand source and
 its earlier dependency mismatch. The standalone Triple project resolves its
