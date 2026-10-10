@@ -131,9 +131,10 @@ Sparkle public signing key remains unchanged, and its Keychain account is
 `codes.mottzi.TripleApp`. Release commands use the notarization credential profile
 `TripleApp`; save that profile in Keychain before notarizing. The update feed points to the
 renamed [`mottzi/TripleApp` repository](https://github.com/mottzi/TripleApp).
-The rebranded source is published, but a signed Triple app release and its
-appcast are still pending. [The release guide](../Docs/direct-release.md) covers
-archive export, notarization, and Sparkle asset preparation.
+[Triple 0.2.0](https://github.com/mottzi/TripleApp/releases/tag/0.2.0) is public
+with a signed, notarized DMG and Sparkle appcast.
+[The release guide](../Docs/direct-release.md) covers archive export, notarization,
+and Sparkle asset preparation.
 
 The [earlier UI audit](../Docs/ui-ux-audit-2026-09-12.md) and screenshots under
 `../Docs/` describe the pre-rebrand app. Their historical labels and source paths
